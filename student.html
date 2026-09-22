@@ -41,9 +41,9 @@
   <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
   <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
 
-<!-- Supabase SDK & Config -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
+  <!-- Supabase SDK & Config -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-900">
 
@@ -51,11 +51,10 @@
 
   <script type="text/babel">
     const { useState, useMemo, useEffect } = React;
-    const [isSubmitted, setIsSubmitted] = useState(false);
-	const { 
+    const { 
       BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, 
       PieChart, Pie, Legend 
-    } = window.Recharts;
+    } = window.Recharts || {};
 
     // --- SVG Icon Helper ---
     const Icon = ({ name, className = "w-4 h-4", ...props }) => {
@@ -141,28 +140,6 @@
       const [showResults, setShowResults] = useState(true);
       const [inputText, setInputText] = useState('');
 
-      const handleSendWord = async () => {
-        if (!inputText.trim()) {
-          alert('กรุณาพิมพ์ข้อความก่อนส่ง');
-          return;
-		  // โค้ดส่ง Supabase เดิมของคุณ...
-  
-  setIsSubmitted(true); // <--- เพิ่มบรรทัดนี้เพื่อสลับไปหน้าขอบคุณ (Phone 2)
-};
-        }
-
-        const { error } = await supabaseClient
-          .from('responses')
-          .insert([{ activity_id: currentActivity, text_answer: inputText.trim() }]);
-
-        if (!error) {
-          setInputText('');
-          alert('ส่งคำตอบเรียบร้อยแล้ว!');
-        } else {
-          console.error('Error sending word:', error);
-        }
-      };
-
       const [liveVotes, setLiveVotes] = useState({
         agree: 0,
         disagree: 0,
@@ -170,63 +147,94 @@
         total: 0
       });
 
+      const handleSendWord = async () => {
+        if (!inputText.trim()) {
+          alert('กรุณาพิมพ์ข้อความก่อนส่ง');
+          return;
+        }
+
+        if (typeof supabaseClient !== 'undefined') {
+          const { error } = await supabaseClient
+            .from('responses')
+            .insert([{ activity_id: currentActivity, text_answer: inputText.trim() }]);
+
+          if (!error) {
+            setInputText('');
+            setStudentSubmitted(true);
+          } else {
+            console.error('Error sending word:', error);
+            alert('เกิดข้อผิดพลาดในการส่งข้อมูล');
+          }
+        } else {
+          setStudentSubmitted(true);
+        }
+      };
+
       const handleStudentSubmit = async () => {
         if (!selectedOption) {
           alert('กรุณาเลือกคำตอบก่อนส่ง');
           return;
-		  // โค้ดส่ง Supabase เดิมของคุณ...
-  
-  setIsSubmitted(true); // <--- เพิ่มบรรทัดนี้เพื่อสลับไปหน้าขอบคุณ (Phone 2)
-};
         }
 
-        const { data, error } = await supabaseClient
-          .from('votes')
-          .insert([
-            { dilemma_id: currentActivity, selected_option: selectedOption }
-          ]);
+        if (typeof supabaseClient !== 'undefined') {
+          const { data, error } = await supabaseClient
+            .from('votes')
+            .insert([
+              { dilemma_id: currentActivity, selected_option: selectedOption }
+            ]);
 
-        if (!error) {
-          setStudentSubmitted(true);
+          if (!error) {
+            setStudentSubmitted(true);
+          } else {
+            console.error('Submit Error:', error);
+            alert('เกิดข้อผิดพลาดในการส่งข้อมูล');
+          }
         } else {
-          console.error('Submit Error:', error);
-          alert('เกิดข้อผิดพลาดในการส่งข้อมูล');
+          setStudentSubmitted(true);
         }
       };
 
       const fetchResults = async () => {
-        const { data, error } = await supabaseClient
-          .from('votes')
-          .select('selected_option')
-          .eq('dilemma_id', currentActivity);
+        if (typeof supabaseClient === 'undefined') return;
 
-        if (data) {
-          const agree = data.filter(d => d.selected_option === 'agree').length;
-          const disagree = data.filter(d => d.selected_option === 'disagree').length;
-          const uncertain = data.filter(d => d.selected_option === 'uncertain').length;
+        try {
+          const { data, error } = await supabaseClient
+            .from('votes')
+            .select('selected_option')
+            .eq('dilemma_id', currentActivity);
 
-          setLiveVotes({
-            agree,
-            disagree,
-            uncertain,
-            total: data.length
-          });
+          if (data) {
+            const agree = data.filter(d => d.selected_option === 'agree').length;
+            const disagree = data.filter(d => d.selected_option === 'disagree').length;
+            const uncertain = data.filter(d => d.selected_option === 'uncertain').length;
+
+            setLiveVotes({
+              agree,
+              disagree,
+              uncertain,
+              total: data.length
+            });
+          }
+        } catch (e) {
+          console.error("Fetch error:", e);
         }
       };
 
       useEffect(() => {
         fetchResults();
 
-        const channel = supabaseClient
-          .channel('realtime_votes')
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'votes' }, () => {
-            fetchResults();
-          })
-          .subscribe();
+        if (typeof supabaseClient !== 'undefined') {
+          const channel = supabaseClient
+            .channel('realtime_votes')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'votes' }, () => {
+              fetchResults();
+            })
+            .subscribe();
 
-        return () => {
-          supabaseClient.removeChannel(channel);
-        };
+          return () => {
+            supabaseClient.removeChannel(channel);
+          };
+        }
       }, [currentActivity]);
 
       const chartData = [
@@ -329,15 +337,15 @@
                       </div>
 
                       {/* Progress Bar */}
-<div className="bg-white px-5 py-2 border-b border-slate-100 flex items-center justify-between text-slate-600 text-[11px] font-bold">
-  <span>{currentActivity} / 11</span>
-  <div className="w-36 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-    <div 
-      className="h-full bg-blue-600 rounded-full transition-all duration-300" 
-      style={{ width: `${(currentActivity / 11) * 100}%` }}
-    />
-  </div>
-</div>
+                      <div className="bg-white px-5 py-2 border-b border-slate-100 flex items-center justify-between text-slate-600 text-[11px] font-bold">
+                        <span>{currentActivity} / 11</span>
+                        <div className="w-36 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-blue-600 rounded-full transition-all duration-300" 
+                            style={{ width: `${(currentActivity / 11) * 100}%` }}
+                          />
+                        </div>
+                      </div>
 
                       {/* Content Area */}
                       <div className="flex-1 bg-white p-5 flex flex-col justify-between overflow-y-auto">
@@ -415,7 +423,7 @@
 
                             <button
                               onClick={handleStudentSubmit}
-                              className="w-full bg-[#1E3A8A] text-white font-bold py-3 rounded-xl text-xs mt-4"
+                              className="w-full bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold py-3 rounded-xl text-xs mt-4 transition-all"
                             >
                               ส่งคำตอบ
                             </button>
@@ -472,15 +480,15 @@
 
                         <div className="w-full space-y-3">
                           <button
-  onClick={() => {
-    setIsSubmitted(false);    // สลับกลับมาหน้ากรอกคำตอบ
-    setInputText('');         // ล้างข้อความในช่องพิมพ์
-    setSelectedOption(null);  // ล้างตัวเลือกโหวตที่เคยเลือก
-  }}
-  className="w-full bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold py-3 rounded-xl text-xs transition-all cursor-pointer"
->
-  กลับสู่หน้าหลัก
-</button>
+                            onClick={() => {
+                              setStudentSubmitted(false); // สลับกลับมาหน้ากรอกคำตอบ
+                              setInputText('');           // ล้างข้อความในช่องพิมพ์
+                              setSelectedOption(null);    // ล้างตัวเลือกโหวตที่เคยเลือก
+                            }}
+                            className="w-full bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold py-3 rounded-xl text-xs transition-all cursor-pointer"
+                          >
+                            กลับสู่หน้าหลัก
+                          </button>
                           <p className="text-[10px] text-slate-400 text-center flex items-center justify-center gap-1 px-2">
                             <Icon name="Info" className="w-3 h-3 shrink-0" />
                             <span>ความคิดเห็นจะแสดงแบบไม่ระบุชื่อ เพื่อใช้สำหรับการเรียนรู้ร่วมกันในชั้นเรียน</span>
@@ -606,18 +614,20 @@
                             </div>
 
                             <div className="h-72">
-                              <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={chartData} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
-                                  <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 700, fill: '#334155' }} />
-                                  <YAxis />
-                                  <Tooltip />
-                                  <Bar dataKey="count" radius={[8, 8, 0, 0]}>
-                                    {DEMO_DATA.dilemma1.map((entry, index) => (
-                                      <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                  </Bar>
-                                </BarChart>
-                              </ResponsiveContainer>
+                              {BarChart && (
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart data={chartData} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
+                                    <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 700, fill: '#334155' }} />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+                                      {DEMO_DATA.dilemma1.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                      ))}
+                                    </Bar>
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              )}
                             </div>
 
                             <div className="grid grid-cols-3 gap-3 pt-2 text-center text-xs">
@@ -710,16 +720,18 @@
                             </h2>
 
                             <div className="h-72">
-                              <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={DEMO_DATA.revoteComparison} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
-                                  <XAxis dataKey="option" tick={{ fontSize: 12, fontWeight: 700 }} />
-                                  <YAxis />
-                                  <Tooltip />
-                                  <Legend />
-                                  <Bar dataKey="before" name="Before Discussion" fill="#93C5FD" radius={[6, 6, 0, 0]} />
-                                  <Bar dataKey="after" name="After Discussion" fill="#1E40AF" radius={[6, 6, 0, 0]} />
-                                </BarChart>
-                              </ResponsiveContainer>
+                              {BarChart && (
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart data={DEMO_DATA.revoteComparison} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
+                                    <XAxis dataKey="option" tick={{ fontSize: 12, fontWeight: 700 }} />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Bar dataKey="before" name="Before Discussion" fill="#93C5FD" radius={[6, 6, 0, 0]} />
+                                    <Bar dataKey="after" name="After Discussion" fill="#1E40AF" radius={[6, 6, 0, 0]} />
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              )}
                             </div>
                           </div>
 
@@ -733,22 +745,24 @@
                               </h3>
 
                               <div className="h-44 relative flex items-center justify-center">
-                                <ResponsiveContainer width="100%" height="100%">
-                                  <PieChart>
-                                    <Pie
-                                      data={DEMO_DATA.revoteStats}
-                                      cx="50%"
-                                      cy="50%"
-                                      innerRadius={50}
-                                      outerRadius={70}
-                                      dataKey="value"
-                                    >
-                                      {DEMO_DATA.revoteStats.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                      ))}
-                                    </Pie>
-                                  </PieChart>
-                                </ResponsiveContainer>
+                                {PieChart && (
+                                  <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                      <Pie
+                                        data={DEMO_DATA.revoteStats}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={50}
+                                        outerRadius={70}
+                                        dataKey="value"
+                                      >
+                                        {DEMO_DATA.revoteStats.map((entry, index) => (
+                                          <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                      </Pie>
+                                    </PieChart>
+                                  </ResponsiveContainer>
+                                )}
                                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                                   <span className="text-lg font-black text-slate-900">15</span>
                                   <span className="text-[10px] text-slate-500 font-bold">changed</span>
