@@ -41,13 +41,9 @@
   <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
   <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
 
-  <!-- Supabase Realtime SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const supabaseUrl = 'https://utwmhcllhgmoqnfbmjwf.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0d21oY2xsaGdtb3FuZmJtandmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMzAyMjEsImV4cCI6MjEwNTYwNjIyMX0.5xguMqgJ7c_uzmJd5-2GikKgvtraJOCG9IZ40y5VNA8';
-    window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-  </script>
+<!-- Supabase SDK & Config -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-900">
 
