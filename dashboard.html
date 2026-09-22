@@ -171,7 +171,34 @@
       alert('เกิดข้อผิดพลาดในการส่งข้อมูล');
     }
   };
+// --- แทรกเพิ่มตรงบรรทัด 174 ---
+  const [wordList, setWordList] = useState([]);
 
+  const fetchWords = async () => {
+    const { data } = await supabaseClient
+      .from('responses')
+      .select('text_answer')
+      .eq('activity_id', currentActivity);
+
+    if (data) {
+      setWordList(data.map(d => d.text_answer));
+    }
+  };
+
+  React.useEffect(() => {
+    fetchWords();
+
+    const channel = supabaseClient
+      .channel('realtime_words')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'responses' }, () => {
+        fetchWords();
+      })
+      .subscribe();
+
+    return () => {
+      supabaseClient.removeChannel(channel);
+    };
+  }, [currentActivity]);
   // 3. ฟังก์ชันดึงผลโหวตและฟัง Real-time จาก Supabase
   const fetchResults = async () => {
     const { data, error } = await supabaseClient
@@ -519,7 +546,36 @@
 
                   {/* Main Dashboard Content */}
                   <div className="p-6 space-y-6 flex-1">
-                    
+                  {/* --- เพิ่มส่วนนี้ตรงบรรทัด 550 (ก่อน CASE 1: ACTIVITY 3) --- */}
+        {currentActivity === 2 && (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-xl font-black text-slate-900">What is Ethics? — Word Cloud</h1>
+              <p className="text-sm font-bold text-slate-600 mt-1">ความคิดเห็นของห้องเรียน</p>
+            </div>
+
+            {/* กล่องแสดงผล Word Cloud */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl h-80 flex flex-wrap items-center justify-center p-8 gap-3 overflow-y-auto shadow-inner">
+              {wordList.length === 0 ? (
+                <p className="text-slate-400 font-medium text-lg">ยังไม่มีคำตอบ</p>
+              ) : (
+                wordList.map((word, index) => (
+                  <span
+                    key={index}
+                    className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-bold text-lg shadow-sm hover:scale-105 transition-transform"
+                  >
+                    {word}
+                  </span>
+                ))
+              )}
+            </div>
+
+            {/* จำนวนคนตอบ */}
+            <p className="text-slate-600 font-medium text-sm">
+              Responses: <span className="font-bold text-slate-900">{wordList.length}</span>
+            </p>
+          </div>
+        )}  
                     {/* CASE 1: ACTIVITY 3 (DILEMMA 1) */}
                     {currentActivity === 3 && (
                       <div className="space-y-6">
