@@ -485,10 +485,11 @@
                         <div className="w-full space-y-3">
                           <button
                             onClick={() => {
-                              setStudentSubmitted(false); // สลับกลับมาหน้ากรอกคำตอบ
-                              setInputText('');           // ล้างข้อความในช่องพิมพ์
-                              setSelectedOption(null);    // ล้างตัวเลือกโหวตที่เคยเลือก
-                            }}
+  setStudentSubmitted(false);    // สลับกลับมาหน้ากรอกคำตอบ
+  setInputText('');             // ล้างข้อความในช่องพิมพ์[cite: 17]
+  setSelectedOption(null);      // ล้างตัวเลือกโหวต[cite: 17]
+  alert('รีเซ็ตหน้าตอบคำถามเรียบร้อยแล้ว'); // <-- เพิ่มบรรทัดนี้เพื่อยืนยันการกด
+}}
                             className="w-full bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold py-3 rounded-xl text-xs transition-all cursor-pointer"
                           >
                             กลับสู่หน้าหลัก
