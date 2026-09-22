@@ -51,7 +51,8 @@
 
   <script type="text/babel">
     const { useState, useMemo, useEffect } = React;
-    const { 
+    const [isSubmitted, setIsSubmitted] = useState(false);
+	const { 
       BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, 
       PieChart, Pie, Legend 
     } = window.Recharts;
@@ -144,6 +145,10 @@
         if (!inputText.trim()) {
           alert('กรุณาพิมพ์ข้อความก่อนส่ง');
           return;
+		  // โค้ดส่ง Supabase เดิมของคุณ...
+  
+  setIsSubmitted(true); // <--- เพิ่มบรรทัดนี้เพื่อสลับไปหน้าขอบคุณ (Phone 2)
+};
         }
 
         const { error } = await supabaseClient
@@ -169,6 +174,10 @@
         if (!selectedOption) {
           alert('กรุณาเลือกคำตอบก่อนส่ง');
           return;
+		  // โค้ดส่ง Supabase เดิมของคุณ...
+  
+  setIsSubmitted(true); // <--- เพิ่มบรรทัดนี้เพื่อสลับไปหน้าขอบคุณ (Phone 2)
+};
         }
 
         const { data, error } = await supabaseClient
