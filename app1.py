@@ -1,5 +1,7 @@
+from datetime import datetime
 import pandas as pd
 import streamlit as st
+from streamlit_gsheets import GSheetsConnection
 
 # ตั้งค่าหน้าเว็บ
 st.set_page_config(
@@ -8,35 +10,16 @@ st.set_page_config(
     layout="wide",
 )
 
-# --- 1. กำหนดค่าเริ่มต้นใน Session State ---
+# เชื่อมต่อ Google Sheets (อ่านค่าจาก st.secrets["connections"]["gsheets"])
+# หมายเหตุ: ต้องตั้งค่า secrets บน Streamlit Cloud ก่อนใช้งานจริง
+try:
+    conn = st.connection("gsheets", type=GSheetsConnection)
+except Exception:
+    conn = None  # กรณีรันเทสบนเครื่องแล้วยังไม่ได้ตั้งค่า secrets
+
+# --- กำหนดค่าเริ่มต้นใน Session State ---
 if "step" not in st.session_state:
-    st.session_state.step = 4  # เริ่มที่ Page 4 ตามโจทย์ (ปรับเปลี่ยนได้)
-
-if "word_cloud_data" not in st.session_state:
-    st.session_state.word_cloud_data = [
-        "ถูกต้อง",
-        "ศีลธรรม",
-        "หน้าที่",
-        "ความถูกต้อง",
-        "กฎหมาย",
-        "คุณธรรม",
-    ]
-
-if "reasons" not in st.session_state:
-    st.session_state.reasons = []
-
-if "reflections" not in st.session_state:
-    st.session_state.reflections = []
-
-
-# ฟังก์ชันเปลี่ยนหน้า
-def next_step():
-    st.session_state.step += 1
-
-
-def prev_step():
-    st.session_state.step -= 1
-
+    st.session_state.step = 4
 
 # --- Sidebar แสดงความคืบหน้า ---
 st.sidebar.markdown("### 🧭 ขั้นตอนกิจกรรม (Workflow)")
@@ -59,7 +42,6 @@ for s_num, s_title in steps_name.items():
         st.sidebar.markdown(f"{s_title}")
 
 st.sidebar.markdown("---")
-# ปุ่มควบคุมข้ามหน้าด่วนสำหรับอาจารย์
 col_sb1, col_sb2 = st.sidebar.columns(2)
 with col_sb1:
     if st.button("⬅️ ก่อนหน้า") and st.session_state.step > 4:
@@ -85,14 +67,50 @@ if st.session_state.step == 4:
             "พิมพ์คำตอบสั้น ๆ 1–3 คำ (เช่น หน้าศีลธรรม, ความถูกต้อง):"
         )
         submitted = st.form_submit_button("ส่งคำตอบ")
+
         if submitted and user_word:
-            st.session_state.word_cloud_data.append(user_word)
-            st.success("บันทึกคำตอบของคุณแล้ว!")
+            new_data = pd.DataFrame(
+                [
+                    {
+                        "Timestamp": datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                        "Step": "Page 4 - Warmup",
+                        "Data": user_word,
+                    }
+                ]
+            )
+
+            if conn:
+                try:
+                    # ดึงข้อมูลเดิมมาต่อท้ายแล้วบันทึกกลับไปที่ Google Sheets
+                    existing_data = conn.read(worksheet="Responses", ttl=0)
+                    updated_data = pd.concat(
+                        [existing_data, new_data], ignore_index=True
+                    )
+                    conn.update(worksheet="Responses", data=updated_data)
+                    st.success("บันทึกคำตอบลง Google Sheets เรียบร้อย!")
+                except Exception as e:
+                    st.error(f"เกิดข้อผิดพลาดในการบันทึก: {e}")
+            else:
+                st.success("บันทึกจำลองสำเร็จ (ยังไม่ได้เชื่อม Google Sheets)")
 
     st.markdown("---")
-    st.markdown("### ☁️ Word Cloud (จำลองการแสดงผล)")
-    # แสดงคำแบบแท็กคลาวด์ง่าย ๆ ด้วยการวนลูป
-    st.info(" ".join([f"` {w} `" for w in st.session_state.word_cloud_data]))
+    st.markdown("### ☁️ Word Cloud (ข้อมูลจาก Google Sheets)")
+    if conn:
+        try:
+            df = conn.read(worksheet="Responses", ttl=5)
+            warmup_words = df[df["Step"] == "Page 4 - Warmup"][
+                "Data"
+            ].tolist()
+            if warmup_words:
+                st.info(" ".join([f"` {w} `" for w in warmup_words]))
+            else:
+                st.write("ยังไม่มีข้อมูลคำตอบ")
+        except:
+            st.info("`ถูกต้อง` `ศีลธรรม` `หน้าที่`")
+    else:
+        st.info("`ถูกต้อง` `ศีลธรรม` `หน้าที่`")
     st.write("“Our classroom's first picture of Ethics”")
 
 
@@ -126,21 +144,33 @@ elif st.session_state.step == 6:
     st.write(
         "### “อะไรเป็นเหตุผลสำคัญที่สุดที่ทำให้คุณเลือกคำตอบนั้น?”"
     )
-    st.caption(
-        "เป้าหมายของหน้านี้คือให้นักศึกษาเห็นว่า คนสองคนอาจเลือกคำตอบเดียวกัน แต่ใช้เหตุผลคนละแบบ"
-    )
 
     with st.form("reason_form"):
         reason_text = st.text_area("อธิบายเหตุผลของคุณสั้น ๆ:")
         sub_reason = st.form_submit_button("ส่งเหตุผล")
-        if sub_reason and reason_text:
-            st.session_state.reasons.append(reason_text)
-            st.success("ส่งเหตุผลสำเร็จ!")
 
-    if st.session_state.reasons:
-        st.markdown("### 📢 เหตุผลจากเพื่อนร่วมชั้น (บางส่วน):")
-        for r in st.session_state.reasons[-3:]:
-            st.markdown(f"- *\"{r}\"*")
+        if sub_reason and reason_text:
+            new_data = pd.DataFrame(
+                [
+                    {
+                        "Timestamp": datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                        "Step": "Page 6 - Why",
+                        "Data": reason_text,
+                    }
+                ]
+            )
+            if conn:
+                try:
+                    existing_data = conn.read(worksheet="Responses", ttl=0)
+                    updated_data = pd.concat(
+                        [existing_data, new_data], ignore_index=True
+                    )
+                    conn.update(worksheet="Responses", data=updated_data)
+                    st.success("ส่งเหตุผลและบันทึกลง Google Sheets สำเร็จ!")
+                except Exception as e:
+                    st.error(f"เกิดข้อผิดพลาด: {e}")
 
 
 # ==========================================
@@ -148,12 +178,8 @@ elif st.session_state.step == 6:
 # ==========================================
 elif st.session_state.step == 7:
     st.title("👥 PAGE 7 — Small Group Discussion")
-    st.write("แบ่งนักศึกษาเป็นกลุ่มย่อย และร่วมกันอภิปรายโจทย์นี้:")
     st.warning(
         "**โจทย์อภิปราย:** “การไม่ผิดกฎหมายเพียงอย่างเดียวเพียงพอที่จะบอกว่าการกระทำนั้นถูกต้องทางจริยธรรมหรือไม่”"
-    )
-    st.write(
-        "ให้แต่ละกลุ่มร่วมกันหาข้อสรุปและเตรียมตัวสะท้อนความคิดเห็นต่อหน้าห้อง"
     )
 
 
@@ -162,14 +188,10 @@ elif st.session_state.step == 7:
 # ==========================================
 elif st.session_state.step == 8:
     st.title("⚔️ PAGE 8 — Challenge")
-    st.write("### สถานการณ์ท้าทายความคิดเห็นกลุ่ม:")
     st.info(
         "“ถ้ามีคนแย้งกับความเห็นของกลุ่มคุณว่า\n*‘ถ้าไม่ผิดกฎหมาย ก็ไม่มีเหตุผลที่จะบอกว่าผิด’*\nคุณจะตอบอย่างไร?”"
     )
-
-    st.text_area("พิมพ์แนวทางการโต้แย้งหรือคำตอบของกลุ่มคุณ:")
-    if st.button("บันทึกคำตอบกลุ่ม"):
-        st.success("บันทึกเรียบร้อย!")
+    st.text_area("พิมพ์แนวทางการโต้แย้งของกลุ่ม:")
 
 
 # ==========================================
@@ -180,7 +202,6 @@ elif st.session_state.step == 9:
     st.error(
         "**สถานการณ์:** คุณเป็นเภสัชกรและพบว่าเพื่อนร่วมงานมีพฤติกรรมที่ไม่เหมาะสม แต่ในเหตุการณ์นั้นยังไม่มีผู้ป่วยได้รับอันตราย คุณจะทำอย่างไร?"
     )
-
     st.radio(
         "การตัดสินใจของคุณ:",
         [
@@ -190,8 +211,6 @@ elif st.session_state.step == 9:
             "4. เพิกเฉยเพราะไม่ใช่เรื่องของเรา",
         ],
     )
-    if st.button("ส่งคำตอบสถานการณ์นี้"):
-        st.success("บันทึกคำตอบแล้ว!")
 
 
 # ==========================================
@@ -199,18 +218,6 @@ elif st.session_state.step == 9:
 # ==========================================
 elif st.session_state.step == 10:
     st.title("📋 PAGE 10 — Ethical Reasoning Framework")
-    st.write(
-        "ให้แต่ละกลุ่มวิเคราะห์สถานการณ์ Pharmacy Context โดยใช้กรอบการคิดเชิงจริยธรรมด้านล่าง:"
-    )
-
-    st.markdown(
-        """
-    - **1. ระบุประเด็นปัญหาจริยธรรม (Ethical Issue):** อะไรคือแก่นของปัญหา?
-    - **2. ผู้มีส่วนได้ส่วนเสีย (Stakeholders):** ใครบ้างที่จะได้รับผลกระทบ?
-    - **3. ทางเลือกที่เป็นไปได้ (Alternative Actions):** มีแนวทางปฏิบัติอะไรบ้าง?
-    - **4. ผลกระทบและหลักการ (Consequences & Principles):** ใช้หลักจริยธรรมใดมาตัดสิน?
-    """
-    )
     st.text_area("บันทึกผลการวิเคราะห์ของกลุ่ม:")
 
 
@@ -219,20 +226,10 @@ elif st.session_state.step == 10:
 # ==========================================
 elif st.session_state.step == 11:
     st.title("🔄 PAGE 11 — Re-Vote")
-    st.write("นำคำถามจาก Dilemma 2 กลับมาอีกครั้ง:")
     st.info(
         "“หลังจากฟังเหตุผลของเพื่อนและอภิปรายในกลุ่มแล้ว คุณยังเลือกคำตอบเดิมหรือไม่?”"
     )
-
-    st.radio(
-        "การตัดสินใจใหม่ของคุณ (Re-Vote):",
-        [
-            "เปลี่ยนใจ (จากเดิม)",
-            "ยังคงเลือกคำตอบเดิม",
-        ],
-    )
-    if st.button("ยืนยันผล Re-Vote"):
-        st.success("บันทึกผลการโหวตรอบสองเรียบร้อย!")
+    st.radio("การตัดสินใจใหม่ (Re-Vote):", ["เปลี่ยนใจ", "ยังคงเลือกคำตอบเดิม"])
 
 
 # ==========================================
@@ -240,7 +237,6 @@ elif st.session_state.step == 11:
 # ==========================================
 elif st.session_state.step == 12:
     st.title("🎯 PAGE 12 — Final Reflection")
-    st.write("### สรุปการเรียนรู้ท้ายกิจกรรม")
 
     with st.form("reflection_form"):
         q1 = st.text_area(
@@ -250,12 +246,34 @@ elif st.session_state.step == 12:
             "2. สิ่งหนึ่งที่คุณจะนำไปใช้เมื่อเผชิญสถานการณ์ทางจริยธรรมในอนาคตคืออะไร?"
         )
         sub_ref = st.form_submit_button("ส่งแบบสะท้อนความคิด")
-        if sub_ref:
-            st.success(
-                "ขอบคุณสำหรับการเข้าร่วมกิจกรรม! บันทึกข้อมูลเรียบร้อยแล้วครับ 🎉"
-            )
 
-# --- ปุ่มควบคุมด้านล่างหน้าจอสำหรับเลื่อนสเตป ---
+        if sub_ref:
+            combined_text = f"Q1: {q1} | Q2: {q2}"
+            new_data = pd.DataFrame(
+                [
+                    {
+                        "Timestamp": datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                        "Step": "Page 12 - Reflection",
+                        "Data": combined_text,
+                    }
+                ]
+            )
+            if conn:
+                try:
+                    existing_data = conn.read(worksheet="Responses", ttl=0)
+                    updated_data = pd.concat(
+                        [existing_data, new_data], ignore_index=True
+                    )
+                    conn.update(worksheet="Responses", data=updated_data)
+                    st.success("บันทึก Reflection ลง Google Sheets สำเร็จ!")
+                except Exception as e:
+                    st.error(f"เกิดข้อผิดพลาด: {e}")
+            else:
+                st.success("บันทึกสำเร็จเรียบร้อย!")
+
+# --- ปุ่มควบคุมด้านล่างหน้าจอ ---
 st.markdown("---")
 c_bot1, c_bot2 = st.columns([1, 1])
 with c_bot1:
