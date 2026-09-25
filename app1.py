@@ -182,6 +182,40 @@ elif st.session_state.step == 7:
         "**โจทย์อภิปราย:** “การไม่ผิดกฎหมายเพียงอย่างเดียวเพียงพอที่จะบอกว่าการกระทำนั้นถูกต้องทางจริยธรรมหรือไม่”"
     )
 
+    with st.form("group_discussion_form"):
+        group_name = st.text_input(
+            "ชื่อกลุ่ม / เลขที่กลุ่ม (เช่น กลุ่ม 1):"
+        )
+        discussion_summary = st.text_area(
+            "สรุปผลการอภิปรายของกลุ่มคุณ:"
+        )
+        sub_disc = st.form_submit_button("ส่งสรุปผลการอภิปราย")
+
+        if sub_disc and discussion_summary:
+            new_data = pd.DataFrame(
+                [
+                    {
+                        "Timestamp": datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                        "Step": "Page 7 - Group Discussion",
+                        "Data": f"[{group_name}] {discussion_summary}",
+                    }
+                ]
+            )
+            if conn:
+                try:
+                    existing_data = conn.read(worksheet="Responses", ttl=0)
+                    updated_data = pd.concat(
+                        [existing_data, new_data], ignore_index=True
+                    )
+                    conn.update(worksheet="Responses", data=updated_data)
+                    st.success("บันทึกสรุปผลการอภิปรายลง Google Sheets สำเร็จ!")
+                except Exception as e:
+                    st.error(f"เกิดข้อผิดพลาด: {e}")
+            else:
+                st.success("บันทึกจำลองสำเร็จ!")
+
 
 # ==========================================
 # PAGE 8 — Challenge
