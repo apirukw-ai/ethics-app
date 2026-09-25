@@ -61,21 +61,20 @@ if st.session_state.lab2_step == 1:
     st.markdown("### “คุณเคยทำสิ่งที่รู้ว่า ‘ไม่ค่อยถูกต้อง’ เพราะไม่อยากมีปัญหากับคนอื่นหรือไม่?”")
 
     with st.form("lab2_act1_form"):
-        anon_choice = st.checkbox("ไม่ให้เปิดเผยรายละเอียดส่วนตัว (Anonymous)")
-        student_id = st.text_input("รหัสนิสิต (ถ้าไม่ประสงค์ไม่ระบุ ให้เว้นว่างหรือพิมพ์ Anonymous):")
+        student_id = st.text_input("รหัสนิสิต (หรือระบุ Anonymous):")
+        choice = st.radio("เลือกคำตอบ:", ["เคย", "ไม่เคย", "ไม่แน่ใจ"])
         
-        choice = st.radio(
-            "เลือกคำตอบของคุณ:",
-            ["เคย", "ไม่เคย", "ไม่แน่ใจ"]
-        )
+        st.markdown("---")
+        st.markdown("**คำถามสะท้อนคิด:** “อะไรทำให้บางครั้งเราทำสิ่งที่ขัดกับสิ่งที่เราคิดว่าถูก?”")
+        comment_text = st.text_area("พิมพ์ความเห็นของคุณ (เช่น ความกดดันจากสังคม, ความสัมพันธ์, ความกลัว, ฯลฯ):")
+        
         sub1 = st.form_submit_button("ส่งคำตอบ Warm-up")
 
-        if sub1:
-            sid_val = "Anonymous" if anon_choice or not student_id else student_id
+        if sub1 and student_id:
             new_data = pd.DataFrame([{
                 "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "Step": "Lab2 - Act 1 Warmup",
-                "Data": f"[{sid_val}] {choice}"
+                "Data": f"[{student_id}] Vote: {choice} | Comment: {comment_text}"
             }])
             if conn:
                 try:
@@ -87,10 +86,23 @@ if st.session_state.lab2_step == 1:
                     st.error(f"เกิดข้อผิดพลาด: {e}")
             else:
                 st.success("บันทึกจำลองสำเร็จ!")
+        elif sub1:
+            st.warning("กรุณากรอกรหัสนิสิตก่อนส่งคำตอบ")
 
     st.markdown("---")
-    st.markdown("### 💬 เปิดประเด็นอภิปราย: “อะไรทำให้บางครั้งเราทำสิ่งที่ขัดกับสิ่งที่เราคิดว่าถูก?”")
-    st.markdown("- ความกดดันจากสังคม\n- ความสัมพันธ์\n- ผลประโยชน์\n- ความกลัว\n- ความสะดวก\n- ความรับผิดชอบ\n- ค่านิยม")
+    st.subheader("📊 กราฟแสดงผล Vote (Activity 1)")
+    if conn:
+        try:
+            df = conn.read(worksheet="Lab2_Responses", ttl=5)
+            act1_df = df[df["Step"] == "Lab2 - Act 1 Warmup"]
+            if not act1_df.empty:
+                # แยกดึงเฉพาะส่วน Vote มาแสดงกราฟ
+                votes = act1_df["Data"].apply(lambda x: x.split("|")[0].replace("Vote: ", "") if "Vote: " in x else x)
+                st.bar_chart(votes.value_counts())
+            else:
+                st.info("ยังไม่มีข้อมูลผลโหวต")
+        except:
+            st.info("กำลังรอข้อมูล...")
 
 
 # ==========================================
@@ -103,7 +115,7 @@ elif st.session_state.lab2_step == 2:
     )
 
     with st.form("lab2_act2_form"):
-        student_id = st.text_input("รหัสนิสิต (หรือระบุว่า Anonymous):")
+        student_id = st.text_input("รหัสนิสิต:")
         choice_d2 = st.radio(
             "คุณจะทำอย่างไร?",
             [
@@ -166,13 +178,14 @@ elif st.session_state.lab2_step == 3:
                 "กฎ/ระเบียบ", "ผลประโยชน์ของส่วนรวม", "อื่น ๆ"
             ]
         )
+        comment_why = st.text_area("ช่องแสดงความคิดเห็นเพิ่มเติม:")
         sub_r3 = st.form_submit_button("ส่งเหตุผล")
 
         if sub_r3 and student_id:
             new_data = pd.DataFrame([{
                 "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "Step": "Lab2 - Act 3 Why",
-                "Data": f"[{student_id}] {reason_choice}"
+                "Data": f"[{student_id}] Reason: {reason_choice} | Comment: {comment_why}"
             }])
             if conn:
                 try:
@@ -194,25 +207,26 @@ elif st.session_state.lab2_step == 3:
             df = conn.read(worksheet="Lab2_Responses", ttl=5.0)
             r3_df = df[df["Step"] == "Lab2 - Act 3 Why"]
             if not r3_df.empty:
-                st.bar_chart(r3_df["Data"].value_counts())
+                reasons = r3_df["Data"].apply(lambda x: x.split("|")[0].replace("Reason: ", "").strip() if "Reason: " in x else x)
+                st.bar_chart(reasons.value_counts())
             else:
                 st.info("ยังไม่มีข้อมูลเหตุผล")
         except:
             st.info("กำลังรอข้อมูล...")
 
     st.markdown("---")
-    st.info("📌 **ประเด็นชวนคิดโดยอาจารย์:** “ถ้าคุณกับเพื่อนเลือกคำตอบต่างกัน แสดงว่าใครคิดถูก?” (ใช้เป็นจุดเริ่มต้นอภิปราย)")
+    st.info("📌 **คำถามอภิปราย:** “ถ้าคุณกับเพื่อนเลือกคำตอบต่างกัน แสดงว่าใครคิดถูก?” (ไม่เฉลย ใช้เปิดประเด็นถกเถียง)")
 
 
 # ==========================================
 # 4. Activity 4 — CHANGE ONE FACTOR
 # ==========================================
 elif st.session_state.lab2_step == 4:
-    st.title("⚡ Activity 4 — CHANGE ONE FACTOR")
-    st.markdown("เปลี่ยนเพียงหนึ่งเงื่อนไข แล้วดูว่าการตัดสินใจเปลี่ยนไปอย่างไร")
+    st.title("⚡ Activity 4 — CHANGE ONE FACTOR (Pre-Vote)")
+    st.markdown("โหวตก่อนอภิปรายในแต่ละ Scenario ที่มีการเปลี่ยนแปลงเงื่อนไข")
 
-    scenario = st.radio(
-        "เลือก Scenario ที่ต้องการโหวต:",
+    scenario_choice = st.selectbox(
+        "เลือก Scenario สำหรับโหวต:",
         [
             "Scenario A: เพื่อนไม่ได้ทำงาน แต่ขอใส่ชื่อเพราะมีเหตุจำเป็น",
             "Scenario B: เพื่อนไม่ได้ทำงาน เพราะต้องดูแลสมาชิกในครอบครัวที่ป่วย",
@@ -223,11 +237,11 @@ elif st.session_state.lab2_step == 4:
 
     with st.form("lab2_act4_form"):
         student_id = st.text_input("รหัสนิสิต:")
-        vote_a4 = st.radio("คุณจะใส่ชื่อให้เพื่อนหรือไม่สำหรับ Scenario นี้?", ["ใส่ชื่อ", "ไม่ใส่ชื่อ", "ขึ้นอยู่กับบริบทเพิ่มเติม"])
-        sub_a4 = st.form_submit_button("ส่งผลโหวต Scenario")
+        vote_a4 = st.radio("คุณจะตัดสินใจอย่างไรสำหรับ Scenario นี้?", ["ใส่ชื่อ", "ไม่ใส่ชื่อ", "ขึ้นอยู่กับบริบทเพิ่มเติม"])
+        sub_a4 = st.form_submit_button("ส่งผลโหวต Scenario (Pre-Vote)")
 
         if sub_a4 and student_id:
-            scen_tag = scenario.split(":")[0]
+            scen_tag = scenario_choice.split(":")[0]
             new_data = pd.DataFrame([{
                 "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "Step": f"Lab2 - Act 4 ({scen_tag})",
@@ -238,7 +252,7 @@ elif st.session_state.lab2_step == 4:
                     existing = conn.read(worksheet="Lab2_Responses", ttl=0)
                     updated = pd.concat([existing, new_data], ignore_index=True)
                     conn.update(worksheet="Lab2_Responses", data=updated)
-                    st.success(f"บันทึกผลโหวต {scen_tag} สำเร็จ!")
+                    st.success(f"บันทึก Pre-Vote {scen_tag} สำเร็จ!")
                 except Exception as e:
                     st.error(f"เกิดข้อผิดพลาด: {e}")
             else:
@@ -247,7 +261,7 @@ elif st.session_state.lab2_step == 4:
             st.warning("กรุณากรอกรหัสนิสิต")
 
     st.markdown("---")
-    st.subheader("📊 เปรียบเทียบผลโหวตแต่ละ Scenario (A / B / C / D)")
+    st.subheader("📊 เปรียบเทียบผล Pre-Vote แต่ละ Scenario (A / B / C / D)")
     if conn:
         try:
             df = conn.read(worksheet="Lab2_Responses", ttl=5)
@@ -256,7 +270,7 @@ elif st.session_state.lab2_step == 4:
                 pivot_data = scen_df.pivot_table(index="Data", columns="Step", aggfunc="size", fill_value=0)
                 st.bar_chart(pivot_data)
             else:
-                st.info("ยังไม่มีข้อมูลเปรียบเทียบ Scenario")
+                st.info("ยังไม่มีข้อมูล Pre-Vote ของ Scenario")
         except:
             st.info("กำลังรอข้อมูล...")
 
@@ -367,42 +381,46 @@ elif st.session_state.lab2_step == 6:
 # 7. Activity 7 — Re-Vote
 # ==========================================
 elif st.session_state.lab2_step == 7:
-    st.title("🔄 Activity 7 — Re-Vote")
-    st.info("นำสถานการณ์แรกกลับมาตัดสินใจอีกครั้งหลังผ่านการอภิปราย")
+    st.title("🔄 Activity 7 — Re-Vote (Post-Vote)")
+    st.markdown("โหวตหลังอภิปราย แยกตาม Scenario A, B, C, D พร้อมวิเคราะห์เหตุผลการเปลี่ยนแปลง")
+
+    revote_scenario = st.selectbox(
+        "เลือก Scenario สำหรับ Re-Vote:",
+        [
+            "Scenario A: เพื่อนไม่ได้ทำงาน แต่ขอใส่ชื่อเพราะมีเหตุจำเป็น",
+            "Scenario B: เพื่อนไม่ได้ทำงาน เพราะต้องดูแลสมาชิกในครอบครัวที่ป่วย",
+            "Scenario C: เพื่อนไม่ได้ทำงาน แต่ผลงานของเขาในส่วนอื่นช่วยให้กลุ่มประสบความสำเร็จ",
+            "Scenario D: เพื่อนไม่ได้ทำงาน และไม่มีเหตุจำเป็น แต่เป็นเพื่อนสนิทของคุณ"
+        ]
+    )
 
     with st.form("lab2_act7_form"):
         student_id = st.text_input("รหัสนิสิต:")
-        revote_choice = st.radio(
-            "หากต้องตัดสินใจตอนนี้ คุณจะเลือกอย่างไร?",
-            [
-                "A. ใส่ชื่อให้ เพราะเป็นเพื่อน",
-                "B. ไม่ใส่ชื่อ เพราะไม่ได้ทำงาน",
-                "C. คุยกับเพื่อนก่อนแล้วหาทางออก",
-                "D. ขึ้นอยู่กับรายละเอียดของสถานการณ์",
-                "E. อื่น ๆ"
-            ]
-        )
+        vote_post = st.radio("การตัดสินใจหลังอภิปราย (Post-Vote):", ["ใส่ชื่อ", "ไม่ใส่ชื่อ", "ขึ้นอยู่กับบริบทเพิ่มเติม"])
+        
+        st.markdown("---")
         reason_change = st.selectbox(
-            "อะไรทำให้คุณเปลี่ยนหรือไม่เปลี่ยนความคิดเห็น?",
+            "“อะไรทำให้คุณเปลี่ยนหรือไม่เปลี่ยนความคิดเห็น?”",
             [
                 "ได้ข้อมูลใหม่", "เห็นมุมมองของเพื่อน", "มองเห็นผู้มีส่วนได้ส่วนเสียมากขึ้น",
                 "เห็นคุณค่าที่ขัดแย้งกันชัดขึ้น", "ยังคิดเหมือนเดิม", "อื่น ๆ"
             ]
         )
-        sub_a7 = st.form_submit_button("ยืนยัน Re-Vote")
+        sub_a7 = st.form_submit_button("ส่งผล Re-Vote")
 
         if sub_a7 and student_id:
+            scen_tag = revote_scenario.split(":")[0]
             new_data = pd.DataFrame([{
                 "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "Step": "Lab2 - Act 7 Re-Vote",
-                "Data": f"[{student_id}] Choice: {revote_choice} | Reason: {reason_change}"
+                "Step": f"Lab2 - Act 7 Post ({scen_tag})",
+                "Data": f"[{student_id}] Vote: {vote_post} | Reason: {reason_change}"
             }])
             if conn:
                 try:
                     existing = conn.read(worksheet="Lab2_Responses", ttl=0)
                     updated = pd.concat([existing, new_data], ignore_index=True)
                     conn.update(worksheet="Lab2_Responses", data=updated)
-                    st.success("บันทึก Re-Vote สำเร็จ!")
+                    st.success(f"บันทึก Re-Vote ของ {scen_tag} สำเร็จ!")
                 except Exception as e:
                     st.error(f"เกิดข้อผิดพลาด: {e}")
             else:
@@ -411,17 +429,31 @@ elif st.session_state.lab2_step == 7:
             st.warning("กรุณากรอกรหัสนิสิต")
 
     st.markdown("---")
-    st.subheader("📊 กราฟเปรียบเทียบผล Re-Vote")
+    st.subheader("📊 กราฟเปรียบเทียบผลโหวต ก่อนอภิปราย (Pre) และ หลังอภิปราย (Post)")
     if conn:
         try:
             df = conn.read(worksheet="Lab2_Responses", ttl=5)
-            rv_df = df[df["Step"] == "Lab2 - Act 7 Re-Vote"]
-            if not rv_df.empty:
-                st.bar_chart(rv_df["Data"].value_counts())
-            else:
-                st.info("ยังไม่มีข้อมูล Re-Vote")
+            scen_tag_curr = revote_scenario.split(":")[0]
+            
+            pre_df = df[df["Step"] == f"Lab2 - Act 4 ({scen_tag_curr})"]
+            post_df = df[df["Step"] == f"Lab2 - Act 7 Post ({scen_tag_curr})"]
+            
+            col_p1, col_p2 = st.columns(2)
+            with col_p1:
+                st.markdown(f"**Pre-Vote ({scen_tag_curr})**")
+                if not pre_df.empty:
+                    st.bar_chart(pre_df["Data"].value_counts())
+                else:
+                    st.info("ยังไม่มีข้อมูล Pre-Vote")
+            with col_p2:
+                st.markdown(f"**Post-Vote ({scen_tag_curr})**")
+                if not post_df.empty:
+                    post_votes = post_df["Data"].apply(lambda x: x.split("|")[0].replace("Vote: ", "").strip() if "Vote: " in x else x)
+                    st.bar_chart(post_votes.value_counts())
+                else:
+                    st.info("ยังไม่มีข้อมูล Post-Vote")
         except:
-            st.info("กำลังรอข้อมูล...")
+            st.info("กำลังโหลดกราฟเปรียบเทียบ...")
 
 
 # ==========================================
@@ -516,7 +548,7 @@ elif st.session_state.lab2_step == 9:
 # 10. Instructor Debrief
 # ==========================================
 elif st.session_state.lab2_step == 10:
-    st.title("👨‍🏫 Instructor Debrief")
+    st.title("👨‍🏫 Instructor Debrief & Summary")
     st.markdown("### แนวทางการสรุปสำหรับอาจารย์ (ใช้คำถาม 5 ข้อ)")
     st.markdown(
         """
@@ -528,3 +560,26 @@ elif st.session_state.lab2_step == 10:
         """
     )
     st.info("💡 **Key Takeaway:** ไม่จำเป็นต้องสรุปว่า “คำตอบที่ถูกคืออะไร” ในทุกสถานการณ์ แต่เน้นกระบวนการคิดและตระหนักรู้ทางจริยธรรม")
+    
+    st.markdown("---")
+    st.subheader("📝 บันทึกสรุปภาพรวมสำหรับผู้สอน (Instructor Summary)")
+    with st.form("debrief_summary_form"):
+        instructor_notes = st.text_area("พิมพ์สรุปผลการอภิปรายในห้องเรียน หรือประเด็นสำคัญที่ได้จากคลาสนี้:")
+        sub_note = st.form_submit_button("บันทึกสรุปผลผู้สอน")
+
+        if sub_note and instructor_notes:
+            new_data = pd.DataFrame([{
+                "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Step": "Lab2 - Instructor Debrief",
+                "Data": f"[Instructor] {instructor_notes}"
+            }])
+            if conn:
+                try:
+                    existing = conn.read(worksheet="Lab2_Responses", ttl=0)
+                    updated = pd.concat([existing, new_data], ignore_index=True)
+                    conn.update(worksheet="Lab2_Responses", data=updated)
+                    st.success("บันทึกสรุปผลผู้สอนลง Google Sheets สำเร็จ!")
+                except Exception as e:
+                    st.error(f"เกิดข้อผิดพลาด: {e}")
+            else:
+                st.success("บันทึกจำลองสำเร็จ!")
