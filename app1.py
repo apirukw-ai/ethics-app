@@ -35,29 +35,26 @@ steps_name = {
     12: "Page 12: Final Reflection",
 }
 
-# สร้าง Radio button ใน Sidebar เพื่อให้คลิกเปลี่ยนหน้าได้ทันที
+# หา index ปัจจุบันเพื่อกำหนดค่าเริ่มต้นให้ radio
+current_index = list(steps_name.keys()).index(st.session_state.step)
+
+# ใช้ key ควบคุม session_state โดยตรงเพื่อป้องกันค่าดีดกลับ
 selected_step_name = st.sidebar.radio(
     "เลือกหน้ากิจกรรม:",
     list(steps_name.values()),
-    index=list(steps_name.keys()).index(st.session_state.step),
+    index=current_index,
+    key="menu_selection",
 )
 
-# แปลงชื่อหน้าที่เลือกกลับเป็นตัวเลข (Step)
+# อัปเดตค่า st.session_state.step ทันทีที่เลือกเมนู
 for s_num, s_title in steps_name.items():
     if s_title == selected_step_name:
         st.session_state.step = s_num
 
 st.sidebar.markdown("---")
-col_sb1, col_sb2 = st.sidebar.columns(2)
-with col_sb1:
-    if st.button("⬅️ ก่อนหน้า") and st.session_state.step > 4:
-        st.session_state.step -= 1
-        st.rerun()
-with col_sb2:
-    if st.button("ถัดไป ➡️") and st.session_state.step < 12:
-        st.session_state.step += 1
-        st.rerun()
-
+st.sidebar.info(
+    "💡 คำแนะนำ: นิสิตสามารถคลิกเลือกหน้าจากเมนูด้านบนเพื่อข้ามไปทำกิจกรรมแต่ละส่วนได้ตามต้องการ"
+)
 
 # ==========================================
 # PAGE 4 — Warm-up: What is Ethics?
