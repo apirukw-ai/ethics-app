@@ -283,7 +283,45 @@ elif st.session_state.step == 9:
 # ==========================================
 elif st.session_state.step == 10:
     st.title("📋 PAGE 10 — Ethical Reasoning Framework")
-    st.text_area("บันทึกผลการวิเคราะห์ของกลุ่ม:")
+    st.write(
+        "### “วิเคราะห์สถานการณ์ตามกรอบการตัดสินใจทางจริยธรรม”"
+    )
+
+    with st.form("framework_form"):
+        group_name = st.text_input(
+            "ชื่อกลุ่ม / เลขที่กลุ่ม (เช่น กลุ่ม 1):"
+        )
+        framework_text = st.text_area(
+            "บันทึกผลการวิเคราะห์และแนวทางการตัดสินใจของกลุ่ม:"
+        )
+        sub_framework = st.form_submit_button("ส่งผลการวิเคราะห์")
+
+        if sub_framework and framework_text:
+            new_data = pd.DataFrame(
+                [
+                    {
+                        "Timestamp": datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                        "Step": "Page 10 - Ethical Framework",
+                        "Data": f"[{group_name}] {framework_text}",
+                    }
+                ]
+            )
+            if conn:
+                try:
+                    existing_data = conn.read(worksheet="Responses", ttl=0)
+                    updated_data = pd.concat(
+                        [existing_data, new_data], ignore_index=True
+                    )
+                    conn.update(worksheet="Responses", data=updated_data)
+                    st.success(
+                        "บันทึกผลการวิเคราะห์ลง Google Sheets สำเร็จ!"
+                    )
+                except Exception as e:
+                    st.error(f"เกิดข้อผิดพลาด: {e}")
+            else:
+                st.success("บันทึกจำลองสำเร็จ!")
 
 
 # ==========================================
