@@ -101,7 +101,7 @@ if st.session_state.lab2_step == 1:
             else:
                 st.info("ยังไม่มีข้อมูลผลโหวต")
         except:
-            st.info("กำลังรอข้อมูล...")
+            pass
 
 
 # ==========================================
@@ -157,7 +157,7 @@ elif st.session_state.lab2_step == 2:
             else:
                 st.info("ยังไม่มีข้อมูลผลโหวต")
         except:
-            st.info("กำลังรอข้อมูล...")
+            pass
 
 
 # ==========================================
@@ -211,7 +211,7 @@ elif st.session_state.lab2_step == 3:
             else:
                 st.info("ยังไม่มีข้อมูลเหตุผล")
         except:
-            st.info("กำลังรอข้อมูล...")
+            pass
 
     st.markdown("---")
     st.info("📌 **คำถามอภิปราย:** “ถ้าคุณกับเพื่อนเลือกคำตอบต่างกัน แสดงว่าใครคิดถูก?” (ไม่เฉลย ใช้เปิดประเด็นถกเถียง)")
@@ -271,7 +271,7 @@ elif st.session_state.lab2_step == 4:
             else:
                 st.info("ยังไม่มีข้อมูล Pre-Vote ของ Scenario")
         except:
-            st.info("กำลังรอข้อมูล...")
+            pass
 
 
 # ==========================================
@@ -321,7 +321,7 @@ elif st.session_state.lab2_step == 5:
             else:
                 st.info("ยังไม่มีข้อมูลกลุ่มย่อย")
         except:
-            st.info("โหลดข้อมูลไม่สำเร็จ")
+            pass
 
 
 # ==========================================
@@ -373,7 +373,7 @@ elif st.session_state.lab2_step == 6:
             else:
                 st.info("ยังไม่มีข้อมูล Tension Map")
         except:
-            st.info("กำลังรอข้อมูล...")
+            pass
 
 
 # ==========================================
@@ -452,7 +452,7 @@ elif st.session_state.lab2_step == 7:
                 else:
                     st.info("ยังไม่มีข้อมูล Post-Vote")
         except:
-            st.info("กำลังโหลดกราฟเปรียบเทียบ...")
+            pass
 
 
 # ==========================================
@@ -499,7 +499,7 @@ elif st.session_state.lab2_step == 8:
     
     # ช่องสรุป 4 มิติทางวิชาชีพของอาจารย์
     with st.form("instructor_4dims_form"):
-        instructor_summary_text = st.text_area("ช่องสรุปประเด็น 4 มิติทางวิชาชีพ (สำหรับอาจารย์บันทึกสรุปหน้าห้อง):")
+        instructor_summary_text = st.text_area("ช่องสรุปประเด็น 4 มิติวิชาชีพ (สำหรับอาจารย์บันทึกสรุปหน้าห้อง):")
         sub_sum = st.form_submit_button("บันทึกสรุป 4 มิติ")
 
         if sub_sum and instructor_summary_text:
@@ -530,7 +530,7 @@ elif st.session_state.lab2_step == 8:
             else:
                 st.info("ยังไม่มีคำตอบ Open-ended ของนิสิต")
         except:
-            st.info("โหลดข้อมูลไม่สำเร็จ")
+            pass
 
 
 # ==========================================
