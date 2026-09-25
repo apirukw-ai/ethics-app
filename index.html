@@ -1,33 +1,439 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ethics Dashboard - Navigation</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>body { font-family: 'Sarabun', sans-serif; }</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AJARNETHICS - Ethics & Law Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#121316',
+                        cardbg: '#1A1D21',
+                        hoverbg: '#23272E',
+                        goldbanner: '#2A2111',
+                        goldborder: '#5C4417',
+                        goldtext: '#F5C062',
+                        accentgreen: '#22c55e',
+                        accentgreenbg: 'rgba(34, 197, 94, 0.15)',
+                    },
+                    fontFamily: {
+                        sans: ['Kanit', 'Prompt', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Kanit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #121316;
+            color: #E2E8F0;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #121316;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2D3748;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4A5568;
+        }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
-  <div class="max-w-md w-full bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl text-center space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold text-white mb-2">Ethics Classroom System</h1>
-      <p class="text-slate-400 text-sm">กรุณาเลือกเมนูการใช้งานตามบทบาทของคุณ</p>
+<body class="min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white">
+
+    <!-- Navbar / Header -->
+    <header class="border-b border-gray-800/80 bg-cardbg/80 backdrop-blur sticky top-0 z-30 px-4 lg:px-12 py-4 transition-all">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <!-- Brand Logo & Title -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-emerald-900/40 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold shadow-lg shadow-emerald-950/50">
+                    <i class="fa-solid font-bold text-lg">🍃</i>
+                </div>
+                <div>
+                    <span class="text-xs tracking-wider text-gray-400 font-medium uppercase block -mb-1">AJARNETHICS</span>
+                    <h1 class="text-xl font-semibold text-white tracking-tight">Ethics & Law Dashboard</h1>
+                </div>
+            </div>
+
+            <!-- Top Right Action Badges / Controls -->
+            <div class="flex items-center space-x-3">
+                <button onclick="openModal()" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md shadow-emerald-900/20 active:scale-95">
+                    <i class="fa-solid fa-plus text-xs"></i> เพิ่มแล็บใหม่
+                </button>
+                <a href="https://line.me" target="_blank" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition-all hover:text-white active:scale-95">
+                    <i class="fa-regular fa-comment-dots text-emerald-400"></i> ติดต่อครู
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-5xl mx-auto w-full px-4 lg:px-8 py-8 flex-grow space-y-8">
+
+        <!-- Banner Announcement Section -->
+        <section id="announcement-card" class="relative overflow-hidden rounded-2xl bg-goldbanner border border-goldborder/70 p-5 md:p-6 shadow-xl transition-all hover:border-goldborder">
+            <div class="flex items-start gap-4">
+                <!-- Bell Icon Badge -->
+                <div class="shrink-0 w-11 h-11 rounded-xl bg-amber-900/40 border border-amber-600/40 flex items-center justify-center text-amber-400 shadow-inner">
+                    <i class="fa-regular fa-bell text-xl"></i>
+                </div>
+                
+                <!-- Announcement Text Content -->
+                <div class="flex-grow">
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <h2 class="text-sm font-semibold text-amber-200 tracking-wide">ประกาศด่วน / ภารกิจประจำสัปดาห์</h2>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">อัปเดตล่าสุด</span>
+                    </div>
+                    <p id="announcement-text" class="text-sm md:text-base text-amber-100/90 leading-relaxed font-light">
+                        สัปดาห์นี้: เปิดกิจกรรม Interactive Labs สัปดาห์ที่ 1 โดยกดที่แถว LAB 1 ด้านล่าง เพื่อเข้าสู่กิจกรรมก่อนเข้าบรรยาย
+                    </p>
+                </div>
+
+                <!-- Edit Announcement Button -->
+                <button onclick="editAnnouncement()" title="แก้ไขประกาศ" class="shrink-0 text-amber-400/70 hover:text-amber-200 hover:bg-amber-900/30 p-2 rounded-lg transition-all">
+                    <i class="fa-solid fa-pen-to-square text-sm"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Interactive Labs Header -->
+        <section class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 border-b border-gray-800/50">
+                <div>
+                    <span class="text-xs font-bold tracking-widest text-emerald-400 uppercase">INTERACTIVE LABS</span>
+                    <h2 class="text-2xl font-bold text-white tracking-tight mt-0.5">สารบัญกิจกรรม</h2>
+                    <p class="text-xs text-gray-400 font-light mt-1">กดที่สัปดาห์ที่เปิดใช้งานแล้ว เพื่อเข้าสู่กิจกรรมของสัปดาห์นั้น</p>
+                </div>
+                <button onclick="openModal()" class="sm:hidden self-start inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md">
+                    <i class="fa-solid fa-plus text-xs"></i> เพิ่มแล็บใหม่
+                </button>
+            </div>
+
+            <!-- Labs List Container -->
+            <div id="labs-list" class="space-y-3">
+                <!-- Dynamically populated via Javascript -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="border-t border-gray-800/60 py-8 px-4 text-center text-xs text-gray-500 space-y-2 bg-cardbg/30">
+        <p class="font-light">วิชา จริยธรรมและกฎหมาย · AjanEthics</p>
+        <p class="text-[11px] text-gray-600">รองรับการใช้งานพร้อมกันหลายคน - กดที่สัปดาห์เพื่อเข้ากิจกรรม</p>
+        <div class="pt-2">
+            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="text-emerald-400 hover:text-emerald-300 font-medium inline-flex items-center gap-1 transition-colors">
+                กลับสู่ด้านบน <i class="fa-solid fa-arrow-up text-[10px]"></i>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Modal Dialog (Add / Edit Lab) -->
+    <div id="lab-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-cardbg border border-gray-700/80 rounded-2xl max-w-lg w-full p-6 shadow-2xl transform scale-95 transition-transform duration-200" id="modal-container">
+            <div class="flex items-center justify-between pb-4 border-b border-gray-800">
+                <h3 id="modal-title" class="text-lg font-semibold text-white">เพิ่มแล็บกิจกรรมใหม่</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1 rounded-lg transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="lab-form" onsubmit="saveLab(event)" class="mt-4 space-y-4">
+                <input type="hidden" id="lab-id">
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">รหัสแล็บ (เช่น L1, L2, LAB 4)</label>
+                    <input type="text" id="lab-code" required placeholder="เช่น L4" class="w-full px-3.5 py-2.5 rounded-xl bg-darkbg border border-gray-700 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">ชื่อสัปดาห์ / กิจกรรม</label>
+                    <input type="text" id="lab-title" required placeholder="เช่น สัปดาห์ที่ 4 — จริยธรรมปัญญาประดิษฐ์" class="w-full px-3.5 py-2.5 rounded-xl bg-darkbg border border-gray-700 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">สถานะ</label>
+                    <select id="lab-status" class="w-full px-3.5 py-2.5 rounded-xl bg-darkbg border border-gray-700 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all">
+                        <option value="active">เปิดใช้งานแล้ว</option>
+                        <option value="inactive">เร็วๆ นี้ (ยังไม่เปิด)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">ลิงก์กิจกรรม (URL)</label>
+                    <input type="url" id="lab-url" placeholder="https://example.com/lab4" class="w-full px-3.5 py-2.5 rounded-xl bg-darkbg border border-gray-700 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all">
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-800">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 transition-all">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md shadow-emerald-950/50">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div class="space-y-3">
-      <a href="student.html" class="block w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-500 font-bold rounded-xl text-white transition-all shadow-lg shadow-blue-900/40">
-        📱 หน้าสำหรับนักศึกษา (สแกนโหวต)
-      </a>
+    <script>
+        // Initial Default Data matching the provided screenshot
+        const defaultLabs = [
+            {
+                id: '1',
+                code: 'L1',
+                status: 'active',
+                title: 'สัปดาห์ที่ 1 — พื้นฐานการคิดเชิงจริยธรรม (Foundations of Ethical Thinking)',
+                url: 'https://ethics-lab-hub.lovable.app/lab1'
+            },
+            {
+                id: '2',
+                code: 'L2',
+                status: 'active',
+                title: 'สัปดาห์ที่ 2 — การคิดและการตัดสินใจทางจริยธรรมในชีวิตประจำวัน (Ethical Thinking and Decision-Making in Everyday Life)',
+                url: 'https://ethics-lab-hub.lovable.app/lab2'
+            },
+            {
+                id: '3',
+                code: 'L3',
+                status: 'inactive',
+                title: 'สัปดาห์ที่ 3 — กฎหมายและสังคม',
+                url: ''
+            }
+        ];
 
-      <a href="dashboard.html" class="block w-full py-3.5 px-4 bg-slate-700 hover:bg-slate-600 font-bold rounded-xl text-slate-200 transition-all border border-slate-600">
-        💻 หน้าสำหรับอาจารย์ (Dashboard)
-      </a>
+        const defaultAnnouncement = "สัปดาห์นี้: เปิดกิจกรรม Interactive Labs สัปดาห์ที่ 1 โดยกดที่แถว LAB 1 ด้านล่าง เพื่อเข้าสู่กิจกรรมก่อนเข้าบรรยาย";
 
-      <a href="present.html" class="block w-full py-3.5 px-4 bg-slate-700 hover:bg-slate-600 font-bold rounded-xl text-slate-200 transition-all border border-slate-600">
-        📊 หน้าฉายจอโปรเจกเตอร์ (Presentation)
-      </a>
-    </div>
-  </div>
+        // Application State
+        let labs = [];
+        let announcement = "";
+
+        function initData() {
+            const savedLabs = localStorage.getItem('ajanethics_labs');
+            if (savedLabs) {
+                try {
+                    labs = JSON.parse(savedLabs);
+                } catch(e) {
+                    labs = defaultLabs;
+                }
+            } else {
+                labs = defaultLabs;
+                saveLabsToStorage();
+            }
+
+            const savedAnnouncement = localStorage.getItem('ajanethics_announcement');
+            if (savedAnnouncement) {
+                announcement = savedAnnouncement;
+            } else {
+                announcement = defaultAnnouncement;
+                saveAnnouncementToStorage();
+            }
+
+            renderAnnouncement();
+            renderLabs();
+        }
+
+        function saveLabsToStorage() {
+            localStorage.setItem('ajanethics_labs', JSON.stringify(labs));
+        }
+
+        function saveAnnouncementToStorage() {
+            localStorage.setItem('ajanethics_announcement', announcement);
+        }
+
+        function renderAnnouncement() {
+            document.getElementById('announcement-text').innerText = announcement;
+        }
+
+        function editAnnouncement() {
+            const newText = prompt("แก้ไขข้อความประกาศด่วน / ภารกิจประจำสัปดาห์:", announcement);
+            if (newText !== null && newText.trim() !== "") {
+                announcement = newText.trim();
+                saveAnnouncementToStorage();
+                renderAnnouncement();
+            }
+        }
+
+        function renderLabs() {
+            const listElement = document.getElementById('labs-list');
+            listElement.innerHTML = '';
+
+            if (labs.length === 0) {
+                listElement.innerHTML = `
+                    <div class="text-center py-12 border border-dashed border-gray-800 rounded-2xl text-gray-500">
+                        <i class="fa-solid fa-folder-open text-3xl mb-2 text-gray-600 block"></i>
+                        ยังไม่มีรายการแล็บ กดปุ่ม "+ เพิ่มแล็บใหม่" ด้านบนเพื่อเพิ่มข้อมูล
+                    </div>
+                `;
+                return;
+            }
+
+            labs.forEach(lab => {
+                const isActive = lab.status === 'active';
+                const card = document.createElement('div');
+                card.className = `group relative rounded-2xl bg-cardbg border border-gray-800 hover:border-gray-700 transition-all duration-200 overflow-hidden shadow-lg p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 ${isActive ? 'hover:bg-hoverbg' : 'opacity-80'}`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-4 flex-grow min-w-0">
+                        <!-- Lab Code Badge -->
+                        <div class="shrink-0 w-11 h-11 rounded-xl bg-gray-800/80 border border-gray-700/60 flex items-center justify-center font-bold text-xs ${isActive ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/20' : 'text-gray-400'}">
+                            ${escapeHtml(lab.code)}
+                        </div>
+
+                        <!-- Lab Main Details -->
+                        <div class="min-w-0 flex-grow space-y-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <!-- Status Tag -->
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium tracking-wide ${isActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-gray-800 text-gray-400 border border-gray-700'}">
+                                    ${isActive ? 'เปิดใช้งานแล้ว' : 'เร็วๆ นี้'}
+                                </span>
+                            </div>
+                            <!-- Title -->
+                            <h3 class="text-sm md:text-base font-medium text-gray-100 group-hover:text-white transition-colors truncate">
+                                ${escapeHtml(lab.title)}
+                            </h3>
+                        </div>
+                    </div>
+
+                    <!-- Right Side Actions -->
+                    <div class="flex items-center justify-between md:justify-end gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-gray-800/60 shrink-0">
+                        <!-- Navigation / Open Link Button -->
+                        ${isActive && lab.url ? `
+                            <a href="${escapeHtml(lab.url)}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white transition-all">
+                                <span>เข้าสู่กิจกรรม</span>
+                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </a>
+                        ` : `
+                            <span class="text-xs text-gray-500 px-2 py-1 flex items-center gap-1">
+                                <i class="fa-solid fa-lock text-[10px]"></i> ยังไม่เปิดใช้งาน
+                            </span>
+                        `}
+
+                        <!-- Administrative Edit / Delete buttons -->
+                        <div class="flex items-center gap-1 border-l border-gray-800 pl-2">
+                            <button onclick="openModal('${lab.id}')" title="แก้ไข" class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="deleteLab('${lab.id}')" title="ลบ" class="p-2 text-red-400/70 hover:text-red-300 hover:bg-red-950/30 rounded-lg transition-colors">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                listElement.appendChild(card);
+            });
+        }
+
+        function openModal(labId = null) {
+            const modal = document.getElementById('lab-modal');
+            const container = document.getElementById('modal-container');
+            const form = document.getElementById('lab-form');
+            const modalTitle = document.getElementById('modal-title');
+
+            form.reset();
+
+            if (labId) {
+                const lab = labs.find(l => l.id === labId);
+                if (lab) {
+                    modalTitle.innerText = "แก้ไขข้อมูลแล็บ";
+                    document.getElementById('lab-id').value = lab.id;
+                    document.getElementById('lab-code').value = lab.code;
+                    document.getElementById('lab-title').value = lab.title;
+                    document.getElementById('lab-status').value = lab.status;
+                    document.getElementById('lab-url').value = lab.url || '';
+                }
+            } else {
+                modalTitle.innerText = "เพิ่มแล็บกิจกรรมใหม่";
+                document.getElementById('lab-id').value = '';
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                container.classList.remove('scale-95');
+                container.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('lab-modal');
+            const container = document.getElementById('modal-container');
+
+            modal.classList.add('opacity-0');
+            container.classList.remove('scale-100');
+            container.classList.add('scale-95');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        function saveLab(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('lab-id').value;
+            const code = document.getElementById('lab-code').value.trim();
+            const title = document.getElementById('lab-title').value.trim();
+            const status = document.getElementById('lab-status').value;
+            const url = document.getElementById('lab-url').value.trim();
+
+            if (id) {
+                // Update existing lab
+                const index = labs.findIndex(l => l.id === id);
+                if (index !== -1) {
+                    labs[index] = { id, code, title, status, url };
+                }
+            } else {
+                // Create new lab
+                const newLab = {
+                    id: Date.now().toString(),
+                    code,
+                    title,
+                    status,
+                    url
+                };
+                labs.push(newLab);
+            }
+
+            saveLabsToStorage();
+            renderLabs();
+            closeModal();
+        }
+
+        function deleteLab(id) {
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบกิจกรรมแล็บนี้?")) {
+                labs = labs.filter(l => l.id !== id);
+                saveLabsToStorage();
+                renderLabs();
+            }
+        }
+
+        // Helper function for XSS protection
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        window.onload = function() {
+            initData();
+        };
+    </script>
 </body>
 </html>
