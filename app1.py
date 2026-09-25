@@ -225,7 +225,38 @@ elif st.session_state.step == 8:
     st.info(
         "“ถ้ามีคนแย้งกับความเห็นของกลุ่มคุณว่า\n*‘ถ้าไม่ผิดกฎหมาย ก็ไม่มีเหตุผลที่จะบอกว่าผิด’*\nคุณจะตอบอย่างไร?”"
     )
-    st.text_area("พิมพ์แนวทางการโต้แย้งของกลุ่ม:")
+
+    with st.form("challenge_form"):
+        group_name = st.text_input(
+            "ชื่อกลุ่ม / เลขที่กลุ่ม (เช่น กลุ่ม 1):"
+        )
+        challenge_text = st.text_area("พิมพ์แนวทางการโต้แย้งของกลุ่ม:")
+        sub_challenge = st.form_submit_button("ส่งคำตอบท้าทาย")
+
+        if sub_challenge and challenge_text:
+            new_data = pd.DataFrame(
+                [
+                    {
+                        "Timestamp": datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                        "Step": "Page 8 - Challenge",
+                        "Data": f"[{group_name}] {challenge_text}",
+                    }
+                ]
+            )
+            if conn:
+                try:
+                    existing_data = conn.read(worksheet="Responses", ttl=0)
+                    updated_data = pd.concat(
+                        [existing_data, new_data], ignore_index=True
+                    )
+                    conn.update(worksheet="Responses", data=updated_data)
+                    st.success("บันทึกคำตอบ Challenge ลง Google Sheets สำเร็จ!")
+                except Exception as e:
+                    st.error(f"เกิดข้อผิดพลาด: {e}")
+            else:
+                st.success("บันทึกจำลองสำเร็จ!")
 
 
 # ==========================================
