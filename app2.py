@@ -96,8 +96,7 @@ if st.session_state.lab2_step == 1:
             df = conn.read(worksheet="Lab2_Responses", ttl=5)
             act1_df = df[df["Step"] == "Lab2 - Act 1 Warmup"]
             if not act1_df.empty:
-                # แยกดึงเฉพาะส่วน Vote มาแสดงกราฟ
-                votes = act1_df["Data"].apply(lambda x: x.split("|")[0].replace("Vote: ", "") if "Vote: " in x else x)
+                votes = act1_df["Data"].apply(lambda x: x.split("|")[0].replace("Vote: ", "").strip() if "Vote: " in x else x)
                 st.bar_chart(votes.value_counts())
             else:
                 st.info("ยังไม่มีข้อมูลผลโหวต")
@@ -488,7 +487,7 @@ elif st.session_state.lab2_step == 8:
             st.warning("กรุณากรอกข้อมูลให้ครบถ้วน")
 
     st.markdown("---")
-    st.subheader("📌 อาจารย์สรุป 4 มิติทางวิชาชีพ:")
+    st.subheader("📌 อาจารย์สรุป 4 มิติทางวิชาชีพ (Instructor Summary)")
     st.markdown(
         """
         1. **PERSON:** ฉันคิดอย่างไร?
@@ -497,15 +496,39 @@ elif st.session_state.lab2_step == 8:
         4. **PROFESSION:** ความรับผิดชอบในฐานะวิชาชีพเพิ่มอะไรเข้ามา?
         """
     )
-    st.write("---")
+    
+    # ช่องสรุป 4 มิติทางวิชาชีพของอาจารย์
+    with st.form("instructor_4dims_form"):
+        instructor_summary_text = st.text_area("ช่องสรุปประเด็น 4 มิติทางวิชาชีพ (สำหรับอาจารย์บันทึกสรุปหน้าห้อง):")
+        sub_sum = st.form_submit_button("บันทึกสรุป 4 มิติ")
+
+        if sub_sum and instructor_summary_text:
+            new_data = pd.DataFrame([{
+                "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Step": "Lab2 - Act 8 Instructor Summary",
+                "Data": f"[Instructor 4-Dims] {instructor_summary_text}"
+            }])
+            if conn:
+                try:
+                    existing = conn.read(worksheet="Lab2_Responses", ttl=0)
+                    updated = pd.concat([existing, new_data], ignore_index=True)
+                    conn.update(worksheet="Lab2_Responses", data=updated)
+                    st.success("บันทึกสรุป 4 มิติทางวิชาชีพสำเร็จ!")
+                except Exception as e:
+                    st.error(f"เกิดข้อผิดพลาด: {e}")
+            else:
+                st.success("บันทึกจำลองสำเร็จ!")
+
+    st.markdown("---")
     if conn:
         try:
             df = conn.read(worksheet="Lab2_Responses", ttl=5)
             b_df = df[df["Step"] == "Lab2 - Act 8 Bridge"]
             if not b_df.empty:
+                st.markdown("#### คำตอบของนิสิตทั้งหมด:")
                 st.dataframe(b_df[["Timestamp", "Data"]], use_container_width=True)
             else:
-                st.info("ยังไม่มีคำตอบ Open-ended")
+                st.info("ยังไม่มีคำตอบ Open-ended ของนิสิต")
         except:
             st.info("โหลดข้อมูลไม่สำเร็จ")
 
