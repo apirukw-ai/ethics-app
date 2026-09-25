@@ -10,12 +10,11 @@ st.set_page_config(
     layout="wide",
 )
 
-# เชื่อมต่อ Google Sheets (อ่านค่าจาก st.secrets["connections"]["gsheets"])
-# หมายเหตุ: ต้องตั้งค่า secrets บน Streamlit Cloud ก่อนใช้งานจริง
+# เชื่อมต่อ Google Sheets
 try:
     conn = st.connection("gsheets", type=GSheetsConnection)
 except Exception:
-    conn = None  # กรณีรันเทสบนเครื่องแล้วยังไม่ได้ตั้งค่า secrets
+    conn = None
 
 # --- กำหนดค่าเริ่มต้นใน Session State ---
 if "step" not in st.session_state:
@@ -56,11 +55,9 @@ with col_sb2:
 # ==========================================
 # PAGE 4 — Warm-up: What is Ethics?
 # ==========================================
-elif st.session_state.step == 4:
+if st.session_state.step == 4:
     st.title("💬 PAGE 4 — Warm-up: What is Ethics?")
-    st.write(
-        "### “เมื่อคุณได้ยินคำว่า Ethics คุณนึกถึงอะไรเป็นสิ่งแรก?”"
-    )
+    st.write("### “เมื่อคุณได้ยินคำว่า Ethics คุณนึกถึงอะไรเป็นสิ่งแรก?”")
 
     with st.form("warmup_form"):
         student_id = st.text_input("รหัสนิสิต:")
@@ -122,7 +119,7 @@ elif st.session_state.step == 4:
 elif st.session_state.step == 5:
     st.title("⚖️ PAGE 5 — Dilemma 1")
     st.markdown(
-        "## “ถ้าการกระทำนั้นไม่ผิดกฎหมาย แสดงว่าการกระทำนั้นถูกต้องทางจริยธรรมหรือไม่?”"
+        "## “ถ้าการกระทำนั้นไม่ผิดกฎหมาย แสดงว่าการกระทำนั้นถูกต้องทางจริยธรรมหรือไม่”"
     )
 
     choice = st.radio(
@@ -143,9 +140,7 @@ elif st.session_state.step == 5:
 # ==========================================
 elif st.session_state.step == 6:
     st.title("🧠 PAGE 6 — Why?")
-    st.write(
-        "### “อะไรเป็นเหตุผลสำคัญที่สุดที่ทำให้คุณเลือกคำตอบนั้น?”"
-    )
+    st.write("### “อะไรเป็นเหตุผลสำคัญที่สุดที่ทำให้คุณเลือกคำตอบนั้น?”")
 
     with st.form("reason_form"):
         student_id = st.text_input("รหัสนิสิต:")
@@ -179,6 +174,7 @@ elif st.session_state.step == 6:
         elif sub_reason:
             st.warning("กรุณากรอกรหัสนิสิตและเหตุผลให้ครบถ้วนครับ")
 
+
 # ==========================================
 # PAGE 7 — Small Group Discussion
 # ==========================================
@@ -189,9 +185,7 @@ elif st.session_state.step == 7:
     )
 
     with st.form("group_discussion_form"):
-        group_name = st.text_input(
-            "ชื่อกลุ่ม / เลขที่กลุ่ม (เช่น กลุ่ม 1):"
-        )
+        group_name = st.text_input("ชื่อกลุ่ม / เลขที่กลุ่ม (เช่น กลุ่ม 1):")
         discussion_summary = st.text_area(
             "สรุปผลการอภิปรายของกลุ่มคุณ:"
         )
@@ -233,9 +227,7 @@ elif st.session_state.step == 8:
     )
 
     with st.form("challenge_form"):
-        group_name = st.text_input(
-            "ชื่อกลุ่ม / เลขที่กลุ่ม (เช่น กลุ่ม 1):"
-        )
+        group_name = st.text_input("ชื่อกลุ่ม / เลขที่กลุ่ม (เช่น กลุ่ม 1):")
         challenge_text = st.text_area("พิมพ์แนวทางการโต้แย้งของกลุ่ม:")
         sub_challenge = st.form_submit_button("ส่งคำตอบท้าทาย")
 
@@ -289,14 +281,10 @@ elif st.session_state.step == 9:
 # ==========================================
 elif st.session_state.step == 10:
     st.title("📋 PAGE 10 — Ethical Reasoning Framework")
-    st.write(
-        "### “วิเคราะห์สถานการณ์ตามกรอบการตัดสินใจทางจริยธรรม”"
-    )
+    st.write("### “วิเคราะห์สถานการณ์ตามกรอบการตัดสินใจทางจริยธรรม”")
 
     with st.form("framework_form"):
-        group_name = st.text_input(
-            "ชื่อกลุ่ม / เลขที่กลุ่ม (เช่น กลุ่ม 1):"
-        )
+        group_name = st.text_input("ชื่อกลุ่ม / เลขที่กลุ่ม (เช่น กลุ่ม 1):")
         framework_text = st.text_area(
             "บันทึกผลการวิเคราะห์และแนวทางการตัดสินใจของกลุ่ม:"
         )
@@ -321,9 +309,7 @@ elif st.session_state.step == 10:
                         [existing_data, new_data], ignore_index=True
                     )
                     conn.update(worksheet="Responses", data=updated_data)
-                    st.success(
-                        "บันทึกผลการวิเคราะห์ลง Google Sheets สำเร็จ!"
-                    )
+                    st.success("บันทึกผลการวิเคราะห์ลง Google Sheets สำเร็จ!")
                 except Exception as e:
                     st.error(f"เกิดข้อผิดพลาด: {e}")
             else:
