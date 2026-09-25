@@ -20,8 +20,9 @@ except Exception:
 if "step" not in st.session_state:
     st.session_state.step = 4
 
-# --- Sidebar แสดงความคืบหน้า ---
+# --- Sidebar เมนูด้านซ้ายแบบคลิกเลือกได้ ---
 st.sidebar.markdown("### 🧭 ขั้นตอนกิจกรรม (Workflow)")
+
 steps_name = {
     4: "Page 4: Warm-up (Ethics)",
     5: "Page 5: Dilemma 1",
@@ -34,11 +35,17 @@ steps_name = {
     12: "Page 12: Final Reflection",
 }
 
+# สร้าง Radio button ใน Sidebar เพื่อให้คลิกเปลี่ยนหน้าได้ทันที
+selected_step_name = st.sidebar.radio(
+    "เลือกหน้ากิจกรรม:",
+    list(steps_name.values()),
+    index=list(steps_name.keys()).index(st.session_state.step),
+)
+
+# แปลงชื่อหน้าที่เลือกกลับเป็นตัวเลข (Step)
 for s_num, s_title in steps_name.items():
-    if st.session_state.step == s_num:
-        st.sidebar.markdown(f"👉 **{s_title}**")
-    else:
-        st.sidebar.markdown(f"{s_title}")
+    if s_title == selected_step_name:
+        st.session_state.step = s_num
 
 st.sidebar.markdown("---")
 col_sb1, col_sb2 = st.sidebar.columns(2)
