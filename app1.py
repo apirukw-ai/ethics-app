@@ -35,10 +35,8 @@ steps_name = {
     12: "Page 12: Final Reflection",
 }
 
-# หา index ปัจจุบันเพื่อกำหนดค่าเริ่มต้นให้ radio
 current_index = list(steps_name.keys()).index(st.session_state.step)
 
-# ใช้ key ควบคุม session_state โดยตรงเพื่อป้องกันค่าดีดกลับ
 selected_step_name = st.sidebar.radio(
     "เลือกหน้ากิจกรรม:",
     list(steps_name.values()),
@@ -46,15 +44,13 @@ selected_step_name = st.sidebar.radio(
     key="menu_selection",
 )
 
-# อัปเดตค่า st.session_state.step ทันทีที่เลือกเมนู
 for s_num, s_title in steps_name.items():
     if s_title == selected_step_name:
         st.session_state.step = s_num
 
 st.sidebar.markdown("---")
-st.sidebar.info(
-    "💡 คำแนะนำ: นิสิตสามารถคลิกเลือกหน้าจากเมนูด้านบนเพื่อข้ามไปทำกิจกรรมแต่ละส่วนได้ตามต้องการ"
-)
+st.sidebar.info("💡 นิสิตสามารถคลิกเลือกหัวข้อกิจกรรมจากเมนูด้านบนได้เลยครับ")
+
 
 # ==========================================
 # PAGE 4 — Warm-up: What is Ethics?
@@ -126,17 +122,58 @@ elif st.session_state.step == 5:
         "## “ถ้าการกระทำนั้นไม่ผิดกฎหมาย แสดงว่าการกระทำนั้นถูกต้องทางจริยธรรมหรือไม่”"
     )
 
-    choice = st.radio(
-        "เลือกคำตอบของคุณ:",
-        [
-            "A. ถูกต้อง (ไม่ผิดกฎหมาย = ถูกต้องทางจริยธรรม)",
-            "B. ไม่ถูกต้องเสมอไป (กฎหมายกับจริยธรรมอาจต่างกัน)",
-            "C. ไม่แน่ใจ / ขึ้นอยู่กับบริบท",
-        ],
-    )
+    with st.form("dilemma1_form"):
+        student_id = st.text_input("รหัสนิสิต:")
+        choice = st.radio(
+            "เลือกคำตอบของคุณ:",
+            [
+                "A. ถูกต้อง (ไม่ผิดกฎหมาย = ถูกต้องทางจริยธรรม)",
+                "B. ไม่ถูกต้องเสมอไป (กฎหมายกับจริยธรรมอาจต่างกัน)",
+                "C. ไม่แน่ใจ / ขึ้นอยู่กับบริบท",
+            ],
+        )
+        sub_d1 = st.form_submit_button("ยืนยันคำตอบ")
 
-    if st.button("ยืนยันคำตอบ"):
-        st.success("บันทึกผลโหวตเรียบร้อย!")
+        if sub_d1 and student_id:
+            new_data = pd.DataFrame(
+                [
+                    {
+                        "Timestamp": datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                        "Step": "Page 5 - Dilemma 1",
+                        "Data": f"[{student_id}] {choice}",
+                    }
+                ]
+            )
+            if conn:
+                try:
+                    existing_data = conn.read(worksheet="Responses", ttl=0)
+                    updated_data = pd.concat(
+                        [existing_data, new_data], ignore_index=True
+                    )
+                    conn.update(worksheet="Responses", data=updated_data)
+                    st.success("บันทึกผลโหวตเรียบร้อย!")
+                except Exception as e:
+                    st.error(f"เกิดข้อผิดพลาด: {e}")
+            else:
+                st.success("บันทึกจำลองสำเร็จ!")
+        elif sub_d1:
+            st.warning("กรุณากรอกรหัสนิสิตก่อนยืนยันคำตอบครับ")
+
+    st.markdown("---")
+    st.subheader("📊 กราฟแสดงผลการโหวต Dilemma 1")
+    if conn:
+        try:
+            df = conn.read(worksheet="Responses", ttl=5)
+            d1_data = df[df["Step"] == "Page 5 - Dilemma 1"]
+            if not d1_data.empty:
+                vote_counts = d1_data["Data"].value_counts()
+                st.bar_chart(vote_counts)
+            else:
+                st.info("ยังไม่มีข้อมูลผลโหวต")
+        except:
+            st.info("กำลังรอข้อมูล...")
 
 
 # ==========================================
@@ -178,6 +215,19 @@ elif st.session_state.step == 6:
         elif sub_reason:
             st.warning("กรุณากรอกรหัสนิสิตและเหตุผลให้ครบถ้วนครับ")
 
+    st.markdown("---")
+    st.subheader("📋 คำตอบทั้งหมด (Page 6)")
+    if conn:
+        try:
+            df = conn.read(worksheet="Responses", ttl=5)
+            p6_data = df[df["Step"] == "Page 6 - Why"]
+            if not p6_data.empty:
+                st.dataframe(p6_data[["Timestamp", "Data"]], use_container_width=True)
+            else:
+                st.info("ยังไม่มีข้อมูลคำตอบ")
+        except:
+            st.info("ไม่สามารถโหลดข้อมูลได้")
+
 
 # ==========================================
 # PAGE 7 — Small Group Discussion
@@ -190,12 +240,10 @@ elif st.session_state.step == 7:
 
     with st.form("group_discussion_form"):
         group_name = st.text_input("ชื่อกลุ่ม / เลขที่กลุ่ม (เช่น กลุ่ม 1):")
-        discussion_summary = st.text_area(
-            "สรุปผลการอภิปรายของกลุ่มคุณ:"
-        )
+        discussion_summary = st.text_area("สรุปผลการอภิปรายของกลุ่มคุณ:")
         sub_disc = st.form_submit_button("ส่งสรุปผลการอภิปราย")
 
-        if sub_disc and discussion_summary:
+        if sub_disc and discussion_summary and group_name:
             new_data = pd.DataFrame(
                 [
                     {
@@ -219,6 +267,21 @@ elif st.session_state.step == 7:
                     st.error(f"เกิดข้อผิดพลาด: {e}")
             else:
                 st.success("บันทึกจำลองสำเร็จ!")
+        elif sub_disc:
+            st.warning("กรุณากรอกชื่อกลุ่มและสรุปผลการอภิปรายครับ")
+
+    st.markdown("---")
+    st.subheader("📋 สรุปผลการอภิปรายของแต่ละกลุ่ม (Page 7)")
+    if conn:
+        try:
+            df = conn.read(worksheet="Responses", ttl=5)
+            p7_data = df[df["Step"] == "Page 7 - Group Discussion"]
+            if not p7_data.empty:
+                st.dataframe(p7_data[["Timestamp", "Data"]], use_container_width=True)
+            else:
+                st.info("ยังไม่มีข้อมูลสรุปของกลุ่ม")
+        except:
+            st.info("ไม่สามารถโหลดข้อมูลได้")
 
 
 # ==========================================
@@ -235,7 +298,7 @@ elif st.session_state.step == 8:
         challenge_text = st.text_area("พิมพ์แนวทางการโต้แย้งของกลุ่ม:")
         sub_challenge = st.form_submit_button("ส่งคำตอบท้าทาย")
 
-        if sub_challenge and challenge_text:
+        if sub_challenge and challenge_text and group_name:
             new_data = pd.DataFrame(
                 [
                     {
@@ -259,6 +322,21 @@ elif st.session_state.step == 8:
                     st.error(f"เกิดข้อผิดพลาด: {e}")
             else:
                 st.success("บันทึกจำลองสำเร็จ!")
+        elif sub_challenge:
+            st.warning("กรุณากรอกชื่อกลุ่มและแนวทางการโต้แย้งครับ")
+
+    st.markdown("---")
+    st.subheader("📋 แนวทางการโต้แย้งของแต่ละกลุ่ม (Page 8)")
+    if conn:
+        try:
+            df = conn.read(worksheet="Responses", ttl=5)
+            p8_data = df[df["Step"] == "Page 8 - Challenge"]
+            if not p8_data.empty:
+                st.dataframe(p8_data[["Timestamp", "Data"]], use_container_width=True)
+            else:
+                st.info("ยังไม่มีข้อมูล Challenge")
+        except:
+            st.info("ไม่สามารถโหลดข้อมูลได้")
 
 
 # ==========================================
@@ -269,15 +347,60 @@ elif st.session_state.step == 9:
     st.error(
         "**สถานการณ์:** คุณเป็นเภสัชกรและพบว่าเพื่อนร่วมงานมีพฤติกรรมที่ไม่เหมาะสม แต่ในเหตุการณ์นั้นยังไม่มีผู้ป่วยได้รับอันตราย คุณจะทำอย่างไร?"
     )
-    st.radio(
-        "การตัดสินใจของคุณ:",
-        [
-            "1. ตักเตือนเพื่อนร่วมงานเป็นการส่วนตัวทันที",
-            "2. รายงานผู้มีอำนาจหรือหัวหน้างานทันที",
-            "3. รอดูสถานการณ์ไปก่อนเพราะยังไม่มีใครเสียหาย",
-            "4. เพิกเฉยเพราะไม่ใช่เรื่องของเรา",
-        ],
-    )
+
+    with st.form("dilemma2_form"):
+        student_id = st.text_input("รหัสนิสิต:")
+        choice_d2 = st.radio(
+            "การตัดสินใจของคุณ:",
+            [
+                "1. ตักเตือนเพื่อนร่วมงานเป็นการส่วนตัวทันที",
+                "2. รายงานผู้มีอำนาจหรือหัวหน้างานทันที",
+                "3. รอดูสถานการณ์ไปก่อนเพราะยังไม่มีใครเสียหาย",
+                "4. เพิกเฉยเพราะไม่ใช่เรื่องของเรา",
+            ],
+        )
+        sub_d2 = st.form_submit_button("ยืนยันคำตอบ Dilemma 2")
+
+        if sub_d2 and student_id:
+            new_data = pd.DataFrame(
+                [
+                    {
+                        "Timestamp": datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                        "Step": "Page 9 - Dilemma 2",
+                        "Data": f"[{student_id}] {choice_d2}",
+                    }
+                ]
+            )
+            if conn:
+                try:
+                    existing_data = conn.read(worksheet="Responses", ttl=0)
+                    updated_data = pd.concat(
+                        [existing_data, new_data], ignore_index=True
+                    )
+                    conn.update(worksheet="Responses", data=updated_data)
+                    st.success("บันทึกผลโหวต Dilemma 2 เรียบร้อย!")
+                except Exception as e:
+                    st.error(f"เกิดข้อผิดพลาด: {e}")
+            else:
+                st.success("บันทึกจำลองสำเร็จ!")
+        elif sub_d2:
+            st.warning("กรุณากรอกรหัสนิสิตก่อนยืนยันคำตอบครับ")
+
+    st.markdown("---")
+    st.subheader("📊 กราฟแสดงผลการโหวต Dilemma 2")
+    if conn:
+        try:
+            df = conn.read(worksheet="Responses", ttl=5)
+            d2_data = df[df["Step"] == "Page 9 - Dilemma 2"]
+            if not d2_data.empty:
+                vote_counts_d2 = d2_data["Data"].value_counts()
+                st.bar_chart(vote_counts_d2)
+            else:
+                st.info("ยังไม่มีข้อมูลผลโหวต Dilemma 2")
+        except:
+            st.info("กำลังรอข้อมูล...")
 
 
 # ==========================================
@@ -294,7 +417,7 @@ elif st.session_state.step == 10:
         )
         sub_framework = st.form_submit_button("ส่งผลการวิเคราะห์")
 
-        if sub_framework and framework_text:
+        if sub_framework and framework_text and group_name:
             new_data = pd.DataFrame(
                 [
                     {
@@ -318,6 +441,21 @@ elif st.session_state.step == 10:
                     st.error(f"เกิดข้อผิดพลาด: {e}")
             else:
                 st.success("บันทึกจำลองสำเร็จ!")
+        elif sub_framework:
+            st.warning("กรุณากรอกชื่อกลุ่มและผลการวิเคราะห์ครับ")
+
+    st.markdown("---")
+    st.subheader("📋 ผลการวิเคราะห์ของแต่ละกลุ่ม (Page 10)")
+    if conn:
+        try:
+            df = conn.read(worksheet="Responses", ttl=5)
+            p10_data = df[df["Step"] == "Page 10 - Ethical Framework"]
+            if not p10_data.empty:
+                st.dataframe(p10_data[["Timestamp", "Data"]], use_container_width=True)
+            else:
+                st.info("ยังไม่มีข้อมูลการวิเคราะห์")
+        except:
+            st.info("ไม่สามารถโหลดข้อมูลได้")
 
 
 # ==========================================
@@ -328,7 +466,54 @@ elif st.session_state.step == 11:
     st.info(
         "“หลังจากฟังเหตุผลของเพื่อนและอภิปรายในกลุ่มแล้ว คุณยังเลือกคำตอบเดิมหรือไม่?”"
     )
-    st.radio("การตัดสินใจใหม่ (Re-Vote):", ["เปลี่ยนใจ", "ยังคงเลือกคำตอบเดิม"])
+
+    with st.form("revote_form"):
+        student_id = st.text_input("รหัสนิสิต:")
+        revote_choice = st.radio(
+            "การตัดสินใจใหม่ (Re-Vote):", ["เปลี่ยนใจ", "ยังคงเลือกคำตอบเดิม"]
+        )
+        sub_rv = st.form_submit_button("ยืนยัน Re-Vote")
+
+        if sub_rv and student_id:
+            new_data = pd.DataFrame(
+                [
+                    {
+                        "Timestamp": datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                        "Step": "Page 11 - Re-Vote",
+                        "Data": f"[{student_id}] {revote_choice}",
+                    }
+                ]
+            )
+            if conn:
+                try:
+                    existing_data = conn.read(worksheet="Responses", ttl=0)
+                    updated_data = pd.concat(
+                        [existing_data, new_data], ignore_index=True
+                    )
+                    conn.update(worksheet="Responses", data=updated_data)
+                    st.success("บันทึก Re-Vote เรียบร้อย!")
+                except Exception as e:
+                    st.error(f"เกิดข้อผิดพลาด: {e}")
+            else:
+                st.success("บันทึกจำลองสำเร็จ!")
+        elif sub_rv:
+            st.warning("กรุณากรอกรหัสนิสิตก่อนยืนยัน Re-Vote ครับ")
+
+    st.markdown("---")
+    st.subheader("📊 กราฟแสดงผล Re-Vote")
+    if conn:
+        try:
+            df = conn.read(worksheet="Responses", ttl=5)
+            p11_data = df[df["Step"] == "Page 11 - Re-Vote"]
+            if not p11_data.empty:
+                vote_counts_rv = p11_data["Data"].value_counts()
+                st.bar_chart(vote_counts_rv)
+            else:
+                st.info("ยังไม่มีข้อมูล Re-Vote")
+        except:
+            st.info("กำลังรอข้อมูล...")
 
 
 # ==========================================
@@ -338,6 +523,7 @@ elif st.session_state.step == 12:
     st.title("🎯 PAGE 12 — Final Reflection")
 
     with st.form("reflection_form"):
+        student_id = st.text_input("รหัสนิสิต:")
         q1 = st.text_area(
             "1. หลังจากกิจกรรมวันนี้ คุณคิดว่า ‘จริยธรรม’ แตกต่างจาก ‘กฎหมาย’ หรือ ‘ความรู้สึกส่วนตัว’ อย่างไร?"
         )
@@ -346,7 +532,7 @@ elif st.session_state.step == 12:
         )
         sub_ref = st.form_submit_button("ส่งแบบสะท้อนความคิด")
 
-        if sub_ref:
+        if sub_ref and q1 and q2 and student_id:
             combined_text = f"Q1: {q1} | Q2: {q2}"
             new_data = pd.DataFrame(
                 [
@@ -355,7 +541,7 @@ elif st.session_state.step == 12:
                             "%Y-%m-%d %H:%M:%S"
                         ),
                         "Step": "Page 12 - Reflection",
-                        "Data": combined_text,
+                        "Data": f"[{student_id}] {combined_text}",
                     }
                 ]
             )
@@ -371,17 +557,5 @@ elif st.session_state.step == 12:
                     st.error(f"เกิดข้อผิดพลาด: {e}")
             else:
                 st.success("บันทึกสำเร็จเรียบร้อย!")
-
-# --- ปุ่มควบคุมด้านล่างหน้าจอ ---
-st.markdown("---")
-c_bot1, c_bot2 = st.columns([1, 1])
-with c_bot1:
-    if st.session_state.step > 4:
-        if st.button("◀️ ย้อนกลับขั้นตอนก่อนหน้า"):
-            st.session_state.step -= 1
-            st.rerun()
-with c_bot2:
-    if st.session_state.step < 12:
-        if st.button("ไปขั้นตอนถัดไป ➡️", type="primary"):
-            st.session_state.step += 1
-            st.rerun()
+        elif sub_ref:
+            st.warning("กรุณากรอกรหัสนิสิตและตอบคำถามให้ครบถ้วนครับ")
