@@ -56,19 +56,20 @@ with col_sb2:
 # ==========================================
 # PAGE 4 — Warm-up: What is Ethics?
 # ==========================================
-if st.session_state.step == 4:
+elif st.session_state.step == 4:
     st.title("💬 PAGE 4 — Warm-up: What is Ethics?")
     st.write(
         "### “เมื่อคุณได้ยินคำว่า Ethics คุณนึกถึงอะไรเป็นสิ่งแรก?”"
     )
 
     with st.form("warmup_form"):
+        student_id = st.text_input("รหัสนิสิต:")
         user_word = st.text_input(
             "พิมพ์คำตอบสั้น ๆ 1–3 คำ (เช่น หน้าศีลธรรม, ความถูกต้อง):"
         )
         submitted = st.form_submit_button("ส่งคำตอบ")
 
-        if submitted and user_word:
+        if submitted and user_word and student_id:
             new_data = pd.DataFrame(
                 [
                     {
@@ -76,14 +77,13 @@ if st.session_state.step == 4:
                             "%Y-%m-%d %H:%M:%S"
                         ),
                         "Step": "Page 4 - Warmup",
-                        "Data": user_word,
+                        "Data": f"[{student_id}] {user_word}",
                     }
                 ]
             )
 
             if conn:
                 try:
-                    # ดึงข้อมูลเดิมมาต่อท้ายแล้วบันทึกกลับไปที่ Google Sheets
                     existing_data = conn.read(worksheet="Responses", ttl=0)
                     updated_data = pd.concat(
                         [existing_data, new_data], ignore_index=True
@@ -93,7 +93,9 @@ if st.session_state.step == 4:
                 except Exception as e:
                     st.error(f"เกิดข้อผิดพลาดในการบันทึก: {e}")
             else:
-                st.success("บันทึกจำลองสำเร็จ (ยังไม่ได้เชื่อม Google Sheets)")
+                st.success("บันทึกจำลองสำเร็จ!")
+        elif submitted:
+            st.warning("กรุณากรอกรหัสนิสิตและคำตอบให้ครบถ้วนครับ")
 
     st.markdown("---")
     st.markdown("### ☁️ Word Cloud (ข้อมูลจาก Google Sheets)")
@@ -146,10 +148,11 @@ elif st.session_state.step == 6:
     )
 
     with st.form("reason_form"):
+        student_id = st.text_input("รหัสนิสิต:")
         reason_text = st.text_area("อธิบายเหตุผลของคุณสั้น ๆ:")
         sub_reason = st.form_submit_button("ส่งเหตุผล")
 
-        if sub_reason and reason_text:
+        if sub_reason and reason_text and student_id:
             new_data = pd.DataFrame(
                 [
                     {
@@ -157,7 +160,7 @@ elif st.session_state.step == 6:
                             "%Y-%m-%d %H:%M:%S"
                         ),
                         "Step": "Page 6 - Why",
-                        "Data": reason_text,
+                        "Data": f"[{student_id}] {reason_text}",
                     }
                 ]
             )
@@ -171,7 +174,10 @@ elif st.session_state.step == 6:
                     st.success("ส่งเหตุผลและบันทึกลง Google Sheets สำเร็จ!")
                 except Exception as e:
                     st.error(f"เกิดข้อผิดพลาด: {e}")
-
+            else:
+                st.success("บันทึกจำลองสำเร็จ!")
+        elif sub_reason:
+            st.warning("กรุณากรอกรหัสนิสิตและเหตุผลให้ครบถ้วนครับ")
 
 # ==========================================
 # PAGE 7 — Small Group Discussion
