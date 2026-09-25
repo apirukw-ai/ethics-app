@@ -21,7 +21,7 @@ if "step" not in st.session_state:
     st.session_state.step = 4
 
 # --- Sidebar เมนูด้านซ้ายแบบคลิกเลือกได้ ---
-st.sidebar.markdown("### 🧭 ขั้นตอนกิจกรรม (Workflow)")
+st.sidebar.markdown("### 🧭 LAB 1: ขั้นตอนกิจกรรม (Workflow)")
 
 steps_name = {
     4: "Page 4: Warm-up (Ethics)",
