@@ -277,9 +277,9 @@ elif st.session_state.lab5_step == 5:
     with st.form("lab5_act5_form"):
         student_id = st.text_input("รหัสนิสิต (ระบุหรือไม่ระบุก็ได้):")
         
-        ans1 = st.text_area("1. สิ่งหนึ่งที่ผมได้เรียนรู้จากประสบการณ์ของวิทยากรคือ:")
-        ans2 = st.text_area("2. สิ่งหนึ่งที่ผมเคยคิดต่างจากเดิมคือ:")
-        ans3 = st.text_area("3. เมื่อผมเข้าสู่วิชาชีพ ผมอยากเตรียมตัวเรื่อง:")
+        ans1 = st.text_area("1. สิ่งหนึ่งที่ฉันได้เรียนรู้จากประสบการณ์ของวิทยากรคือ:")
+        ans2 = st.text_area("2. สิ่งหนึ่งที่ฉันเคยคิดต่างจากเดิมคือ:")
+        ans3 = st.text_area("3. เมื่อฉันเข้าสู่วิชาชีพ ฉันอยากเตรียมตัวเรื่อง:")
         
         sub_a5 = st.form_submit_button("ส่ง One Lesson Reflection")
 
