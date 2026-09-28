@@ -135,7 +135,7 @@
 
     <!-- Footer Section -->
     <footer class="border-t border-gray-800/60 py-8 px-4 text-center text-xs text-gray-500 space-y-2 bg-cardbg/30">
-        <p class="font-light">วิชา จริยธรรมและกฎหมาย · ajarnethics</p>
+        <p class="font-light">วิชา จริยธรรมและกฎหมาย · AjanEthics</p>
         <p class="text-[11px] text-gray-600">รองรับการใช้งานพร้อมกันหลายคน - กดที่สัปดาห์เพื่อเข้ากิจกรรม</p>
         <div class="pt-2">
             <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="text-emerald-400 hover:text-emerald-300 font-medium inline-flex items-center gap-1 transition-colors">
@@ -190,29 +190,8 @@
 
     <script>
         // Initial Default Data matching the provided screenshot
-        const defaultLabs = [
-            {
-                id: '1',
-                code: 'L1',
-                status: 'active',
-                title: 'สัปดาห์ที่ 1 — พื้นฐานการคิดเชิงจริยธรรม (Foundations of Ethical Thinking)',
-                url: 'https://ethics-lab-hub.lovable.app/lab1'
-            },
-            {
-                id: '2',
-                code: 'L2',
-                status: 'active',
-                title: 'สัปดาห์ที่ 2 — การคิดและการตัดสินใจทางจริยธรรมในชีวิตประจำวัน (Ethical Thinking and Decision-Making in Everyday Life)',
-                url: 'https://ethics-lab-hub.lovable.app/lab2'
-            },
-            {
-                id: '3',
-                code: 'L3',
-                status: 'inactive',
-                title: 'สัปดาห์ที่ 3 — กฎหมายและสังคม',
-                url: ''
-            }
-        ];
+        const defaultLabs = [{"id":"1","code":"L1","title":"สัปดาห์ที่ 1 — พื้นฐานการคิดเชิงจริยธรรม (Foundations of Ethical Thinking)","status":"active","url":"https://ethics-app-cavd9qhmb2tr5stgrfezkr.streamlit.app/"},{"id":"2","code":"L2","title":"สัปดาห์ที่ 2 — การคิดและการตัดสินใจทางจริยธรรมในชีวิตประจำวัน (Ethical Thinking and Decision-Making in Everyday Life)","status":"active","url":"https://ethics-app-p7cx3sev9au4npcwnuvwy9.streamlit.app/"},{"id":"3","code":"L3.1","title":"สัปดาห์ที่ 3 — คุณธรรมของผู้ประกอบวิชาชีพ — เราควรเป็นคนแบบไหน?","status":"active","url":"https://ethics-app-luwaoyleccalfuvg73chcu.streamlit.app/"},{"id":"1790333515519","code":"L3.2","title":"สัปดาห์ที่ 4 — คุณธรรมของผู้ประกอบวิชาชีพ — เมื่อคุณค่าต้องถูกนำไปใช้จริง","status":"active","url":"https://ethics-app-bzj8hhjteydea8q3x6s3ut.streamlit.app/"},{"id":"1790334568375","code":"L4","title":"สัปดาห์ที่ 5 — การพัฒนาจริยธรรมวิชาชีพ (Developing Professional Ethics) : วิเคราะห์ประเด็นจริยธรรมจากสถานการณ์ & การตัดสินใจเมื่อคุณค่าทางจริยธรรมขัดแย้งกัน","status":"active","url":"https://ethics-app-kwcszbf6uo4j685wiepdtx.streamlit.app/"},{"id":"1790405360825","code":"L5","title":"สัปดาห์ที่ 6: เรียนรู้จริยธรรมจากประสบการณ์วิชาชีพ (Learning Professional Ethics from Practice)","status":"active","url":"https://ethics-app-kimbrt4sd8etxzqx99qkk9.streamlit.app/"},{"id":"1790405488232","code":"L6","title":"สัปดาห์ที่ 7: จริยธรรมในการปฏิบัติงานเภสัชกรรมชุมชน (Ethics in Community Pharmacy Practice)","status":"active","url":"https://ethics-app-fjwjy3h5s6rwnvuot4dhfc.streamlit.app/"},{"id":"1790406952749","code":"L7","title":"สัปดาห์ที่ 8: จริยธรรมในการปฏิบัติงานเภสัชกรรมโรงพยาบาล (Ethics in Hospital Pharmacy Practice)","status":"active","url":"https://ethics-app-kergkn3dsiu48b8lzj7ghe.streamlit.app/"},{"id":"1790408485460","code":"L8","title":"สัปดาห์ที่ 9: จริยธรรมในการผลิตและอุตสาหกรรมยา (Ethics in Pharmaceutical Industry)","status":"active","url":"https://ethics-app-cvrmbduvcqor9egoth4yeh.streamlit.app/"},{"id":"1790409586441","code":"L9","title":"สัปดาห์ที่ 10: บูรณาการจริยธรรมในวิชาชีพเภสัชกรรม","status":"active","url":"https://ethics-app-2mjcapp9akblqfrw3sieqvw.streamlit.app/"},{"id":"1790592693801","code":"L10","title":"สัปดาห์ที่ 11 — จริยธรรมวิชาชีพกับสังคม (Pharmacy Profession and Society)","status":"active","url":"https://ethics-app-g685axpyghznarujn8cdyq.streamlit.app/"},{"id":"1790592786927","code":"L11","title":"สัปดาห์ที่ 12 — เภสัชกรต้นแบบและตัวตนทางวิชาชีพ (Pharmacist Role Model & Professional Identity)","status":"active","url":"https://ethics-app-p7cx3sev9au4npcwnuvwy9.streamlit.app/"}]
+       
 
         const defaultAnnouncement = "สัปดาห์นี้: เปิดกิจกรรม Interactive Labs สัปดาห์ที่ 1 โดยกดที่แถว LAB 1 ด้านล่าง เพื่อเข้าสู่กิจกรรมก่อนเข้าบรรยาย";
 
@@ -221,7 +200,7 @@
         let announcement = "";
 
         function initData() {
-            const savedLabs = localStorage.getItem('ajarnethics_labs');
+            const savedLabs = localStorage.getItem('ajanethics_labs');
             if (savedLabs) {
                 try {
                     labs = JSON.parse(savedLabs);
@@ -233,7 +212,7 @@
                 saveLabsToStorage();
             }
 
-            const savedAnnouncement = localStorage.getItem('ajarnethics_announcement');
+            const savedAnnouncement = localStorage.getItem('ajanethics_announcement');
             if (savedAnnouncement) {
                 announcement = savedAnnouncement;
             } else {
@@ -246,11 +225,11 @@
         }
 
         function saveLabsToStorage() {
-            localStorage.setItem('ajarnethics_labs', JSON.stringify(labs));
+            localStorage.setItem('ajanethics_labs', JSON.stringify(labs));
         }
 
         function saveAnnouncementToStorage() {
-            localStorage.setItem('ajarnethics_announcement', announcement);
+            localStorage.setItem('ajanethics_announcement', announcement);
         }
 
         function renderAnnouncement() {
