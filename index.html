@@ -135,7 +135,7 @@
 
     <!-- Footer Section -->
     <footer class="border-t border-gray-800/60 py-8 px-4 text-center text-xs text-gray-500 space-y-2 bg-cardbg/30">
-        <p class="font-light">วิชา จริยธรรมและกฎหมาย · AjanEthics</p>
+        <p class="font-light">วิชา จริยธรรมและกฎหมาย · ajarnethics</p>
         <p class="text-[11px] text-gray-600">รองรับการใช้งานพร้อมกันหลายคน - กดที่สัปดาห์เพื่อเข้ากิจกรรม</p>
         <div class="pt-2">
             <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="text-emerald-400 hover:text-emerald-300 font-medium inline-flex items-center gap-1 transition-colors">
@@ -221,7 +221,7 @@
         let announcement = "";
 
         function initData() {
-            const savedLabs = localStorage.getItem('ajanethics_labs');
+            const savedLabs = localStorage.getItem('ajarnethics_labs');
             if (savedLabs) {
                 try {
                     labs = JSON.parse(savedLabs);
@@ -233,7 +233,7 @@
                 saveLabsToStorage();
             }
 
-            const savedAnnouncement = localStorage.getItem('ajanethics_announcement');
+            const savedAnnouncement = localStorage.getItem('ajarnethics_announcement');
             if (savedAnnouncement) {
                 announcement = savedAnnouncement;
             } else {
@@ -246,11 +246,11 @@
         }
 
         function saveLabsToStorage() {
-            localStorage.setItem('ajanethics_labs', JSON.stringify(labs));
+            localStorage.setItem('ajarnethics_labs', JSON.stringify(labs));
         }
 
         function saveAnnouncementToStorage() {
-            localStorage.setItem('ajanethics_announcement', announcement);
+            localStorage.setItem('ajarnethics_announcement', announcement);
         }
 
         function renderAnnouncement() {
