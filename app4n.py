@@ -180,7 +180,7 @@ elif st.session_state.lab4_page == 3:
 elif st.session_state.lab4_page == 4:
     st.title("🎬 Page 4 — Watch the Clip")
     st.markdown("### 🎥 กรณีศึกษา / คลิปวิดีโอสถานการณ์ปัญหา")
-    st.markdown("[🔗 คลิกที่นี่เพื่อเปิดลิงก์คลิปวิดีโอในแท็บใหม่](https://www.youtube.com)", unsafe_allow_html=True)
+    st.markdown("[🔗 คลิกที่นี่เพื่อเปิดลิงก์คลิปวิดีโอในแท็บใหม่](https://youtu.be/HdDrMe52xxs?utm_source=chatgpt.com)", unsafe_allow_html=True)
     
     st.info(
         """
