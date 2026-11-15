@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบเช็กชื่อเข้าเรียน | 180432 Laws in Pharmacy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #0f172a; color: #f8fafc; }
+    .glass { background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(148, 163, 184, 0.15); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 md:p-8">
+
+  <!-- Header -->
+  <header class="w-full max-w-4xl flex flex-col md:flex-row justify-between items-center gap-4 mb-6 pb-4 border-b border-slate-800">
+    <div>
+      <span class="text-xs font-semibold uppercase tracking-wider text-sky-400">Faculty of Pharmacy • Naresuan University</span>
+      <h1 class="text-2xl font-bold text-white">180432 Laws in Pharmacy <span class="text-sm font-normal text-slate-400">(กลุ่ม 1 • 2/2569)</span></h1>
+      <p class="text-sm text-slate-400">ผู้สอน: ผศ.อภิรักษ์ วงศ์รัตนชัย | ห้อง Pharma 1311 (Mon 8:00–9:55)</p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="switchMode('student')" id="btn-mode-student" class="px-4 py-2 rounded-lg text-sm font-semibold bg-sky-600 text-white shadow">มุมมองนิสิต</button>
+      <button onclick="promptInstructor()" id="btn-mode-admin" class="px-4 py-2 rounded-lg text-sm font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">มุมมองอาจารย์</button>
+    </div>
+  </header>
+
+  <!-- ==================== STUDENT VIEW ==================== -->
+  <main id="view-student" class="w-full max-w-md glass rounded-2xl p-6 shadow-2xl">
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-sky-500/20 text-sky-400 mb-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      </div>
+      <h2 class="text-xl font-bold">ลงชื่อเข้าเรียนประจำสัปดาห์</h2>
+      <p id="student-session-status" class="text-sm text-slate-400 mt-1">กำลังตรวจสอบสถานะการเปิดรับเช็กชื่อ...</p>
+    </div>
+
+    <form id="checkin-form" class="space-y-4 hidden">
+      <div>
+        <label class="block text-sm font-semibold text-slate-300 mb-1">รหัสนิสิต (8 หลัก)</label>
+        <input type="text" id="input-student-id" maxlength="8" inputmode="numeric" placeholder="เช่น 66210052" required
+          class="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-lg tracking-widest focus:outline-none focus:border-sky-500" />
+        <p id="student-name-preview" class="text-sm mt-1.5 min-h-[20px] text-slate-400">กรอกรหัสนิสิตเพื่อตรวจสอบชื่อ-สกุล</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-300 mb-1">รหัส OTP 4 หลัก (ดูบนหน้าจอในห้องเรียน)</label>
+        <input type="text" id="input-otp" maxlength="4" inputmode="numeric" placeholder="••••" required
+          class="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-center text-2xl font-bold tracking-[0.5em] focus:outline-none focus:border-sky-500" />
+      </div>
+
+      <button type="submit" id="btn-submit-checkin"
+        class="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base shadow-lg transition disabled:opacity-50">
+        ยืนยันการเข้าเรียน
+      </button>
+    </form>
+
+    <div id="student-alert" class="hidden mt-4 p-4 rounded-xl text-sm text-center font-semibold"></div>
+  </main>
+
+  <!-- ==================== INSTRUCTOR VIEW ==================== -->
+  <section id="view-admin" class="w-full max-w-4xl hidden space-y-6">
+    <!-- Control Panel -->
+    <div class="glass rounded-2xl p-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-sky-400">ควบคุมการเช็กชื่อในชั้นเรียน</h2>
+          <button onclick="openProjectorMode()" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            โหมดขึ้นจอโปรเจกเตอร์
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">สัปดาห์ที่ (1–16)</label>
+            <select id="admin-week" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+              <script>
+                for(let i=1; i<=16; i++) document.write(`<option value="${i}">สัปดาห์ที่ ${i}</option>`);
+              </script>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">เปิดรับเช็กชื่อ (นาที)</label>
+            <select id="admin-duration" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+              <option value="5">5 นาที</option>
+              <option value="10" selected>10 นาที</option>
+              <option value="15">15 นาที</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button onclick="openSession()" class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold text-white shadow">
+            เปิดรับเช็กชื่อ (สุ่ม OTP)
+          </button>
+          <button onclick="closeSession()" class="py-2.5 px-4 rounded-xl bg-rose-600/80 hover:bg-rose-600 font-bold text-white">
+            ปิดรับทันที
+          </button>
+        </div>
+
+        <div id="active-otp-box" class="hidden p-4 rounded-xl bg-slate-900/90 border border-sky-500/40 flex justify-between items-center">
+          <div>
+            <p class="text-xs text-slate-400">รหัส OTP ประจำคาบ</p>
+            <p id="display-otp" class="text-4xl font-extrabold text-amber-400 tracking-widest mt-0.5">----</p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-slate-400">เวลาที่เหลือ</p>
+            <p id="display-timer" class="text-2xl font-bold text-emerald-400 font-mono mt-0.5">00:00</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR Code Display -->
+      <div class="flex flex-col items-center justify-center p-4 bg-white rounded-xl text-slate-900">
+        <div id="qrcode" class="p-2"></div>
+        <p class="text-xs font-bold mt-2 text-slate-700">สแกนเพื่อเช็กชื่อเข้าเรียน (180432)</p>
+      </div>
+    </div>
+
+    <!-- Real-time Attendance Dashboard -->
+    <div class="glass rounded-2xl p-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <div>
+          <h3 class="text-lg font-bold">สถานะการเข้าเรียนแบบเรียลไทม์ (<span id="count-present" class="text-emerald-400">0</span> / 89 คน)</h3>
+          <p class="text-xs text-slate-400">คลิกที่สถานะของนิสิตเพื่อปรับแก้ (มาเรียน / สาย / ลา / ขาด) ได้ทันที</p>
+        </div>
+        <button onclick="exportExcel()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold flex items-center gap-2 shadow">
+          ดาวน์โหลด Excel (.xlsx)
+        </button>
+      </div>
+
+      <div class="overflow-x-auto max-h-[450px] overflow-y-auto rounded-xl border border-slate-800">
+        <table class="w-full text-sm text-left">
+          <thead class="bg-slate-900 text-slate-300 sticky top-0">
+            <tr>
+              <th class="py-3 px-4 w-16 text-center">ที่</th>
+              <th class="py-3 px-4 w-28 text-center">รหัสนิสิต</th>
+              <th class="py-3 px-4">ชื่อ-สกุล</th>
+              <th class="py-3 px-4 w-32 text-center">เวลาเช็กชื่อ</th>
+              <th class="py-3 px-4 w-32 text-center">สถานะ</th>
+            </tr>
+          </thead>
+          <tbody id="attendance-table-body" class="divide-y divide-slate-800/80">
+            <tr><td colspan="5" class="py-8 text-center text-slate-500">กำลังโหลดรายชื่อนิสิต...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== PROJECTOR FULLSCREEN MODAL ==================== -->
+  <div id="projector-modal" class="fixed inset-0 z-50 hidden bg-slate-950 flex flex-col justify-between p-6 md:p-10 select-none">
+    <!-- Top Bar -->
+    <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+      <div>
+        <span class="text-sm font-bold uppercase tracking-widest text-sky-400">180432 Laws in Pharmacy • กลุ่ม 1 (2/2569)</span>
+        <h2 id="proj-week-title" class="text-2xl md:text-3xl font-extrabold text-white mt-0.5">เช็กชื่อเข้าเรียน สัปดาห์ที่ 1</h2>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-right">
+          <span class="text-xs text-slate-400 block">เช็กชื่อแล้ว</span>
+          <span class="text-xl md:text-2xl font-extrabold text-emerald-400"><span id="proj-count">0</span> / 89 คน</span>
+        </div>
+        <button onclick="closeProjectorMode()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm border border-slate-700">
+          ✕ ปิดหน้าจอนี้ (ESC)
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Split Content -->
+    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-8 items-center justify-items-center my-auto py-4">
+      <!-- Left: Huge QR Code -->
+      <div class="flex flex-col items-center bg-white p-6 md:p-8 rounded-3xl shadow-2xl">
+        <div id="proj-qrcode"></div>
+        <p class="text-slate-900 font-extrabold text-lg md:text-xl mt-4">สแกน QR Code เพื่อลงชื่อ</p>
+        <p id="proj-url-text" class="text-slate-500 text-xs mt-1 font-mono break-all max-w-[280px] text-center"></p>
+      </div>
+
+      <!-- Right: Giant OTP & Countdown -->
+      <div class="flex flex-col items-center text-center space-y-6 w-full max-w-lg">
+        <div class="w-full p-6 md:p-8 rounded-3xl bg-slate-900/90 border-2 border-amber-500/40 shadow-2xl">
+          <p class="text-lg md:text-xl font-bold text-slate-300 uppercase tracking-wider">รหัส OTP ประจำคาบ</p>
+          <p id="proj-otp" class="text-7xl md:text-9xl font-extrabold text-amber-400 tracking-[0.2em] my-4 font-mono">----</p>
+          <p class="text-sm text-slate-400">กรอกรหัสนิสิต 8 หลัก + รหัส OTP 4 หลักนี้</p>
+        </div>
+
+        <div class="w-full p-5 rounded-2xl bg-slate-900/70 border border-slate-800 flex items-center justify-between px-8">
+          <span class="text-lg font-semibold text-slate-300">เวลาที่เหลือ</span>
+          <span id="proj-timer" class="text-4xl md:text-5xl font-extrabold text-emerald-400 font-mono">00:00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Hint -->
+    <div class="text-center text-slate-500 text-sm">
+      ระบบจะปิดรับเช็กชื่ออัตโนมัติเมื่อครบกำหนดเวลา • ห้อง Pharma 1311
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // ตั้งค่าการเชื่อมต่อ Supabase (โปรเจกต์ iprokttvetsbxxmpptuj)
+    // =========================================================================
+    const SUPABASE_URL = 'https://iprokttvetsbxxmpptuj.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwcm9rdHZ2ZXRzYnh4bXBwdHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyOTU3NDEsImV4cCI6MjEwMjg3MTc0MX0.Kc0USo30u4gvZNJ1bsOdD9k6nwEBcY7lNMAQxWEFzqw'; // <-- นำ Anon Public Key มาวางตรงนี้
+    const INSTRUCTOR_PIN = '641023'; // รหัสผ่านเข้าหน้าอาจารย์
+
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      db: { schema: 'ethics' }
+    });
+
+    let studentsList = [];
+    let currentSession = null;
+    let countdownInterval = null;
+    let livePollInterval = null;
+
+    const cleanUrl = window.location.href.split('?')[0];
+
+    // สร้าง QR Code ฝั่งแผงควบคุมและฝั่ง Projector Mode
+    new QRCode(document.getElementById("qrcode"), {
+      text: cleanUrl,
+      width: 170,
+      height: 170
+    });
+
+    new QRCode(document.getElementById("proj-qrcode"), {
+      text: cleanUrl,
+      width: 280,
+      height: 280
+    });
+    document.getElementById("proj-url-text").textContent = cleanUrl;
+
+    // สร้าง Device Token ประจำเครื่องป้องกันการเช็กชื่อซ้ำแทนเพื่อน
+    function getDeviceToken() {
+      let token = localStorage.getItem('nu_ethics_device_token');
+      if (!token) {
+        token = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now();
+        localStorage.setItem('nu_ethics_device_token', token);
+      }
+      return token;
+    }
+
+    async function init() {
+      const { data: stds, error } = await db.from('students_180432').select('*').order('seq', { ascending: true });
+      if (!error && stds) studentsList = stds;
+      await fetchActiveSession();
+    }
+
+    async function fetchActiveSession() {
+      const { data, error } = await db.from('attendance_sessions')
+        .select('*')
+        .eq('is_open', true)
+        .order('week_no', { ascending: false })
+        .limit(1);
+
+      const statusEl = document.getElementById('student-session-status');
+      const formEl = document.getElementById('checkin-form');
+
+      if (data && data.length > 0) {
+        const sess = data[0];
+        if (new Date(sess.expires_at) > new Date()) {
+          currentSession = sess;
+          statusEl.innerHTML = `<span class="text-emerald-400 font-semibold">กำลังเปิดรับเช็กชื่อ: สัปดาห์ที่ ${sess.week_no}</span>`;
+          formEl.classList.remove('hidden');
+          startAdminTimer(sess);
+          return;
+        }
+      }
+      currentSession = null;
+      statusEl.innerHTML = `<span class="text-amber-400">ขณะนี้ยังไม่เปิดรับเช็กชื่อ (หรือหมดเวลาแล้ว)</span>`;
+      formEl.classList.add('hidden');
+    }
+
+    // ตรวจสอบชื่อนิสิตอัตโนมัติเมื่อพิมพ์ครบ 8 หลัก
+    document.getElementById('input-student-id').addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      const preview = document.getElementById('student-name-preview');
+      if (val.length === 8) {
+        const found = studentsList.find(s => s.student_id === val);
+        if (found) {
+          preview.innerHTML = `<span class="text-emerald-400 font-semibold">✓ ${found.full_name} (ลำดับที่ ${found.seq})</span>`;
+        } else {
+          preview.innerHTML = `<span class="text-rose-400">✕ ไม่พบรหัสนิสิตนี้ในรายวิชา 180432 กลุ่ม 1</span>`;
+        }
+      } else {
+        preview.textContent = 'กรอกรหัสนิสิตเพื่อตรวจสอบชื่อ-สกุล';
+      }
+    });
+
+    // ส่งข้อมูลเช็กชื่อฝั่งนิสิต
+    document.getElementById('checkin-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const sid = document.getElementById('input-student-id').value.trim();
+      const otp = document.getElementById('input-otp').value.trim();
+      const btn = document.getElementById('btn-submit-checkin');
+
+      const found = studentsList.find(s => s.student_id === sid);
+      if (!found) return showStudentAlert('ไม่พบรหัสนิสิตในรายชื่อกลุ่มเรียนนี้', 'error');
+
+      await fetchActiveSession();
+      if (!currentSession) return showStudentAlert('หมดเวลาเช็กชื่อแล้ว กรุณาติดต่ออาจารย์ผู้สอน', 'error');
+      if (otp !== currentSession.otp_code) return showStudentAlert('รหัส OTP 4 หลักไม่ถูกต้อง กรุณาดูบนหน้าจอในห้องเรียน', 'error');
+
+      const localKey = `checked_in_180432_w${currentSession.week_no}`;
+      const prevSid = localStorage.getItem(localKey);
+      if (prevSid && prevSid !== sid) {
+        return showStudentAlert(`อุปกรณ์นี้ได้บันทึกการเข้าเรียนให้รหัส ${prevSid} ในสัปดาห์นี้ไปแล้ว ไม่สามารถเช็กชื่อแทนกันได้`, 'error');
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'กำลังบันทึก...';
+
+      const { error } = await db.from('attendance_logs').upsert({
+        week_no: currentSession.week_no,
+        student_id: sid,
+        status: '/',
+        device_token: getDeviceToken(),
+        checked_in_at: new Date().toISOString()
+      }, { onConflict: 'week_no,student_id' });
+
+      btn.disabled = false;
+      btn.textContent = 'ยืนยันการเข้าเรียน';
+
+      if (error) {
+        showStudentAlert('เกิดข้อผิดพลาดในการบันทึก: ' + error.message, 'error');
+      } else {
+        localStorage.setItem(localKey, sid);
+        showStudentAlert(`บันทึกการเข้าเรียนสำเร็จ! สัปดาห์ที่ ${currentSession.week_no}<br>${found.student_id} ${found.full_name}`, 'success');
+        document.getElementById('checkin-form').reset();
+      }
+    });
+
+    function showStudentAlert(msg, type) {
+      const box = document.getElementById('student-alert');
+      box.classList.remove('hidden', 'bg-emerald-950', 'text-emerald-300', 'border-emerald-700', 'bg-rose-950', 'text-rose-300', 'border-rose-700');
+      if (type === 'success') {
+        box.classList.add('bg-emerald-950', 'text-emerald-300', 'border', 'border-emerald-700');
+      } else {
+        box.classList.add('bg-rose-950', 'text-rose-300', 'border', 'border-rose-700');
+      }
+      box.innerHTML = msg;
+    }
+
+    // สลับมุมมอง
+    function promptInstructor() {
+      const pin = prompt('กรุณากรอกรหัสผ่านผู้สอน (ค่าเริ่มต้น: 180432):');
+      if (pin === INSTRUCTOR_PIN) switchMode('admin');
+      else if (pin !== null) alert('รหัสผ่านไม่ถูกต้อง');
+    }
+
+    function switchMode(mode) {
+      if (mode === 'admin') {
+        document.getElementById('view-student').classList.add('hidden');
+        document.getElementById('view-admin').classList.remove('hidden');
+        loadAdminTable();
+        startLivePolling();
+      } else {
+        document.getElementById('view-admin').classList.add('hidden');
+        document.getElementById('view-student').classList.remove('hidden');
+        stopLivePolling();
+      }
+    }
+
+    function startLivePolling() {
+      stopLivePolling();
+      livePollInterval = setInterval(loadAdminTable, 4000);
+    }
+
+    function stopLivePolling() {
+      if (livePollInterval) clearInterval(livePollInterval);
+    }
+
+    // ฝั่งอาจารย์: เปิด/ปิดรับเช็กชื่อ
+    async function openSession() {
+      const weekNo = parseInt(document.getElementById('admin-week').value);
+      const mins = parseInt(document.getElementById('admin-duration').value);
+      const otp = Math.floor(1000 + Math.random() * 9000).toString();
+      const expiresAt = new Date(Date.now() + mins * 60000).toISOString();
+
+      await db.from('attendance_sessions').update({ is_open: false }).eq('is_open', true);
+
+      const { data, error } = await db.from('attendance_sessions').upsert({
+        week_no: weekNo,
+        session_date: new Date().toISOString().split('T')[0],
+        otp_code: otp,
+        is_open: true,
+        expires_at: expiresAt
+      }, { onConflict: 'week_no' }).select();
+
+      if (!error && data) {
+        currentSession = data[0];
+        startAdminTimer(currentSession);
+        loadAdminTable();
+        openProjectorMode(); // เปิดขึ้นจอโปรเจกเตอร์ให้อัตโนมัติทันทีที่กดเริ่ม
+      }
+    }
+
+    async function closeSession() {
+      const weekNo = parseInt(document.getElementById('admin-week').value);
+      await db.from('attendance_sessions').update({ is_open: false }).eq('week_no', weekNo);
+      clearInterval(countdownInterval);
+      document.getElementById('active-otp-box').classList.add('hidden');
+      document.getElementById('proj-otp').textContent = 'ปิดรับ';
+      document.getElementById('proj-timer').textContent = '00:00';
+      closeProjectorMode();
+      alert(`ปิดรับการเช็กชื่อสัปดาห์ที่ ${weekNo} เรียบร้อยแล้ว`);
+    }
+
+    function startAdminTimer(sess) {
+      const box = document.getElementById('active-otp-box');
+      if (box) box.classList.remove('hidden');
+      document.getElementById('display-otp').textContent = sess.otp_code;
+      document.getElementById('proj-otp').textContent = sess.otp_code;
+      document.getElementById('proj-week-title').textContent = `เช็กชื่อเข้าเรียน สัปดาห์ที่ ${sess.week_no}`;
+
+      clearInterval(countdownInterval);
+      countdownInterval = setInterval(() => {
+        const diff = new Date(sess.expires_at) - new Date();
+        if (diff <= 0) {
+          clearInterval(countdownInterval);
+          document.getElementById('display-timer').textContent = 'หมดเวลา';
+          document.getElementById('proj-timer').textContent = 'หมดเวลา';
+          closeSession();
+          return;
+        }
+        const m = String(Math.floor(diff / 60000)).padStart(2, '0');
+        const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+        const timeText = `${m}:${s}`;
+        document.getElementById('display-timer').textContent = timeText;
+        document.getElementById('proj-timer').textContent = timeText;
+      }, 1000);
+    }
+
+    // ควบคุม Projector Mode
+    function openProjectorMode() {
+      const weekNo = document.getElementById('admin-week').value;
+      document.getElementById('proj-week-title').textContent = `เช็กชื่อเข้าเรียน สัปดาห์ที่ ${weekNo}`;
+      if (currentSession && currentSession.is_open) {
+        document.getElementById('proj-otp').textContent = currentSession.otp_code;
+      }
+      document.getElementById('projector-modal').classList.remove('hidden');
+      loadAdminTable();
+    }
+
+    function closeProjectorMode() {
+      document.getElementById('projector-modal').classList.add('hidden');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeProjectorMode();
+    });
+
+    document.getElementById('admin-week').addEventListener('change', loadAdminTable);
+
+    async function loadAdminTable() {
+      const weekNo = parseInt(document.getElementById('admin-week').value);
+      const { data: logs } = await db.from('attendance_logs').select('*').eq('week_no', weekNo);
+      const logMap = {};
+      (logs || []).forEach(l => logMap[l.student_id] = l);
+
+      let presentCount = 0;
+      const tbody = document.getElementById('attendance-table-body');
+      tbody.innerHTML = studentsList.map(std => {
+        const log = logMap[std.student_id];
+        const status = log ? log.status : 'ข';
+        if (status === '/' || status === 'ส') presentCount++;
+        const timeStr = log ? new Date(log.checked_in_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '-';
+
+        return `
+          <tr class="hover:bg-slate-800/50">
+            <td class="py-2.5 px-4 text-center text-slate-400">${std.seq}</td>
+            <td class="py-2.5 px-4 text-center font-mono">${std.student_id}</td>
+            <td class="py-2.5 px-4">${std.full_name}</td>
+            <td class="py-2.5 px-4 text-center text-slate-400">${timeStr}</td>
+            <td class="py-2.5 px-4 text-center">
+              <select onchange="manualUpdate(${weekNo}, '${std.student_id}', this.value)"
+                class="px-2.5 py-1 rounded-lg text-xs font-bold border ${getStatusStyle(status)}">
+                <option value="/" ${status === '/' ? 'selected' : ''}>/ มาเรียน</option>
+                <option value="ส" ${status === 'ส' ? 'selected' : ''}>ส สาย</option>
+                <option value="ล" ${status === 'ล' ? 'selected' : ''}>ล ลา</option>
+                <option value="ข" ${status === 'ข' ? 'selected' : ''}>ข ขาด</option>
+              </select>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('count-present').textContent = presentCount;
+      document.getElementById('proj-count').textContent = presentCount;
+    }
+
+    function getStatusStyle(st) {
+      if (st === '/') return 'bg-emerald-950 text-emerald-300 border-emerald-700';
+      if (st === 'ส' || st === 'ล') return 'bg-amber-950 text-amber-300 border-amber-700';
+      return 'bg-rose-950 text-rose-300 border-rose-700';
+    }
+
+    async function manualUpdate(weekNo, sid, newStatus) {
+      await db.from('attendance_logs').upsert({
+        week_no: weekNo,
+        student_id: sid,
+        status: newStatus,
+        checked_in_at: new Date().toISOString()
+      }, { onConflict: 'week_no,student_id' });
+      loadAdminTable();
+    }
+
+    // Export ตารางทั้ง 16 สัปดาห์เป็น Excel (.xlsx)
+    async function exportExcel() {
+      const { data: allLogs } = await db.from('attendance_logs').select('*');
+      const rows = studentsList.map(std => {
+        const row = {
+          'ลำดับที่': std.seq,
+          'รหัสนิสิต': std.student_id,
+          'ชื่อ-สกุล': std.full_name
+        };
+        let present = 0;
+        for (let w = 1; w <= 16; w++) {
+          const found = (allLogs || []).find(l => l.student_id === std.student_id && l.week_no === w);
+          const st = found ? found.status : '';
+          row[`สัปดาห์ ${w}`] = st;
+          if (st === '/' || st === 'ส') present++;
+        }
+        row['รวมมาเรียน (ครั้ง)'] = present;
+        return row;
+      });
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'เช็กชื่อ_180432');
+      XLSX.writeFile(wb, 'สรุปการเข้าเรียน_180432_กลุ่ม1_2-2569.xlsx');
+    }
+
+    init();
+  </script>
+</body>
+</html>
