@@ -305,13 +305,16 @@
 		alert("❌ ไม่สามารถบันทึกได้: ยังไม่ได้เชื่อมต่อฐานข้อมูล Supabase");
 		return;
 	  }
-	  const { error } = await sb.from("lab_control").upsert({
-		id: 1,
-		active_lab_no: dailyLabNo,
-		active_lab_file: dailyLabNo ? (LABS_CATALOG.find(l => l.no === dailyLabNo)?.file || `lab${dailyLabNo}-180433.html`) : null,
-		labs_catalog: LABS_CATALOG,
+	  
+	  // สร้าง array ข้อมูลสำหรับอัปเดตแต่ละแล็บ
+	  const updates = LABS_CATALOG.map(lab => ({
+		lab_no: lab.no,
+		// อัปเดตคอลัมน์อื่นๆ ตามความเหมาะสม หรือปล่อยว่างไว้ให้เป็นค่าเดิม
+		active_lab_file: lab.file,
 		updated_at: new Date().toISOString()
-	  });
+	  }));
+
+	  const { error } = await sb.from("lab_control").upsert(updates);
 
 	  if (error) {
 		alert("❌ บันทึกลง Cloud ไม่สำเร็จ: " + error.message);
@@ -791,13 +794,22 @@
 		alert("กรุณาใส่ Supabase Anon Key ในโค้ดก่อนใช้งาน");
 		return;
 	  }
-	  const { data, error } = await sb.from("lab_control").select("*").eq("id", 1).maybeSingle();
+	  const { data, error } = await sb.from("lab_control").select("*");
+	  
 	  if (error) {
 		console.error("โหลดข้อมูลล้มเหลว:", error);
 	  }
-	  if (data && Array.isArray(data.labs_catalog)) {
-		LABS_CATALOG = data.labs_catalog;
-		dailyLabNo = data.active_lab_no ?? null;
+	  
+	  if (data && data.length > 0) {
+		 // แปลงข้อมูลจากตารางมาเป็นรูปแบบที่ LABS_CATALOG ต้องการ
+		 LABS_CATALOG = data.map(row => ({
+			 no: row.lab_no,
+			 code: `lab${row.lab_no}`,
+			 title: `Lab ${row.lab_no}`, // คุณอาจต้องเพิ่มคอลัมน์ title ใน Supabase ถ้าต้องการเก็บชื่อ
+			 file: row.active_lab_file || `lab${row.lab_no}-180433.html`,
+			 active: !row.is_locked
+		 }));
+		 dailyLabNo = LABS_CATALOG.length > 0 ? LABS_CATALOG[0].no : 2; // สมมติให้แล็บแรกเป็นแล็บประจำวัน
 	  } else {
 		LABS_CATALOG = [...DEFAULT_LABS_CATALOG];
 		dailyLabNo = 2;
