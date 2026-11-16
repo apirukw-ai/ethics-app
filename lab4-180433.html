@@ -1,340 +1,578 @@
 <!DOCTYPE html>
 <html lang="th" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ปฏิบัติการที่ 4: การพัฒนาจริยธรรมเชิงวิชาชีพทางการแพทย์ | 180433</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Sarabun', 'sans-serif'],
-                        display: ['Prompt', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { background-color: #0f172a; color: #f8fafc; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.8); }
-        .tab-active { background-color: #0284c7; color: white; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab 4: Autonomy &amp; Informed Consent | 180433</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #0b1120; color: #f8fafc; }
+    .glass { background: rgba(30, 41, 59, 0.78); backdrop-filter: blur(12px); border: 1px solid rgba(148, 163, 184, 0.16); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+  </style>
 </head>
-<body class="min-h-screen font-sans antialiased selection:bg-sky-500/30">
+<body class="min-h-screen flex flex-col">
 
-    <!-- Navbar -->
-    <nav class="sticky top-0 z-50 glass-card border-b border-slate-700/80">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <a href="index.html" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="กลับหน้าหลัก">
-                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                </a>
-                <div>
-                    <span class="text-xs font-medium text-sky-400 tracking-wider uppercase">180433 จรรยาบรรณวิชาชีพ</span>
-                    <h1 class="text-base sm:text-lg font-display font-semibold text-white leading-tight">ปฏิบัติการที่ 4: การพัฒนาจริยธรรมเชิงวิชาชีพทางการแพทย์</h1>
-                </div>
-            </div>
-            <div class="flex items-center space-x-2">
-                <span class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
-                    Active Learning
-                </span>
-                <a href="grading-180433.html" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-sm">
-                    <i data-lucide="clipboard-check" class="w-4 h-4 mr-1.5"></i>
-                    หน้าประเมินผล
-                </a>
-            </div>
+  <!-- TOP NAVBAR -->
+  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur border-b border-slate-800 px-4 py-3">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1 transition">
+          <span>&larr;</span> <span>หน้าเช็กชื่อ</span>
+        </a>
+        <span class="px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-400 font-extrabold text-xs border border-sky-500/30">180433 • LAB 4</span>
+        <div>
+          <h1 class="text-base md:text-lg font-bold text-white leading-tight">Autonomy &amp; Informed Consent</h1>
+          <p class="text-xs text-slate-400">การเคารพการตัดสินใจและความยินยอม • กลุ่มเรียน 1 (2/2569)</p>
         </div>
-    </nav>
+      </div>
 
-    <!-- Main Container -->
-    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <div class="flex items-center gap-2">
+        <button onclick="openStudentLoginModal()" id="btn-student-badge" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-amber-400" id="login-dot"></span>
+          <span id="student-badge-text">ระบุรหัสนิสิต / กลุ่ม</span>
+        </button>
+        <button onclick="switchRole('student')" id="btn-role-student" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow">นิสิต</button>
+        <button onclick="promptInstructor()" id="btn-role-admin" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">อาจารย์</button>
+      </div>
+    </div>
+  </header>
 
-        <!-- Header Banner -->
-        <div class="glass-card rounded-2xl p-6 border-l-4 border-l-sky-500">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div class="space-y-2">
-                    <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                        <span class="px-2 py-0.5 rounded bg-slate-800 text-sky-300 border border-slate-700">CLO 1</span>
-                        <span>•</span>
-                        <span>ภาคเรียนที่ 2/2568</span>
-                        <span>•</span>
-                        <span>น้ำหนักคะแนน: ร่วมกับปฏิบัติการที่ 2 (รวม 15%)</span>
-                    </div>
-                    <h2 class="text-xl sm:text-2xl font-display font-bold text-white">การชมภาพยนตร์และอภิปรายพัฒนาจริยธรรมเชิงวิชาชีพทางการแพทย์</h2>
-                    <p class="text-sm text-slate-300 max-w-3xl">
-                        วิเคราะห์ประเด็นคุณธรรม จริยธรรมแห่งวิชาชีพ ความขัดแย้งทางผลประโยชน์ สิทธิผู้ป่วย และความรับผิดชอบต่อสังคมจากสื่อภาพยนตร์ที่กำหนด พร้อมแลกเปลี่ยนมุมมองในกลุ่มย่อย (7 กลุ่ม) และบันทึกผลสรุปรายบุคคล/รายกลุ่ม
-                    </p>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-2 shrink-0">
-                    <button onclick="switchTab('guide')" id="btn-guide" class="tab-btn tab-active px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center transition">
-                        <i data-lucide="film" class="w-4 h-4 mr-2"></i>
-                        คำชี้แจง & ห้องกลุ่มย่อย
-                    </button>
-                    <button onclick="switchTab('worksheet')" id="btn-worksheet" class="tab-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center transition">
-                        <i data-lucide="file-edit" class="w-4 h-4 mr-2"></i>
-                        แบบบันทึกงาน Lab 4
-                    </button>
-                </div>
-            </div>
+  <!-- INSTRUCTOR CONTROL BAR -->
+  <div id="admin-control-bar" class="hidden bg-slate-900 border-b border-amber-500/30 px-4 py-2.5">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">ควบคุมห้องเรียน:</span>
+        <button onclick="changeInstructorPage(-1)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold border border-slate-700">◀ ก่อนหน้า</button>
+        <select id="admin-page-select" onchange="setInstructorPage(parseInt(this.value))" class="px-3 py-1 rounded bg-slate-950 border border-amber-500/40 text-amber-300 text-xs font-bold max-w-[260px] md:max-w-none">
+          <option value="1">PAGE 1: Welcome (ประเด็นเปิด Lab 4)</option>
+          <option value="2">PAGE 2: Connect (Lab 1–3 &rarr; Lab 4)</option>
+          <option value="3">PAGE 3: Autonomy Dilemma (โหวตกรณีปฏิเสธการรักษา)</option>
+          <option value="4">PAGE 4: See the Room (มุมมองของห้องต่อสิทธิผู้ป่วย)</option>
+          <option value="5">PAGE 5: Assessing Capacity (ประเมินความสามารถตัดสินใจ 4 องค์ประกอบ)</option>
+          <option value="6">PAGE 6: Group Case Analysis (วิเคราะห์เคสรายกลุ่ม)</option>
+          <option value="7">PAGE 7: Elements of Informed Consent (องค์ประกอบความยินยอมที่แท้จริง)</option>
+          <option value="8">PAGE 8: Barriers to Understanding (อุปสรรคการสื่อสาร/ความเข้าใจ)</option>
+          <option value="9">PAGE 9: Surrogate Decision Making (การตัดสินใจแทนผู้ป่วย)</option>
+          <option value="10">PAGE 10: Emergency Exceptions (ข้อยกเว้นกรณีฉุกเฉิน/ภาวะวิกฤต)</option>
+          <option value="11">PAGE 11: Ethical Tension Map (Autonomy &harr; Beneficence)</option>
+          <option value="12">PAGE 12: Professional Dilemma (ผู้ป่วยมีสติแต่ปฏิเสธยาจำเป็น)</option>
+          <option value="13">PAGE 13: Reasoning &amp; Principles (หลักคิดเบื้องหลังการตัดสินใจ)</option>
+          <option value="14">PAGE 14: Challenge 1 — Borderline Capacity (ความสามารถก้ำกึ่ง)</option>
+          <option value="15">PAGE 15: Challenge 2 — Family Demand (ญาติขอปกปิดความจริง)</option>
+          <option value="16">PAGE 16: Challenge 3 — Life Threatening (อันตรายถึงชีวิต)</option>
+          <option value="17">PAGE 17: Group Synthesis (Autonomy &amp; Consent Map)</option>
+          <option value="18">PAGE 18: Gallery Review &amp; Peer Challenge</option>
+          <option value="19">PAGE 19: Exit Reflection (Professional Identity)</option>
+        </select>
+        <button onclick="changeInstructorPage(1)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold border border-slate-700">ถัดไป ▶</button>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer bg-slate-800 px-2.5 py-1 rounded border border-slate-700">
+          <input type="checkbox" id="chk-sync-lock" onchange="toggleSyncLock(this.checked)" checked class="accent-amber-500">
+          <span>ล็อกหน้าจอนิสิตตามอาจารย์</span>
+        </label>
+        <a href="grading-180433.html?lab=4" class="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-sm">ประเมินผล (เดี่ยว + กลุ่ม)</a>
+        <button onclick="openAdminDrawer('qr')" class="px-2.5 py-1 rounded bg-sky-600/80 hover:bg-sky-600 text-white text-xs font-bold">QR เข้า Lab 4</button>
+        <button onclick="exportLab4Excel()" class="px-2.5 py-1 rounded bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold">Export Excel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP PROGRESS BAR -->
+  <div class="bg-slate-900/50 border-b border-slate-800/80 px-4 py-2">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      <div class="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar" id="step-pills-container"></div>
+      <span id="sync-status-pill" class="shrink-0 text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+        ● Sync ตามหน้าจออาจารย์
+      </span>
+    </div>
+  </div>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 w-full max-w-6xl mx-auto p-4 md:p-6">
+    <div id="page-container"></div>
+  </main>
+
+  <!-- STUDENT LOGIN MODAL -->
+  <div id="student-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-md glass rounded-2xl p-6 shadow-2xl border border-slate-700 space-y-4">
+      <div class="text-center">
+        <h3 class="text-lg font-bold text-white">ข้อมูลผู้เข้าร่วมปฏิบัติการที่ 4</h3>
+        <p class="text-xs text-slate-400 mt-1">กรอกรหัสนิสิต 8 หลัก เพื่อดึงชื่อและกลุ่มคงที่ (1–10) อัตโนมัติ</p>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1">รหัสนิสิต (8 หลัก)</label>
+        <input type="text" id="modal-sid" maxlength="8" inputmode="numeric" placeholder="เช่น 66210052"
+          class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-lg tracking-widest focus:outline-none focus:border-sky-500" />
+        <p id="modal-std-preview" class="text-xs mt-1.5 text-slate-400">กรอกรหัสนิสิตเพื่อตรวจสอบรายชื่อ</p>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">กลุ่มคงที่ (1–10)</label>
+          <select id="modal-group" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm">
+            <option value="">-- เลือกกลุ่ม --</option>
+            ${[1,2,3,4,5,6,7,8,9,10].map(g => `<option value="${g}">กลุ่มที่ ${g}</option>`).join('')}
+          </select>
         </div>
-
-        <!-- Tab 1: Guide & Breakout Rooms -->
-        <div id="tab-guide" class="space-y-6">
-            <!-- Activity Timeline -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="glass-card rounded-xl p-5 space-y-2">
-                    <div class="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center font-display font-bold">1</div>
-                    <h3 class="font-display font-semibold text-white">ชี้แจงปฏิบัติการและชมภาพยนตร์</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">รับฟังคำชี้แจงประเด็นสำคัญที่ต้องสังเกต (Ethical Issues, Patient Rights, Professional Integrity) และรับชมภาพยนตร์กรณีศึกษา</p>
-                </div>
-                <div class="glass-card rounded-xl p-5 space-y-2">
-                    <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-display font-bold">2</div>
-                    <h3 class="font-display font-semibold text-white">อภิปรายแลกเปลี่ยนในกลุ่มย่อย</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">แยกเข้าห้องกลุ่มย่อย 7 กลุ่ม เพื่ออภิปรายประเด็นจริยธรรมที่พบ เปรียบเทียบกับข้อบังคับสภาเภสัชกรรมว่าด้วยจรรยาบรรณวิชาชีพ</p>
-                </div>
-                <div class="glass-card rounded-xl p-5 space-y-2">
-                    <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-display font-bold">3</div>
-                    <h3 class="font-display font-semibold text-white">บันทึกงานและสะท้อนคิด (Reflection)</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">กรอกแบบบันทึกงาน Lab 4 สะท้อนการนำข้อคิดไปประยุกต์ใช้ในการเป็นเภสัชกรที่ดีและส่งเข้าระบบภายในเวลาที่กำหนด</p>
-                </div>
-            </div>
-
-            <!-- Room Allocation (7 Groups per Syllabus) -->
-            <div class="glass-card rounded-2xl p-6 space-y-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-display font-semibold text-white flex items-center">
-                        <i data-lucide="door-open" class="w-5 h-5 mr-2 text-sky-400"></i>
-                        การจัดห้องปฏิบัติการกลุ่มย่อย (7 กลุ่ม)
-                    </h3>
-                    <span class="text-xs text-slate-400">ห้องรวมเริ่มต้น: PHA 6203</span>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
-                        <div class="text-xs text-slate-400">กลุ่มที่ 1</div>
-                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.6203</div>
-                    </div>
-                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
-                        <div class="text-xs text-slate-400">กลุ่มที่ 2</div>
-                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.6306</div>
-                    </div>
-                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
-                        <div class="text-xs text-slate-400">กลุ่มที่ 3</div>
-                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.6307</div>
-                    </div>
-                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
-                        <div class="text-xs text-slate-400">กลุ่มที่ 4</div>
-                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.1307</div>
-                    </div>
-                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
-                        <div class="text-xs text-slate-400">กลุ่มที่ 5</div>
-                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.1308</div>
-                    </div>
-                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
-                        <div class="text-xs text-slate-400">กลุ่มที่ 6</div>
-                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.2207</div>
-                    </div>
-                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
-                        <div class="text-xs text-slate-400">กลุ่มที่ 7</div>
-                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.2208</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Discussion Prompts -->
-            <div class="glass-card rounded-2xl p-6 space-y-4">
-                <h3 class="text-lg font-display font-semibold text-white flex items-center">
-                    <i data-lucide="message-square-quote" class="w-5 h-5 mr-2 text-amber-400"></i>
-                    ประเด็นชวนคิดและวิเคราะห์เชิงจริยธรรม
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/70 space-y-1.5">
-                        <h4 class="font-semibold text-sky-300">1. ประเด็นปัญหาทางจริยธรรม (Ethical Dilemmas)</h4>
-                        <p class="text-slate-300 text-xs leading-relaxed">ตัวละครหลักเผชิญกับความขัดแย้งทางคุณค่าหรือหน้าที่อย่างไร (เช่น ระหว่างผลประโยชน์ส่วนตน/องค์กร กับประโยชน์สูงสุดของผู้ป่วย)?</p>
-                    </div>
-                    <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/70 space-y-1.5">
-                        <h4 class="font-semibold text-sky-300">2. หลักจริยธรรมชีวเวช (Biomedical Ethics)</h4>
-                        <p class="text-slate-300 text-xs leading-relaxed">วิเคราะห์เหตุการณ์ตามหลัก Autonomy (เคารพการตัดสินใจ), Beneficence (ทำประโยชน์), Non-maleficence (ไม่ทำอันตราย) และ Justice (ความยุติธรรม)</p>
-                    </div>
-                    <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/70 space-y-1.5">
-                        <h4 class="font-semibold text-sky-300">3. ความเชื่อมโยงกับจรรยาบรรณวิชาชีพเภสัชกรรม</h4>
-                        <p class="text-slate-300 text-xs leading-relaxed">หากสถานการณ์ลักษณะเดียวกันเกิดขึ้นในบริบทของเภสัชกร (โรงพยาบาล ร้านยา อุตสาหกรรม หรือการวิจัย) จะเกี่ยวข้องกับหมวดใดของจรรยาบรรณวิชาชีพ?</p>
-                    </div>
-                    <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/70 space-y-1.5">
-                        <h4 class="font-semibold text-sky-300">4. การพัฒนาตนเองเชิงวิชาชีพ (Professional Identity)</h4>
-                        <p class="text-slate-300 text-xs leading-relaxed">บทเรียนสำคัญที่นิสิตได้รับเพื่อสร้างภูมิคุ้มกันทางจริยธรรม (Moral Courage) เมื่อต้องปฏิบัติงานจริงในอนาคตคืออะไร?</p>
-                    </div>
-                </div>
-            </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">บทบาทใน Lab 4</label>
+          <select id="modal-role" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm">
+            <option value="Facilitator">Facilitator</option>
+            <option value="Recorder">Recorder</option>
+            <option value="Skeptic">Skeptic</option>
+            <option value="Member" selected>Member</option>
+          </select>
         </div>
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeStudentLoginModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-sm font-semibold">ปิด</button>
+        <button onclick="saveStudentProfile()" class="flex-1 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold shadow">บันทึกข้อมูล</button>
+      </div>
+    </div>
+  </div>
 
-        <!-- Tab 2: Student Worksheet Form -->
-        <div id="tab-worksheet" class="hidden space-y-6">
-            <form id="lab4Form" onsubmit="submitLab4(event)" class="glass-card rounded-2xl p-6 space-y-6">
-                <div class="border-b border-slate-700 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                        <h3 class="text-lg font-display font-semibold text-white">แบบบันทึกงานปฏิบัติการที่ 4 (Reflection & Ethical Analysis)</h3>
-                        <p class="text-xs text-slate-400">ข้อมูลจะถูกบันทึกลงระบบและเชื่อมโยงกับหน้าประเมินผล (grading-180433.html)</p>
-                    </div>
-                    <button type="button" onclick="loadDraft()" class="text-xs text-sky-400 hover:text-sky-300 underline self-start sm:self-auto">ดึงข้อมูลร่างที่บันทึกไว้</button>
-                </div>
-
-                <!-- Student Info -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1.5">รหัสนิสิต (8 หลัก) <span class="text-rose-400">*</span></label>
-                        <input type="text" id="studentId" required pattern="[0-9]{8}" maxlength="8" placeholder="เช่น 65210xxx"
-                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-sky-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1.5">ชื่อ - นามสกุล <span class="text-rose-400">*</span></label>
-                        <input type="text" id="studentName" required placeholder="ระบุชื่อ-นามสกุล"
-                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-sky-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1.5">กลุ่มปฏิบัติการ <span class="text-rose-400">*</span></label>
-                        <select id="groupNo" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-sky-500">
-                            <option value="">-- เลือกกลุ่ม --</option>
-                            <option value="1">กลุ่ม 1 (ห้อง ภ.6203)</option>
-                            <option value="2">กลุ่ม 2 (ห้อง ภ.6306)</option>
-                            <option value="3">กลุ่ม 3 (ห้อง ภ.6307)</option>
-                            <option value="4">กลุ่ม 4 (ห้อง ภ.1307)</option>
-                            <option value="5">กลุ่ม 5 (ห้อง ภ.1308)</option>
-                            <option value="6">กลุ่ม 6 (ห้อง ภ.2207)</option>
-                            <option value="7">กลุ่ม 7 (ห้อง ภ.2208)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Reflection Fields -->
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-200 mb-1.5">
-                            1. สรุปประเด็นปัญหาทางจริยธรรมที่สำคัญจากภาพยนตร์ และผลกระทบต่อผู้ป่วย/สังคม <span class="text-rose-400">*</span>
-                        </label>
-                        <textarea id="q1" rows="4" required placeholder="อธิบายสถานการณ์ความขัดแย้งทางจริยธรรม ตัวละครที่เกี่ยวข้อง และผลกระทบที่เกิดขึ้น..."
-                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-sky-500"></textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-200 mb-1.5">
-                            2. การวิเคราะห์ตามหลักจริยธรรม (Autonomy, Beneficence, Non-maleficence, Justice) และจรรยาบรรณวิชาชีพ <span class="text-rose-400">*</span>
-                        </label>
-                        <textarea id="q2" rows="4" required placeholder="เชื่อมโยงเหตุการณ์กับหลักจริยธรรมสากลและข้อบังคับสภาเภสัชกรรมว่าด้วยจรรยาบรรณแห่งวิชาชีพเภสัชกรรม..."
-                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-sky-500"></textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-200 mb-1.5">
-                            3. บทเรียนและการสะท้อนคิด (Self-Reflection) เพื่อการพัฒนาจริยธรรมเชิงวิชาชีพของตนเอง <span class="text-rose-400">*</span>
-                        </label>
-                        <textarea id="q3" rows="4" required placeholder="หากนิสิตอยู่ในสถานการณ์ดังกล่าวจะตัดสินใจอย่างไร และจะนำข้อคิดไปปรับใช้ในการฝึกปฏิบัติงาน/ประกอบวิชาชีพอย่างไร..."
-                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-sky-500"></textarea>
-                    </div>
-                </div>
-
-                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-700">
-                    <button type="button" onclick="saveDraft()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium transition flex items-center justify-center">
-                        <i data-lucide="save" class="w-4 h-4 mr-2"></i>
-                        บันทึกร่าง (Local)
-                    </button>
-                    <button type="submit" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-sm font-semibold shadow-lg shadow-sky-600/20 transition flex items-center justify-center">
-                        <i data-lucide="send" class="w-4 h-4 mr-2"></i>
-                        ส่งบันทึกงานปฏิบัติการที่ 4
-                    </button>
-                </div>
-            </form>
-
-            <!-- Submission Status / History -->
-            <div id="submissionAlert" class="hidden glass-card rounded-xl p-4 border-l-4 border-l-emerald-500 bg-emerald-950/20">
-                <div class="flex items-start space-x-3">
-                    <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
-                    <div class="text-sm">
-                        <p class="font-semibold text-emerald-300">บันทึกข้อมูลปฏิบัติการที่ 4 เรียบร้อยแล้ว</p>
-                        <p id="submissionSummary" class="text-xs text-slate-300 mt-1"></p>
-                    </div>
-                </div>
-            </div>
+  <!-- INSTRUCTOR PIN MODAL -->
+  <div id="pin-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-sm glass rounded-2xl p-6 shadow-2xl border border-slate-700">
+      <h3 class="text-lg font-bold text-white text-center">เข้าสู่โหมดอาจารย์ผู้สอน</h3>
+      <p class="text-xs text-slate-400 text-center mt-1 mb-4">กรอกรหัสผ่านผู้สอน (6 หลัก)</p>
+      <form id="pin-form" class="space-y-4">
+        <input type="password" id="input-pin" inputmode="numeric" placeholder="••••••" required
+          class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-center text-2xl tracking-[0.4em] focus:outline-none focus:border-sky-500" />
+        <p id="pin-error" class="hidden text-xs text-rose-400 text-center font-semibold">รหัสผ่านไม่ถูกต้อง</p>
+        <div class="flex gap-2">
+          <button type="button" onclick="document.getElementById('pin-modal').classList.add('hidden')" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-sm font-semibold">ยกเลิก</button>
+          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-sky-600 text-white text-sm font-bold">ยืนยัน</button>
         </div>
+      </form>
+    </div>
+  </div>
 
-    </main>
+  <!-- ADMIN DRAWER (QR) -->
+  <div id="admin-drawer" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-md glass rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+        <h3 class="text-lg font-bold text-white">QR Code เข้า Lab 4</h3>
+        <button onclick="document.getElementById('admin-drawer').classList.add('hidden')" class="px-3 py-1 rounded-lg bg-slate-800 text-slate-300 text-sm font-bold">✕ ปิด</button>
+      </div>
+      <div id="drawer-body" class="p-6"></div>
+    </div>
+  </div>
 
-    <script>
-        lucide.createIcons();
+  <script>
+    const SUPABASE_URL = localStorage.getItem('sb_url') || 'https://iproktvvetsbxxmpptuj.supabase.co';
+    const SUPABASE_ANON_KEY = localStorage.getItem('sb_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwcm9rdHZ2ZXRzYnh4bXBwdHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyOTU3NDEsImV4cCI6MjEwMjg3MTc0MX0.Kc0USo30u4gvZNJ1bsOdD9k6nwEBcY7lNMAQxWEFzqw';
+    const INSTRUCTOR_PIN = '641023';
+    const LAB_NO = 4;
 
-        function switchTab(tab) {
-            document.getElementById('tab-guide').classList.toggle('hidden', tab !== 'guide');
-            document.getElementById('tab-worksheet').classList.toggle('hidden', tab !== 'worksheet');
-            
-            document.getElementById('btn-guide').className = tab === 'guide' 
-                ? 'tab-btn tab-active px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center transition'
-                : 'tab-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center transition';
-                
-            document.getElementById('btn-worksheet').className = tab === 'worksheet'
-                ? 'tab-btn tab-active px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center transition'
-                : 'tab-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center transition';
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'ethics' } });
+
+    let isAdmin = false;
+    let studentsList = [];
+    let groupAssignments = {};
+    let controlState = { current_page: 1, is_locked: false };
+    let currentViewPage = 1;
+    let pollTimer = null;
+    let activeCharts = {};
+    let studentProfile = JSON.parse(localStorage.getItem('lab1_student_profile') || 'null');
+
+    const PAGE_TITLES = [
+      "1. Welcome", "2. Connect", "3. Dilemma", "4. See Room", "5. Capacity",
+      "6. Group Case", "7. Elements", "8. Barriers", "9. Surrogate", "10. Emergency",
+      "11. Tension", "12. Prof Dilemma", "13. Reasoning", "14. Chal 1", "15. Chal 2",
+      "16. Chal 3", "17. Synthesis", "18. Gallery", "19. Identity"
+    ];
+
+    async function init() {
+      const [stdRes, grpRes, ctrlRes] = await Promise.all([
+        db.from('students_180433').select('*').order('seq', { ascending: true }),
+        db.from('lab_groups').select('*'),
+        db.from('lab_control').select('*').eq('lab_no', LAB_NO).maybeSingle()
+      ]);
+
+      if (stdRes.data) studentsList = stdRes.data;
+      if (grpRes.data) grpRes.data.forEach(g => groupAssignments[g.student_id] = g);
+      if (ctrlRes.data) {
+        controlState = ctrlRes.data;
+        currentViewPage = controlState.current_page;
+      } else {
+        await db.from('lab_control').upsert({ lab_no: LAB_NO, current_page: 1, is_locked: false }, { onConflict: 'lab_no' });
+      }
+
+      updateStudentBadgeUI();
+      renderStepPills();
+      await renderCurrentPage();
+      pollTimer = setInterval(syncLoop, 3500);
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') === 'grading') {
+        window.location.href = 'grading-180433.html?lab=4';
+      }
+    }
+
+    async function syncLoop() {
+      const { data: ctrl } = await db.from('lab_control').select('*').eq('lab_no', LAB_NO).maybeSingle();
+      if (ctrl) {
+        const pageChanged = ctrl.current_page !== controlState.current_page;
+        controlState = ctrl;
+        if (!isAdmin && controlState.is_locked && currentViewPage !== controlState.current_page) {
+          currentViewPage = controlState.current_page;
+          renderStepPills();
+          await renderCurrentPage();
+          return;
         }
+        if (pageChanged) renderStepPills();
+      }
+      if ([3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].includes(currentViewPage)) {
+        await refreshLiveSection(currentViewPage);
+      }
+    }
 
-        function saveDraft() {
-            const draft = {
-                studentId: document.getElementById('studentId').value,
-                studentName: document.getElementById('studentName').value,
-                groupNo: document.getElementById('groupNo').value,
-                q1: document.getElementById('q1').value,
-                q2: document.getElementById('q2').value,
-                q3: document.getElementById('q3').value,
-                savedAt: new Date().toLocaleString('th-TH')
-            };
-            localStorage.setItem('180433_lab4_draft', JSON.stringify(draft));
-            alert('บันทึกร่างลงในเครื่องเรียบร้อยแล้ว (' + draft.savedAt + ')');
+    function updateStudentBadgeUI() {
+      const badgeText = document.getElementById('student-badge-text');
+      const dot = document.getElementById('login-dot');
+      if (studentProfile && studentProfile.student_id) {
+        badgeText.textContent = `${studentProfile.student_id} (กลุ่ม ${studentProfile.group_no || '?'})`;
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+      } else {
+        badgeText.textContent = 'ระบุรหัสนิสิต / กลุ่ม';
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
+      }
+    }
+
+    function openStudentLoginModal() { document.getElementById('student-modal').classList.remove('hidden'); }
+    function closeStudentLoginModal() { document.getElementById('student-modal').classList.add('hidden'); }
+
+    document.getElementById('modal-sid').addEventListener('input', (e) => {
+      const sid = e.target.value.trim();
+      const prev = document.getElementById('modal-std-preview');
+      if (sid.length === 8) {
+        const found = studentsList.find(s => s.student_id === sid);
+        if (found) {
+          prev.innerHTML = `<span class="text-emerald-400 font-semibold">✓ ${found.full_name}</span>`;
+          const grp = groupAssignments[sid];
+          if (grp) document.getElementById('modal-group').value = grp.group_no;
+          return;
         }
+      }
+      prev.textContent = 'กรอกรหัสนิสิต 8 หลักเพื่อตรวจสอบรายชื่อ';
+    });
 
-        function loadDraft() {
-            const raw = localStorage.getItem('180433_lab4_draft');
-            if (!raw) {
-                alert('ไม่พบข้อมูลร่างที่บันทึกไว้');
-                return;
-            }
-            const draft = JSON.parse(raw);
-            document.getElementById('studentId').value = draft.studentId || '';
-            document.getElementById('studentName').value = draft.studentName || '';
-            document.getElementById('groupNo').value = draft.groupNo || '';
-            document.getElementById('q1').value = draft.q1 || '';
-            document.getElementById('q2').value = draft.q2 || '';
-            document.getElementById('q3').value = draft.q3 || '';
+    async function saveStudentProfile() {
+      const sid = document.getElementById('modal-sid').value.trim();
+      const grp = parseInt(document.getElementById('modal-group').value);
+      const role = document.getElementById('modal-role').value;
+      const found = studentsList.find(s => s.student_id === sid);
+      if (!found) return alert('รหัสนิสิตไม่ถูกต้อง');
+      if (!grp) return alert('กรุณาเลือกกลุ่ม');
+
+      studentProfile = { student_id: sid, full_name: found.full_name, group_no: grp, role };
+      localStorage.setItem('lab1_student_profile', JSON.stringify(studentProfile));
+      await db.from('lab_groups').upsert({ student_id: sid, group_no: grp, updated_at: new Date().toISOString() }, { onConflict: 'student_id' });
+      groupAssignments[sid] = { student_id: sid, group_no: grp };
+      updateStudentBadgeUI();
+      closeStudentLoginModal();
+      renderCurrentPage();
+    }
+
+    function requireStudent() {
+      if (!studentProfile?.student_id) { openStudentLoginModal(); return false; }
+      return true;
+    }
+    function requireGroup() {
+      if (!requireStudent()) return false;
+      if (!studentProfile.group_no) { openStudentLoginModal(); return false; }
+      return true;
+    }
+
+    function promptInstructor() {
+      if (isAdmin) { switchRole('admin'); return; }
+      document.getElementById('pin-error').classList.add('hidden');
+      document.getElementById('input-pin').value = '';
+      document.getElementById('pin-modal').classList.remove('hidden');
+    }
+
+    document.getElementById('pin-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (document.getElementById('input-pin').value === INSTRUCTOR_PIN) {
+        document.getElementById('pin-modal').classList.add('hidden');
+        switchRole('admin');
+      } else {
+        document.getElementById('pin-error').classList.remove('hidden');
+      }
+    });
+
+    function switchRole(role) {
+      isAdmin = (role === 'admin');
+      document.getElementById('admin-control-bar').classList.toggle('hidden', !isAdmin);
+      document.getElementById('btn-role-admin').className = isAdmin ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white shadow' : 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300';
+      document.getElementById('btn-role-student').className = !isAdmin ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow' : 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300';
+      renderStepPills();
+      renderCurrentPage();
+    }
+
+    async function setInstructorPage(p) {
+      if (p < 1 || p > 19) return;
+      currentViewPage = p;
+      controlState.current_page = p;
+      if (isAdmin) {
+        document.getElementById('admin-page-select').value = p;
+        await db.from('lab_control').upsert({ lab_no: LAB_NO, current_page: p, is_locked: controlState.is_locked, updated_at: new Date().toISOString() }, { onConflict: 'lab_no' });
+      }
+      renderStepPills();
+      await renderCurrentPage();
+    }
+
+    function changeInstructorPage(delta) { setInstructorPage(currentViewPage + delta); }
+    async function toggleSyncLock(locked) {
+      controlState.is_locked = locked;
+      await db.from('lab_control').upsert({ lab_no: LAB_NO, current_page: currentViewPage, is_locked: locked, updated_at: new Date().toISOString() }, { onConflict: 'lab_no' });
+      renderStepPills();
+    }
+    function navigateToPage(p) {
+      if (!isAdmin && controlState.is_locked && p !== controlState.current_page) return;
+      if (isAdmin) setInstructorPage(p);
+      else { currentViewPage = p; renderStepPills(); renderCurrentPage(); }
+    }
+
+    function renderStepPills() {
+      const container = document.getElementById('step-pills-container');
+      document.getElementById('sync-status-pill').innerHTML = controlState.is_locked ? `🔒 ซิงค์ตามอาจารย์ (Page ${controlState.current_page})` : `🔓 อิสระ`;
+      container.innerHTML = PAGE_TITLES.map((title, idx) => {
+        const p = idx + 1;
+        const active = p === currentViewPage;
+        const disabled = !isAdmin && controlState.is_locked && p !== controlState.current_page;
+        let cls = 'px-2 py-1 rounded-md text-[11px] font-bold whitespace-nowrap transition ';
+        if (active) cls += 'bg-sky-600 text-white shadow';
+        else if (disabled) cls += 'bg-slate-900/40 text-slate-600 cursor-not-allowed';
+        else cls += 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 cursor-pointer';
+        return `<button onclick="navigateToPage(${p})" ${disabled ? 'disabled' : ''} class="${cls}">${title}</button>`;
+      }).join('');
+    }
+
+    async function renderCurrentPage() {
+      Object.values(activeCharts).forEach(c => { try { c.destroy(); } catch(e){} });
+      activeCharts = {};
+      const container = document.getElementById('page-container');
+      const p = currentViewPage;
+
+      if (p === 1) {
+        container.innerHTML = `
+          <div class="glass rounded-3xl p-8 md:p-12 text-center space-y-6 max-w-4xl mx-auto">
+            <span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold border border-sky-500/30">ปฏิบัติการที่ 4 (110 นาที) • 180433 Professional Ethics</span>
+            <h2 class="text-3xl md:text-5xl font-extrabold text-white leading-tight">
+              Autonomy &amp; <span class="text-sky-400">Informed Consent</span>
+            </h2>
+            <p class="text-base md:text-lg text-slate-300 max-w-2xl mx-auto">
+              การเคารพการตัดสินใจและความยินยอมของผู้ป่วย — “เมื่อผู้ป่วยมีสิทธิปฏิเสธการรักษา หรือเลือกทางเลือกที่ขัดกับคำแนะนำของแพทย์/เภสัชกร เราจะปฏิบัติอย่างไรภายใต้กรอบจริยธรรมและกฎหมาย?”
+            </p>
+            <div class="p-5 rounded-2xl bg-sky-500/10 border border-sky-500/30 max-w-2xl mx-auto">
+              <p class="text-sky-300 text-lg md:text-xl font-bold">“สิทธิในการตัดสินใจของผู้ป่วย (Autonomy) สิ้นสุดตรงไหน เมื่อความปลอดภัย (Beneficence) เข้ามาเกี่ยวข้อง?”</p>
+            </div>
+            <button onclick="navigateToPage(2)" class="px-8 py-3.5 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-base shadow-lg transition">
+              เริ่มต้นปฏิบัติการที่ 4 (START) &rarr;
+            </button>
+          </div>`;
+      }
+      else if (p === 2) {
+        container.innerHTML = `
+          <div class="glass rounded-3xl p-6 md:p-10 space-y-6 max-w-4xl mx-auto">
+            <div class="text-center space-y-2">
+              <span class="text-xs font-bold text-sky-400 uppercase">PAGE 2 • CONNECTING THE THREADS</span>
+              <h2 class="text-2xl font-extrabold text-white">เส้นทางจาก Lab 1 &rarr; Lab 2 &rarr; Lab 3 สู่ Lab 4</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+              <div class="p-4 rounded-xl bg-slate-900 border border-slate-800"><strong>Lab 1:</strong> พื้นฐานคิดเชิงจริยธรรม</div>
+              <div class="p-4 rounded-xl bg-slate-900 border border-slate-800"><strong>Lab 2:</strong> ชั่งน้ำหนักคุณค่า (Tension)</div>
+              <div class="p-4 rounded-xl bg-slate-900 border border-slate-800"><strong>Lab 3:</strong> ตัวตนและคุณธรรมวิชาชีพ</div>
+              <div class="p-4 rounded-xl bg-sky-950/60 border border-sky-500/40 text-sky-200"><strong>Lab 4 (วันนี้):</strong> สิทธิผู้ป่วยและความยินยอม</div>
+            </div>
+          </div>`;
+      }
+      else if (p === 3) {
+        container.innerHTML = `
+          <div class="max-w-4xl mx-auto space-y-5">
+            <div class="glass rounded-3xl p-6 md:p-8 space-y-5">
+              <span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold">PAGE 3 • INDIVIDUAL VOTE</span>
+              <h2 class="text-2xl font-extrabold text-white">Case: สิทธิปฏิเสธการรักษา</h2>
+              <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-sm text-slate-200 space-y-2">
+                <p>ผู้ป่วยโรคมะเร็งระยะลุกลาม มีสติดีครบถ้วน (Competent) แจ้งความประสงค์<strong>ปฏิเสธการทำเคมีบำบัด</strong>ต่อ ถึงแม้แพทย์จะยืนยันว่ายังมีโอกาสรักษาหายได้ 50% ญาติขอร้องให้บังคับผู้ป่วย</p>
+                <p class="font-bold text-sky-400">คุณคิดว่าทีมสุขภาพควรเคารพการตัดสินใจของผู้ป่วยหรือไม่?</p>
+              </div>
+              <div class="space-y-2">
+                ${[['RESPECT', '1. เคารพการตัดสินใจ (Respect Autonomy) — ผู้ป่วยมีสิทธิขาด'],
+                  ['PERSUADE', '2. พยายามเกลี้ยกล่อมและให้ข้อมูลเพิ่ม แต่ไม่บังคับ'],
+                  ['SURROGATE', '3. ให้ญาติหรือแพทย์ตัดสินใจร่วมกันเพื่อประโยชน์สูงสุด'],
+                  ['INTERVENE', '4. แทรกแซง/โน้มน้าวอย่างเต็มที่เพราะชีวิตสำคัญที่สุด']].map(([c, l]) => `
+                  <label class="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-sky-500 cursor-pointer text-xs text-white font-bold">
+                    <input type="radio" name="p3_vote" value="${c}" class="accent-sky-500 w-4 h-4">
+                    <span>${l}</span>
+                  </label>
+                `).join('')}
+              </div>
+              <div class="flex justify-between items-center">
+                <span id="p3-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage3Vote()" class="px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm shadow">ส่งผลโหวต</button>
+              </div>
+            </div>
+          </div>`;
+        await refreshLiveSection(3);
+      }
+      else if (p === 4) {
+        container.innerHTML = `
+          <div class="max-w-5xl mx-auto space-y-5">
+            <div class="glass rounded-3xl p-6 md:p-8 space-y-5">
+              <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-extrabold text-white">📊 มุมมองของห้องต่อสิทธิผู้ป่วย (See the Room)</h2>
+                <span class="text-xs text-slate-400">โหวตแล้ว <strong id="p4-count" class="text-white">0</strong> คน</span>
+              </div>
+              <div class="h-72 bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+                <canvas id="chart-p4"></canvas>
+              </div>
+            </div>
+          </div>`;
+        await refreshLiveSection(4);
+      }
+      else if (p === 5) {
+        container.innerHTML = `
+          <div class="max-w-4xl mx-auto glass rounded-3xl p-6 md:p-8 space-y-4">
+            <span class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold">PAGE 5 • CLINICAL CAPACITY ASSESSMENT</span>
+            <h2 class="text-2xl font-extrabold text-white">4 องค์ประกอบในการประเมินความสามารถในการตัดสินใจ (Decision-Making Capacity)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-300">
+              <div class="p-4 rounded-xl bg-slate-900 border border-slate-800"><strong>1. Understanding:</strong> เข้าใจข้อมูลโรค ทางเลือก และผลลัพธ์</div>
+              <div class="p-4 rounded-xl bg-slate-900 border border-slate-800"><strong>2. Appreciating:</strong> ตระหนักว่าข้อมูลนั้นส่งผลต่อตนเองอย่างไร</div>
+              <div class="p-4 rounded-xl bg-slate-900 border border-slate-800"><strong>3. Reasoning:</strong> ใช้เหตุผลเปรียบเทียบข้อดีข้อเสียได้</div>
+              <div class="p-4 rounded-xl bg-slate-900 border border-slate-800"><strong>4. Expressing a Choice:</strong> สามารถแสดงความต้องการได้อย่างชัดเจน</div>
+            </div>
+          </div>`;
+      }
+      else if (p === 6) {
+        container.innerHTML = `
+          <div class="max-w-4xl mx-auto glass rounded-3xl p-6 md:p-8 space-y-4">
+            <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">PAGE 6 • GROUP CASE ANALYSIS (กลุ่ม ${studentProfile?.group_no || '?'})</span>
+            <h2 class="text-2xl font-extrabold text-white">วิเคราะห์เคสความยินยอม (Informed Consent Analysis)</h2>
+            <textarea id="p6-ans" rows="5" placeholder="สรุปการวิเคราะห์เคสของกลุ่ม (ประเด็นความยินยอม อุปสรรค และแนวทางแก้ไข)..."
+              class="w-full p-3.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+            <div class="flex justify-between items-center">
+              <span id="p6-status" class="text-xs text-emerald-400 font-semibold"></span>
+              <button onclick="submitPage6Group()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm">ส่งคำตอบกลุ่ม</button>
+            </div>
+          </div>`;
+      }
+      else if (p >= 7 && p <= 18) {
+        container.innerHTML = `
+          <div class="max-w-4xl mx-auto glass rounded-3xl p-8 text-center space-y-4">
+            <span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold">PAGE ${p}</span>
+            <h2 class="text-2xl font-extrabold text-white">กิจกรรมขั้นตอนที่ ${p}: Informed Consent &amp; Autonomy Workflows</h2>
+            <p class="text-sm text-slate-300">อาจารย์กำลังนำอภิปรายหัวข้อนี้ในห้องเรียน กรุณาร่วมทำกิจกรรมกับกลุ่มและบันทึกผลลัพธ์</p>
+          </div>`;
+      }
+      else if (p === 19) {
+        container.innerHTML = `
+          <div class="max-w-3xl mx-auto glass rounded-3xl p-6 md:p-8 space-y-5">
+            <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">PAGE 19 • EXIT REFLECTION</span>
+            <h2 class="text-2xl font-extrabold text-white">🎯 Professional Identity: Autonomy &amp; Consent</h2>
+            <textarea id="p19-ref" rows="4" placeholder="สะท้อนสิ่งที่ได้เรียนรู้เกี่ยวกับการเคารพสิทธิผู้ป่วยและการสื่อสารความยินยอม..."
+              class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"></textarea>
+            <div class="flex justify-between items-center">
+              <span id="p19-status" class="text-xs text-emerald-400 font-semibold"></span>
+              <button onclick="submitPage19Exit()" class="px-8 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm">ส่ง Exit Reflection</button>
+            </div>
+          </div>`;
+      }
+    }
+
+    async function submitPage3Vote() {
+      if (!requireStudent()) return;
+      const sel = document.querySelector('input[name="p3_vote"]:checked');
+      if (!sel) return alert('กรุณาเลือกคำตอบ');
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO, student_id: studentProfile.student_id, group_no: studentProfile.group_no,
+        step_key: 'p3_vote', choice_val: sel.value, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,student_id,step_key' });
+      document.getElementById('p3-status').textContent = '✓ บันทึกผลโหวตแล้ว';
+      await refreshLiveSection(3);
+    }
+
+    async function submitPage6Group() {
+      if (!requireGroup()) return;
+      const val = document.getElementById('p6-ans').value.trim();
+      if (!val) return alert('กรุณากรอกคำตอบ');
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: 'p6_analysis',
+        text_val: val, submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,group_no,step_key' });
+      document.getElementById('p6-status').textContent = '✓ บันทึกคำตอบกลุ่มแล้ว';
+    }
+
+    async function submitPage19Exit() {
+      if (!requireStudent()) return;
+      const val = document.getElementById('p19-ref').value.trim();
+      if (!val) return alert('กรุณากรอกสะท้อนความคิดเห็น');
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO, student_id: studentProfile.student_id, group_no: studentProfile.group_no,
+        step_key: 'p19_exit', text_val: val, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,student_id,step_key' });
+      document.getElementById('p19-status').textContent = '✓ บันทึกเรียบร้อย ขอบคุณครับ!';
+    }
+
+    async function refreshLiveSection(p) {
+      if (p === 4) {
+        const { data } = await db.from('lab_individual_responses').select('choice_val').eq('lab_no', LAB_NO).eq('step_key', 'p3_vote');
+        const rows = data || [];
+        const cntEl = document.getElementById('p4-count');
+        if (cntEl) cntEl.textContent = rows.length;
+        const canvas = document.getElementById('chart-p4');
+        if (!canvas) return;
+        const codes = ['RESPECT', 'PERSUADE', 'SURROGATE', 'INTERVENE'];
+        const labels = ['1. เคารพสิทธิ', '2. เกลี้ยกล่อม', '3. ให้ญาติร่วมตัดสิน', '4. แทรกแซงเต็มที่'];
+        const counts = codes.map(c => rows.filter(r => r.choice_val === c).length);
+        if (activeCharts['chart-p4']) {
+          activeCharts['chart-p4'].data.datasets[0].data = counts;
+          activeCharts['chart-p4'].update('none');
+          return;
         }
+        activeCharts['chart-p4'] = new Chart(canvas, {
+          type: 'bar',
+          data: { labels, datasets: [{ label: 'จำนวนเสียง', data: counts, backgroundColor: '#0ea5e9', borderRadius: 8 }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#cbd5e1' } }, y: { ticks: { color: '#cbd5e1', precision: 0 } } } }
+        });
+      }
+    }
 
-        function submitLab4(e) {
-            e.preventDefault();
-            const record = {
-                lab: 'lab4',
-                studentId: document.getElementById('studentId').value.trim(),
-                studentName: document.getElementById('studentName').value.trim(),
-                groupNo: document.getElementById('groupNo').value,
-                q1: document.getElementById('q1').value.trim(),
-                q2: document.getElementById('q2').value.trim(),
-                q3: document.getElementById('q3').value.trim(),
-                submittedAt: new Date().toISOString()
-            };
+    function openAdminDrawer(type) {
+      const drawer = document.getElementById('admin-drawer');
+      const body = document.getElementById('drawer-body');
+      drawer.classList.remove('hidden');
+      const url = window.location.href.split('?')[0];
+      body.innerHTML = `
+        <div class="flex flex-col items-center justify-center p-6 bg-white rounded-2xl text-slate-900">
+          <div id="drawer-qr-box"></div>
+          <p class="font-extrabold text-base mt-3">180433 • Lab 4 Dashboard</p>
+          <p class="text-xs text-slate-500 font-mono mt-1 break-all text-center">${url}</p>
+        </div>`;
+      new QRCode(document.getElementById('drawer-qr-box'), { text: url, width: 220, height: 220 });
+    }
 
-            // Save to shared LocalStorage store for grading-180433.html integration
-            const allSubmissions = JSON.parse(localStorage.getItem('180433_submissions') || '{}');
-            if (!allSubmissions.lab4) allSubmissions.lab4 = {};
-            allSubmissions.lab4[record.studentId] = record;
-            localStorage.setItem('180433_submissions', JSON.stringify(allSubmissions));
+    async function exportLab4Excel() {
+      const [indivRes, grpRes] = await Promise.all([
+        db.from('lab_individual_responses').select('*').eq('lab_no', LAB_NO),
+        db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO)
+      ]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(indivRes.data || []), 'Lab4_Individual');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(grpRes.data || []), 'Lab4_Group');
+      XLSX.writeFile(wb, 'ผลปฏิบัติการที่4_180433_2-2569.xlsx');
+    }
 
-            const alertBox = document.getElementById('submissionAlert');
-            const summary = document.getElementById('submissionSummary');
-            summary.textContent = `รหัสนิสิต: ${record.studentId} (${record.studentName}) | กลุ่มที่ ${record.groupNo} | เวลาส่ง: ${new Date().toLocaleString('th-TH')}`;
-            alertBox.classList.remove('hidden');
-            alertBox.scrollIntoView({ behavior: 'smooth' });
-        }
-    </script>
+    init();
+  </script>
 </body>
 </html>
