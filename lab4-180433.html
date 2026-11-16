@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ปฏิบัติการที่ 4: การพัฒนาจริยธรรมเชิงวิชาชีพทางการแพทย์ | 180433</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Sarabun', 'sans-serif'],
+                        display: ['Prompt', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.8); }
+        .tab-active { background-color: #0284c7; color: white; }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased selection:bg-sky-500/30">
+
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 glass-card border-b border-slate-700/80">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <a href="index.html" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="กลับหน้าหลัก">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <div>
+                    <span class="text-xs font-medium text-sky-400 tracking-wider uppercase">180433 จรรยาบรรณวิชาชีพ</span>
+                    <h1 class="text-base sm:text-lg font-display font-semibold text-white leading-tight">ปฏิบัติการที่ 4: การพัฒนาจริยธรรมเชิงวิชาชีพทางการแพทย์</h1>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+                    Active Learning
+                </span>
+                <a href="grading-180433.html" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-sm">
+                    <i data-lucide="clipboard-check" class="w-4 h-4 mr-1.5"></i>
+                    หน้าประเมินผล
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+        <!-- Header Banner -->
+        <div class="glass-card rounded-2xl p-6 border-l-4 border-l-sky-500">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="space-y-2">
+                    <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                        <span class="px-2 py-0.5 rounded bg-slate-800 text-sky-300 border border-slate-700">CLO 1</span>
+                        <span>•</span>
+                        <span>ภาคเรียนที่ 2/2568</span>
+                        <span>•</span>
+                        <span>น้ำหนักคะแนน: ร่วมกับปฏิบัติการที่ 2 (รวม 15%)</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-display font-bold text-white">การชมภาพยนตร์และอภิปรายพัฒนาจริยธรรมเชิงวิชาชีพทางการแพทย์</h2>
+                    <p class="text-sm text-slate-300 max-w-3xl">
+                        วิเคราะห์ประเด็นคุณธรรม จริยธรรมแห่งวิชาชีพ ความขัดแย้งทางผลประโยชน์ สิทธิผู้ป่วย และความรับผิดชอบต่อสังคมจากสื่อภาพยนตร์ที่กำหนด พร้อมแลกเปลี่ยนมุมมองในกลุ่มย่อย (7 กลุ่ม) และบันทึกผลสรุปรายบุคคล/รายกลุ่ม
+                    </p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+                    <button onclick="switchTab('guide')" id="btn-guide" class="tab-btn tab-active px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center transition">
+                        <i data-lucide="film" class="w-4 h-4 mr-2"></i>
+                        คำชี้แจง & ห้องกลุ่มย่อย
+                    </button>
+                    <button onclick="switchTab('worksheet')" id="btn-worksheet" class="tab-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center transition">
+                        <i data-lucide="file-edit" class="w-4 h-4 mr-2"></i>
+                        แบบบันทึกงาน Lab 4
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 1: Guide & Breakout Rooms -->
+        <div id="tab-guide" class="space-y-6">
+            <!-- Activity Timeline -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="glass-card rounded-xl p-5 space-y-2">
+                    <div class="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center font-display font-bold">1</div>
+                    <h3 class="font-display font-semibold text-white">ชี้แจงปฏิบัติการและชมภาพยนตร์</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">รับฟังคำชี้แจงประเด็นสำคัญที่ต้องสังเกต (Ethical Issues, Patient Rights, Professional Integrity) และรับชมภาพยนตร์กรณีศึกษา</p>
+                </div>
+                <div class="glass-card rounded-xl p-5 space-y-2">
+                    <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-display font-bold">2</div>
+                    <h3 class="font-display font-semibold text-white">อภิปรายแลกเปลี่ยนในกลุ่มย่อย</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">แยกเข้าห้องกลุ่มย่อย 7 กลุ่ม เพื่ออภิปรายประเด็นจริยธรรมที่พบ เปรียบเทียบกับข้อบังคับสภาเภสัชกรรมว่าด้วยจรรยาบรรณวิชาชีพ</p>
+                </div>
+                <div class="glass-card rounded-xl p-5 space-y-2">
+                    <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-display font-bold">3</div>
+                    <h3 class="font-display font-semibold text-white">บันทึกงานและสะท้อนคิด (Reflection)</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">กรอกแบบบันทึกงาน Lab 4 สะท้อนการนำข้อคิดไปประยุกต์ใช้ในการเป็นเภสัชกรที่ดีและส่งเข้าระบบภายในเวลาที่กำหนด</p>
+                </div>
+            </div>
+
+            <!-- Room Allocation (7 Groups per Syllabus) -->
+            <div class="glass-card rounded-2xl p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-display font-semibold text-white flex items-center">
+                        <i data-lucide="door-open" class="w-5 h-5 mr-2 text-sky-400"></i>
+                        การจัดห้องปฏิบัติการกลุ่มย่อย (7 กลุ่ม)
+                    </h3>
+                    <span class="text-xs text-slate-400">ห้องรวมเริ่มต้น: PHA 6203</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
+                        <div class="text-xs text-slate-400">กลุ่มที่ 1</div>
+                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.6203</div>
+                    </div>
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
+                        <div class="text-xs text-slate-400">กลุ่มที่ 2</div>
+                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.6306</div>
+                    </div>
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
+                        <div class="text-xs text-slate-400">กลุ่มที่ 3</div>
+                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.6307</div>
+                    </div>
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
+                        <div class="text-xs text-slate-400">กลุ่มที่ 4</div>
+                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.1307</div>
+                    </div>
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
+                        <div class="text-xs text-slate-400">กลุ่มที่ 5</div>
+                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.1308</div>
+                    </div>
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
+                        <div class="text-xs text-slate-400">กลุ่มที่ 6</div>
+                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.2207</div>
+                    </div>
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-center hover:border-sky-500/50 transition">
+                        <div class="text-xs text-slate-400">กลุ่มที่ 7</div>
+                        <div class="text-base font-display font-bold text-sky-400 mt-1">ภ.2208</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discussion Prompts -->
+            <div class="glass-card rounded-2xl p-6 space-y-4">
+                <h3 class="text-lg font-display font-semibold text-white flex items-center">
+                    <i data-lucide="message-square-quote" class="w-5 h-5 mr-2 text-amber-400"></i>
+                    ประเด็นชวนคิดและวิเคราะห์เชิงจริยธรรม
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/70 space-y-1.5">
+                        <h4 class="font-semibold text-sky-300">1. ประเด็นปัญหาทางจริยธรรม (Ethical Dilemmas)</h4>
+                        <p class="text-slate-300 text-xs leading-relaxed">ตัวละครหลักเผชิญกับความขัดแย้งทางคุณค่าหรือหน้าที่อย่างไร (เช่น ระหว่างผลประโยชน์ส่วนตน/องค์กร กับประโยชน์สูงสุดของผู้ป่วย)?</p>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/70 space-y-1.5">
+                        <h4 class="font-semibold text-sky-300">2. หลักจริยธรรมชีวเวช (Biomedical Ethics)</h4>
+                        <p class="text-slate-300 text-xs leading-relaxed">วิเคราะห์เหตุการณ์ตามหลัก Autonomy (เคารพการตัดสินใจ), Beneficence (ทำประโยชน์), Non-maleficence (ไม่ทำอันตราย) และ Justice (ความยุติธรรม)</p>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/70 space-y-1.5">
+                        <h4 class="font-semibold text-sky-300">3. ความเชื่อมโยงกับจรรยาบรรณวิชาชีพเภสัชกรรม</h4>
+                        <p class="text-slate-300 text-xs leading-relaxed">หากสถานการณ์ลักษณะเดียวกันเกิดขึ้นในบริบทของเภสัชกร (โรงพยาบาล ร้านยา อุตสาหกรรม หรือการวิจัย) จะเกี่ยวข้องกับหมวดใดของจรรยาบรรณวิชาชีพ?</p>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/70 space-y-1.5">
+                        <h4 class="font-semibold text-sky-300">4. การพัฒนาตนเองเชิงวิชาชีพ (Professional Identity)</h4>
+                        <p class="text-slate-300 text-xs leading-relaxed">บทเรียนสำคัญที่นิสิตได้รับเพื่อสร้างภูมิคุ้มกันทางจริยธรรม (Moral Courage) เมื่อต้องปฏิบัติงานจริงในอนาคตคืออะไร?</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Student Worksheet Form -->
+        <div id="tab-worksheet" class="hidden space-y-6">
+            <form id="lab4Form" onsubmit="submitLab4(event)" class="glass-card rounded-2xl p-6 space-y-6">
+                <div class="border-b border-slate-700 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h3 class="text-lg font-display font-semibold text-white">แบบบันทึกงานปฏิบัติการที่ 4 (Reflection & Ethical Analysis)</h3>
+                        <p class="text-xs text-slate-400">ข้อมูลจะถูกบันทึกลงระบบและเชื่อมโยงกับหน้าประเมินผล (grading-180433.html)</p>
+                    </div>
+                    <button type="button" onclick="loadDraft()" class="text-xs text-sky-400 hover:text-sky-300 underline self-start sm:self-auto">ดึงข้อมูลร่างที่บันทึกไว้</button>
+                </div>
+
+                <!-- Student Info -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1.5">รหัสนิสิต (8 หลัก) <span class="text-rose-400">*</span></label>
+                        <input type="text" id="studentId" required pattern="[0-9]{8}" maxlength="8" placeholder="เช่น 65210xxx"
+                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1.5">ชื่อ - นามสกุล <span class="text-rose-400">*</span></label>
+                        <input type="text" id="studentName" required placeholder="ระบุชื่อ-นามสกุล"
+                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1.5">กลุ่มปฏิบัติการ <span class="text-rose-400">*</span></label>
+                        <select id="groupNo" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-sky-500">
+                            <option value="">-- เลือกกลุ่ม --</option>
+                            <option value="1">กลุ่ม 1 (ห้อง ภ.6203)</option>
+                            <option value="2">กลุ่ม 2 (ห้อง ภ.6306)</option>
+                            <option value="3">กลุ่ม 3 (ห้อง ภ.6307)</option>
+                            <option value="4">กลุ่ม 4 (ห้อง ภ.1307)</option>
+                            <option value="5">กลุ่ม 5 (ห้อง ภ.1308)</option>
+                            <option value="6">กลุ่ม 6 (ห้อง ภ.2207)</option>
+                            <option value="7">กลุ่ม 7 (ห้อง ภ.2208)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Reflection Fields -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-200 mb-1.5">
+                            1. สรุปประเด็นปัญหาทางจริยธรรมที่สำคัญจากภาพยนตร์ และผลกระทบต่อผู้ป่วย/สังคม <span class="text-rose-400">*</span>
+                        </label>
+                        <textarea id="q1" rows="4" required placeholder="อธิบายสถานการณ์ความขัดแย้งทางจริยธรรม ตัวละครที่เกี่ยวข้อง และผลกระทบที่เกิดขึ้น..."
+                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-sky-500"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-200 mb-1.5">
+                            2. การวิเคราะห์ตามหลักจริยธรรม (Autonomy, Beneficence, Non-maleficence, Justice) และจรรยาบรรณวิชาชีพ <span class="text-rose-400">*</span>
+                        </label>
+                        <textarea id="q2" rows="4" required placeholder="เชื่อมโยงเหตุการณ์กับหลักจริยธรรมสากลและข้อบังคับสภาเภสัชกรรมว่าด้วยจรรยาบรรณแห่งวิชาชีพเภสัชกรรม..."
+                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-sky-500"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-200 mb-1.5">
+                            3. บทเรียนและการสะท้อนคิด (Self-Reflection) เพื่อการพัฒนาจริยธรรมเชิงวิชาชีพของตนเอง <span class="text-rose-400">*</span>
+                        </label>
+                        <textarea id="q3" rows="4" required placeholder="หากนิสิตอยู่ในสถานการณ์ดังกล่าวจะตัดสินใจอย่างไร และจะนำข้อคิดไปปรับใช้ในการฝึกปฏิบัติงาน/ประกอบวิชาชีพอย่างไร..."
+                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-sky-500"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-700">
+                    <button type="button" onclick="saveDraft()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium transition flex items-center justify-center">
+                        <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                        บันทึกร่าง (Local)
+                    </button>
+                    <button type="submit" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-sm font-semibold shadow-lg shadow-sky-600/20 transition flex items-center justify-center">
+                        <i data-lucide="send" class="w-4 h-4 mr-2"></i>
+                        ส่งบันทึกงานปฏิบัติการที่ 4
+                    </button>
+                </div>
+            </form>
+
+            <!-- Submission Status / History -->
+            <div id="submissionAlert" class="hidden glass-card rounded-xl p-4 border-l-4 border-l-emerald-500 bg-emerald-950/20">
+                <div class="flex items-start space-x-3">
+                    <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
+                    <div class="text-sm">
+                        <p class="font-semibold text-emerald-300">บันทึกข้อมูลปฏิบัติการที่ 4 เรียบร้อยแล้ว</p>
+                        <p id="submissionSummary" class="text-xs text-slate-300 mt-1"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        function switchTab(tab) {
+            document.getElementById('tab-guide').classList.toggle('hidden', tab !== 'guide');
+            document.getElementById('tab-worksheet').classList.toggle('hidden', tab !== 'worksheet');
+            
+            document.getElementById('btn-guide').className = tab === 'guide' 
+                ? 'tab-btn tab-active px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center transition'
+                : 'tab-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center transition';
+                
+            document.getElementById('btn-worksheet').className = tab === 'worksheet'
+                ? 'tab-btn tab-active px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center transition'
+                : 'tab-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center transition';
+        }
+
+        function saveDraft() {
+            const draft = {
+                studentId: document.getElementById('studentId').value,
+                studentName: document.getElementById('studentName').value,
+                groupNo: document.getElementById('groupNo').value,
+                q1: document.getElementById('q1').value,
+                q2: document.getElementById('q2').value,
+                q3: document.getElementById('q3').value,
+                savedAt: new Date().toLocaleString('th-TH')
+            };
+            localStorage.setItem('180433_lab4_draft', JSON.stringify(draft));
+            alert('บันทึกร่างลงในเครื่องเรียบร้อยแล้ว (' + draft.savedAt + ')');
+        }
+
+        function loadDraft() {
+            const raw = localStorage.getItem('180433_lab4_draft');
+            if (!raw) {
+                alert('ไม่พบข้อมูลร่างที่บันทึกไว้');
+                return;
+            }
+            const draft = JSON.parse(raw);
+            document.getElementById('studentId').value = draft.studentId || '';
+            document.getElementById('studentName').value = draft.studentName || '';
+            document.getElementById('groupNo').value = draft.groupNo || '';
+            document.getElementById('q1').value = draft.q1 || '';
+            document.getElementById('q2').value = draft.q2 || '';
+            document.getElementById('q3').value = draft.q3 || '';
+        }
+
+        function submitLab4(e) {
+            e.preventDefault();
+            const record = {
+                lab: 'lab4',
+                studentId: document.getElementById('studentId').value.trim(),
+                studentName: document.getElementById('studentName').value.trim(),
+                groupNo: document.getElementById('groupNo').value,
+                q1: document.getElementById('q1').value.trim(),
+                q2: document.getElementById('q2').value.trim(),
+                q3: document.getElementById('q3').value.trim(),
+                submittedAt: new Date().toISOString()
+            };
+
+            // Save to shared LocalStorage store for grading-180433.html integration
+            const allSubmissions = JSON.parse(localStorage.getItem('180433_submissions') || '{}');
+            if (!allSubmissions.lab4) allSubmissions.lab4 = {};
+            allSubmissions.lab4[record.studentId] = record;
+            localStorage.setItem('180433_submissions', JSON.stringify(allSubmissions));
+
+            const alertBox = document.getElementById('submissionAlert');
+            const summary = document.getElementById('submissionSummary');
+            summary.textContent = `รหัสนิสิต: ${record.studentId} (${record.studentName}) | กลุ่มที่ ${record.groupNo} | เวลาส่ง: ${new Date().toLocaleString('th-TH')}`;
+            alertBox.classList.remove('hidden');
+            alertBox.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

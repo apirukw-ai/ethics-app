@@ -1,1116 +1,507 @@
 <!DOCTYPE html>
 <html lang="th" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ระบบประเมินผลการปฏิบัติการ (เดี่ยว + กลุ่ม) | 180433</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Sarabun', sans-serif; background-color: #0b1120; color: #f8fafc; }
-    .glass { background: rgba(30, 41, 59, 0.78); backdrop-filter: blur(12px); border: 1px solid rgba(148, 163, 184, 0.16); }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
-    input[type="number"]::-webkit-inner-spin-button { opacity: 1; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบประเมินผลและให้คะแนนปฏิบัติการ (Lab 1–11) | 180433</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Sarabun', 'sans-serif'],
+                        display: ['Prompt', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; }
+        .glass-card { background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.8); }
+    </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen font-sans antialiased">
 
-  <!-- TOP NAVBAR -->
-  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur border-b border-slate-800 px-4 py-3">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <a href="index.html" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1 transition">
-          <span>&larr;</span> <span>หน้าเช็กชื่อ</span>
-        </a>
-        <a id="btn-open-lab" href="lab1-180433.html" class="px-3 py-1.5 rounded-lg bg-sky-950/80 hover:bg-sky-900 border border-sky-700/50 text-xs font-bold text-sky-300 transition">
-          เปิดหน้ากิจกรรม Lab 1
-        </a>
-        <div>
-          <h1 class="text-base md:text-lg font-extrabold text-white leading-tight">ระบบประเมินผลการปฏิบัติการ (เดี่ยว + กลุ่ม)</h1>
-          <p class="text-xs text-slate-400">รายวิชา 180433 จริยธรรมวิชาชีพเภสัชกรรม • กลุ่มเรียน 1 (2/2569)</p>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2 flex-wrap">
-        <span id="db-status-badge" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">
-          กำลังเชื่อมต่อ...
-        </span>
-        <button onclick="openConfigModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700">
-          ตั้งค่า DB
-        </button>
-        <button onclick="exportCurrentLabExcel()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow">
-          Export Excel (Lab นี้)
-        </button>
-        <button onclick="exportAllLabsSummaryExcel()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow">
-          Export สรุปรวมทั้งเทอม
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- LOCK SCREEN (INSTRUCTOR PIN) -->
-  <div id="lock-screen" class="flex-1 flex items-center justify-center p-4">
-    <div class="w-full max-w-sm glass rounded-2xl p-6 shadow-2xl border border-slate-700 space-y-4">
-      <div class="text-center">
-        <span class="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">INSTRUCTOR GRADING HUB</span>
-        <h2 class="text-xl font-extrabold text-white mt-2">เข้าสู่ระบบประเมินผล</h2>
-        <p class="text-xs text-slate-400 mt-1">กรอกรหัสผ่านอาจารย์ผู้สอน (6 หลัก) เพื่อดูคำตอบและให้คะแนน</p>
-      </div>
-      <form id="pin-form" class="space-y-3">
-        <input type="password" id="input-pin" inputmode="numeric" placeholder="••••••" required
-          class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-center text-2xl tracking-[0.4em] focus:outline-none focus:border-sky-500" />
-        <p id="pin-error" class="hidden text-xs text-rose-400 text-center font-semibold">รหัสผ่านไม่ถูกต้อง</p>
-        <button type="submit" class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold shadow">เข้าสู่หน้าประเมิน</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- MAIN GRADING WORKSPACE -->
-  <main id="main-workspace" class="hidden flex-1 w-full max-w-7xl mx-auto p-4 md:p-6 space-y-5">
-
-    <!-- LAB SELECTOR & MODE TABS -->
-    <div class="glass rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3 flex-wrap">
-        <label class="text-xs font-extrabold text-amber-400 uppercase tracking-wider">เลือกปฏิบัติการ:</label>
-        <select id="lab-selector" onchange="onSelectLab(parseInt(this.value))"
-          class="px-3.5 py-2 rounded-xl bg-slate-950 border border-sky-500/40 text-white text-sm font-bold focus:outline-none">
-          <option value="1">Lab 1: Foundations of Ethical Thinking (พื้นฐานการคิดเชิงจริยธรรม)</option>
-          <option value="2">Lab 2: Everyday Ethical Decision Making (การคิดและตัดสินใจทางจริยธรรมในชีวิตประจำวัน)</option>
-          <option value="3">Lab 3: Professional Character &amp; Virtues (คุณธรรมและจริยธรรมของผู้ประกอบวิชาชีพ)</option>
-          <option value="4">Lab 4: Autonomy & Informed Consent (การเคารพการตัดสินใจและความยินยอม)</option>
-          <option value="5">Lab 5: Beneficence & Non-maleficence (การทำประโยชน์และไม่ก่ออันตราย)</option>
-          <option value="6">Lab 6: Justice & Resource Allocation (ความยุติธรรมและการจัดสรรทรัพยากร)</option>
-          <option value="7">Lab 7: Confidentiality & Privacy (การรักษาความลับและข้อมูลส่วนบุคคล)</option>
-          <option value="8">Lab 8: Truth-telling & Disclosure (การบอกความจริงและการเปิดเผยข้อมูล)</option>
-          <option value="9">Lab 9: Conflict of Interest (ผลประโยชน์ทับซ้อนในวิชาชีพเภสัชกรรม)</option>
-          <option value="10">Lab 10: Interprofessional Ethics (จริยธรรมการทำงานร่วมกับสหวิชาชีพ)</option>
-          <option value="11">Lab 11: Case Seminar I (สัมมนากรณีศึกษาเชิงบูรณาการ 1)</option>
-          <option value="12">Lab 12: Case Seminar II & Synthesis (สัมมนากรณีศึกษา 2 และสรุปบทเรียน)</option>
-        </select>
-        <button onclick="reloadLabData()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700">
-          ↻ รีเฟรชคำตอบล่าสุด
-        </button>
-      </div>
-
-      <div class="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
-        <button onclick="switchGradingTab('group')" id="tab-btn-group"
-          class="px-4 py-2 rounded-lg text-xs font-extrabold bg-sky-600 text-white shadow transition">
-          1. ประเมินรายกลุ่ม (Rubric 20 คะแนน)
-        </button>
-        <button onclick="switchGradingTab('individual')" id="tab-btn-individual"
-          class="px-4 py-2 rounded-lg text-xs font-extrabold text-slate-400 hover:text-white transition">
-          2. ประเมินรายบุคคล (90 คน • ฐานกลุ่ม + คะแนนเดี่ยว)
-        </button>
-        <button onclick="switchGradingTab('overview')" id="tab-btn-overview"
-          class="px-4 py-2 rounded-lg text-xs font-extrabold text-slate-400 hover:text-white transition">
-          3. ภาพรวมคะแนนทั้งเทอม (Lab 1–12)
-        </button>
-      </div>
-    </div>
-
-    <!-- KPI SUMMARY BAR -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <div class="glass rounded-xl p-3.5">
-        <p class="text-[11px] text-slate-400 font-bold">ส่งงานกลุ่มแล้ว</p>
-        <p id="kpi-group-sub" class="text-xl font-extrabold text-sky-400 mt-0.5">0 / 10 กลุ่ม</p>
-      </div>
-      <div class="glass rounded-xl p-3.5">
-        <p class="text-[11px] text-slate-400 font-bold">ประเมิน Rubric กลุ่มแล้ว</p>
-        <p id="kpi-group-graded" class="text-xl font-extrabold text-emerald-400 mt-0.5">0 / 10 กลุ่ม</p>
-      </div>
-      <div class="glass rounded-xl p-3.5">
-        <p class="text-[11px] text-slate-400 font-bold">นิสิตมีส่วนร่วมรายบุคคล</p>
-        <p id="kpi-indiv-active" class="text-xl font-extrabold text-amber-400 mt-0.5">0 / 90 คน</p>
-      </div>
-      <div class="glass rounded-xl p-3.5">
-        <p class="text-[11px] text-slate-400 font-bold">คะแนนเฉลี่ยสุทธิ (Lab นี้)</p>
-        <p id="kpi-avg-score" class="text-xl font-extrabold text-indigo-400 mt-0.5">0.00 / 20</p>
-      </div>
-    </div>
-
-    <!-- ==================== TAB 1: GROUP RUBRIC GRADING ==================== -->
-    <section id="view-group" class="space-y-4">
-      <div class="glass rounded-2xl p-4 border border-sky-500/20 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 class="text-base font-extrabold text-white">เกณฑ์ประเมิน Rubric รายกลุ่ม (เต็ม 20 คะแนน)</h2>
-          <p id="rubric-criteria-hint" class="text-xs text-slate-400 mt-0.5">
-            <strong>C1</strong> ระบุปัญหาจริยธรรม (4) • <strong>C2</strong> ผู้เกี่ยวข้อง/ผลกระทบ (4) • <strong>C3</strong> เหตุผลเชื่อมหลักจริยธรรม (4) • <strong>C4</strong> ทางเลือกหลากหลาย (3) • <strong>C5</strong> ตอบสนองข้อมูลใหม่ (3) • <strong>C6</strong> การฟัง/มีส่วนร่วม (2)
-          </p>
-        </div>
-        <button onclick="autoFillFullSample()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700">
-          กำหนดค่าเริ่มต้น 16 คะแนน (กลุ่มที่ยังไม่ให้คะแนน)
-        </button>
-      </div>
-
-      <!-- 10 Group Cards with Side-by-Side Submission + Rubric Form -->
-      <div id="group-cards-container" class="space-y-4"></div>
-    </section>
-
-    <!-- ==================== TAB 2: INDIVIDUAL GRADING (HYBRID) ==================== -->
-    <section id="view-individual" class="hidden space-y-4">
-      <div class="glass rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-2 flex-wrap">
-          <input type="text" id="indiv-search" oninput="renderIndividualTable()" placeholder="ค้นหารหัสนิสิต / ชื่อ-สกุล..."
-            class="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white w-60 focus:outline-none focus:border-sky-500" />
-          <select id="indiv-group-filter" onchange="renderIndividualTable()"
-            class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-bold">
-            <option value="all">ทุกกลุ่ม (1–10)</option>
-            <option value="1">กลุ่มที่ 1</option><option value="2">กลุ่มที่ 2</option>
-            <option value="3">กลุ่มที่ 3</option><option value="4">กลุ่มที่ 4</option>
-            <option value="5">กลุ่มที่ 5</option><option value="6">กลุ่มที่ 6</option>
-            <option value="7">กลุ่มที่ 7</option><option value="8">กลุ่มที่ 8</option>
-            <option value="9">กลุ่มที่ 9</option><option value="10">กลุ่มที่ 10</option>
-            <option value="0">ยังไม่ระบุกลุ่ม</option>
-          </select>
-          <select id="indiv-status-filter" onchange="renderIndividualTable()"
-            class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-bold">
-            <option value="all">สถานะส่งงานเดี่ยว: ทั้งหมด</option>
-            <option value="submitted">ส่งงานเดี่ยวแล้ว</option>
-            <option value="missing">ยังไม่ส่งงานเดี่ยว</option>
-          </select>
-        </div>
-
-        <div class="flex items-center gap-2 flex-wrap">
-          <button onclick="applyAutoIndividualBonus()" class="px-3 py-2 rounded-xl bg-amber-600/90 hover:bg-amber-600 text-white text-xs font-bold shadow">
-            ⚡ หัก -1 อัตโนมัติสำหรับคนไม่ส่งงานเดี่ยว
-          </button>
-          <button onclick="resetIndividualAdjustments()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700">
-            ล้างค่าปรับคะแนนเดี่ยว (= 0)
-          </button>
-        </div>
-      </div>
-
-      <div class="glass rounded-2xl overflow-hidden border border-slate-800">
-        <div class="overflow-x-auto max-h-[650px]">
-          <table class="w-full text-xs text-left">
-            <thead class="bg-slate-900 text-slate-300 sticky top-0 z-10 border-b border-slate-800">
-              <tr>
-                <th class="p-3">ที่</th>
-                <th class="p-3">รหัสนิสิต</th>
-                <th class="p-3">ชื่อ-สกุล</th>
-                <th class="p-3 text-center">กลุ่ม</th>
-                <th class="p-3">บทบาท</th>
-                <th class="p-3">ผลงานเดี่ยวที่ส่งใน Lab นี้</th>
-                <th class="p-3 text-center">คะแนนกลุ่ม (20)</th>
-                <th class="p-3 text-center">ปรับคะแนนเดี่ยว (+/-)</th>
-                <th class="p-3 text-center text-emerald-400">คะแนนสุทธิ (20)</th>
-                <th class="p-3">หมายเหตุรายบุคคล</th>
-              </tr>
-            </thead>
-            <tbody id="indiv-tbody" class="divide-y divide-slate-800/80"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== TAB 3: TERM OVERVIEW (LAB 1–12) ==================== -->
-    <section id="view-overview" class="hidden space-y-4">
-      <div class="glass rounded-2xl p-4 flex flex-wrap justify-between items-center gap-3">
-        <div>
-          <h2 class="text-base font-extrabold text-white">ตารางสรุปคะแนนปฏิบัติการสะสมรายบุคคล (Lab 1–12)</h2>
-          <p class="text-xs text-slate-400">คำนวณจาก (คะแนน Rubric กลุ่ม + คะแนนปรับรายบุคคล) สูงสุด 20 คะแนน/ปฏิบัติการ</p>
-        </div>
-        <button onclick="loadAllLabsMatrix()" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold">
-          ↻ โหลดคะแนนล่าสุดทั้ง 12 ปฏิบัติการ
-        </button>
-      </div>
-
-      <div class="glass rounded-2xl overflow-hidden border border-slate-800">
-        <div class="overflow-x-auto max-h-[650px]">
-          <table class="w-full text-xs text-left">
-            <thead class="bg-slate-900 text-slate-300 sticky top-0 z-10 border-b border-slate-800">
-              <tr>
-                <th class="p-2.5">ที่</th>
-                <th class="p-2.5">รหัสนิสิต</th>
-                <th class="p-2.5">ชื่อ-สกุล</th>
-                <th class="p-2.5 text-center">กลุ่ม</th>
-                <th class="p-2.5 text-center">L1</th><th class="p-2.5 text-center">L2</th>
-                <th class="p-2.5 text-center">L3</th><th class="p-2.5 text-center">L4</th>
-                <th class="p-2.5 text-center">L5</th><th class="p-2.5 text-center">L6</th>
-                <th class="p-2.5 text-center">L7</th><th class="p-2.5 text-center">L8</th>
-                <th class="p-2.5 text-center">L9</th><th class="p-2.5 text-center">L10</th>
-                <th class="p-2.5 text-center">L11</th><th class="p-2.5 text-center">L12</th>
-                <th class="p-2.5 text-center text-emerald-400">รวม (240)</th>
-                <th class="p-2.5 text-center text-sky-400">เฉลี่ย %</th>
-              </tr>
-            </thead>
-            <tbody id="overview-tbody" class="divide-y divide-slate-800/80"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- ==================== DB CONFIG MODAL ==================== -->
-  <div id="config-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="w-full max-w-md glass rounded-2xl p-6 shadow-2xl border border-slate-700 space-y-4">
-      <h3 class="text-lg font-bold text-white">ตั้งค่าการเชื่อมต่อ Supabase</h3>
-      <div>
-        <label class="block text-xs font-bold text-slate-300 mb-1">Supabase URL</label>
-        <input type="text" id="cfg-url" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-mono" />
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-slate-300 mb-1">Supabase Anon Key</label>
-        <textarea id="cfg-key" rows="3" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-mono"></textarea>
-      </div>
-      <div class="flex gap-2">
-        <button onclick="document.getElementById('config-modal').classList.add('hidden')" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">ปิด</button>
-        <button onclick="saveDbConfig()" class="flex-1 py-2 rounded-xl bg-sky-600 text-white text-xs font-bold">บันทึกและเชื่อมต่อใหม่</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // =========================================================================
-    // SUPABASE & GLOBAL STATE
-    // =========================================================================
-    const DEFAULT_URL = 'https://iproktvvetsbxxmpptuj.supabase.co';
-    const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwcm9rdHZ2ZXRzYnh4bXBwdHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyOTU3NDEsImV4cCI6MjEwMjg3MTc0MX0.Kc0USo30u4gvZNJ1bsOdD9k6nwEBcY7lNMAQxWEFzqw';
-    const INSTRUCTOR_PIN = '641023';
-
-    let sbUrl = localStorage.getItem('sb_url') || DEFAULT_URL;
-    let sbKey = localStorage.getItem('sb_key') || DEFAULT_KEY;
-    let db = supabase.createClient(sbUrl, sbKey, { db: { schema: 'ethics' } });
-
-    let currentLab = 1;
-    let currentTab = 'group';
-    let studentsList = [];
-    let groupAssignments = {}; // student_id -> { group_no, role_lab1, ... }
-    let groupResponses = [];   // rows from lab_group_responses for currentLab
-    let indivResponses = [];   // rows from lab_individual_responses for currentLab
-    let rubricScores = {};     // group_no -> { c1_issue..c6_listening, total_score, feedback }
-    let indivAdjustments = {}; // student_id -> { adj, note } (stored in lab_individual_responses step_key='grade_adj' + localStorage)
-
-    // =========================================================================
-    // AUTH & INITIALIZATION
-    // =========================================================================
-    document.getElementById('pin-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (document.getElementById('input-pin').value === INSTRUCTOR_PIN) {
-        sessionStorage.setItem('ethics_grading_unlocked', '1');
-        unlockApp();
-      } else {
-        document.getElementById('pin-error').classList.remove('hidden');
-      }
-    });
-
-    async function unlockApp() {
-      document.getElementById('lock-screen').classList.add('hidden');
-      document.getElementById('main-workspace').classList.remove('hidden');
-
-      const params = new URLSearchParams(window.location.search);
-      const qLab = parseInt(params.get('lab'));
-      if (qLab >= 1 && qLab <= 12) {
-        currentLab = qLab;
-        document.getElementById('lab-selector').value = qLab;
-      }
-      updateOpenLabLink();
-      await loadBaseRoster();
-      await reloadLabData();
-    }
-
-    if (sessionStorage.getItem('ethics_grading_unlocked') === '1') {
-      unlockApp();
-    }
-
-    function openConfigModal() {
-      document.getElementById('cfg-url').value = sbUrl;
-      document.getElementById('cfg-key').value = sbKey;
-      document.getElementById('config-modal').classList.remove('hidden');
-    }
-
-    async function saveDbConfig() {
-      sbUrl = document.getElementById('cfg-url').value.trim() || DEFAULT_URL;
-      sbKey = document.getElementById('cfg-key').value.trim() || DEFAULT_KEY;
-      localStorage.setItem('sb_url', sbUrl);
-      localStorage.setItem('sb_key', sbKey);
-      db = supabase.createClient(sbUrl, sbKey, { db: { schema: 'ethics' } });
-      document.getElementById('config-modal').classList.add('hidden');
-      await loadBaseRoster();
-      await reloadLabData();
-    }
-
-    function updateOpenLabLink() {
-      const btn = document.getElementById('btn-open-lab');
-      btn.href = `lab${currentLab}-180433.html`;
-      btn.textContent = `เปิดหน้ากิจกรรม Lab ${currentLab}`;
-      const hint = document.getElementById('rubric-criteria-hint');
-      if (hint) {
-        if (currentLab === 2) {
-          hint.innerHTML = `<strong>C1</strong> ระบุปัญหาจริยธรรม (4) • <strong>C2</strong> Stakeholders/ผลกระทบ (4) • <strong>C3</strong> คุณค่าที่ขัดแย้ง &amp; เหตุผลตัดสินใจ (4) • <strong>C4</strong> เสนอ/เปรียบเทียบทางเลือก (3) • <strong>C5</strong> ปรับเหตุผลเมื่อข้อมูลเปลี่ยน Ch1–2 (3) • <strong>C6</strong> การมีส่วนร่วม/รับฟัง (2)`;
-        } else if (currentLab === 3) {
-          hint.innerHTML = `<strong>C1</strong> อธิบายคุณธรรมได้ชัดเจน (3) • <strong>C2</strong> แปลงเป็นพฤติกรรมที่สังเกตได้ (4) • <strong>C3</strong> วิเคราะห์ความสำคัญ/ผลกระทบ (3) • <strong>C4</strong> วิเคราะห์ความขัดแย้งระหว่างคุณธรรม (3) • <strong>C5</strong> ทางเลือก/เหตุผล &amp; ตอบสนอง Challenge (5) • <strong>C6</strong> การอภิปรายและรับฟัง (2) • <em>รวม 20 คะแนน</em>`;
-        } else {
-          hint.innerHTML = `<strong>C1</strong> ระบุปัญหาจริยธรรม (4) • <strong>C2</strong> ผู้เกี่ยวข้อง/ผลกระทบ (4) • <strong>C3</strong> เหตุผลเชื่อมหลักจริยธรรม (4) • <strong>C4</strong> ทางเลือกหลากหลาย (3) • <strong>C5</strong> ตอบสนองข้อมูลใหม่ (3) • <strong>C6</strong> การฟัง/มีส่วนร่วม (2)`;
-        }
-      }
-    }
-
-    async function onSelectLab(labNo) {
-      currentLab = labNo;
-      updateOpenLabLink();
-      await reloadLabData();
-    }
-
-    function switchGradingTab(tab) {
-      currentTab = tab;
-      ['group', 'individual', 'overview'].forEach(t => {
-        document.getElementById(`view-${t}`).classList.toggle('hidden', t !== tab);
-        document.getElementById(`tab-btn-${t}`).className = (t === tab)
-          ? 'px-4 py-2 rounded-lg text-xs font-extrabold bg-sky-600 text-white shadow transition'
-          : 'px-4 py-2 rounded-lg text-xs font-extrabold text-slate-400 hover:text-white transition';
-      });
-      if (tab === 'overview') loadAllLabsMatrix();
-    }
-
-    // =========================================================================
-    // DATA LOADING (ROSTER, GROUPS, SUBMISSIONS, RUBRIC & ADJUSTMENTS)
-    // =========================================================================
-    async function loadBaseRoster() {
-      const badge = document.getElementById('db-status-badge');
-      try {
-        const [stdRes, grpRes] = await Promise.all([
-          db.from('students_180433').select('*').order('seq', { ascending: true }),
-          db.from('lab_groups').select('*')
-        ]);
-        if (stdRes.error) throw stdRes.error;
-        studentsList = stdRes.data || [];
-        groupAssignments = {};
-        (grpRes.data || []).forEach(g => groupAssignments[g.student_id] = g);
-
-        badge.className = 'px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 text-xs font-bold border border-emerald-500/30';
-        badge.textContent = `● เชื่อมต่อแล้ว (${studentsList.length} คน)`;
-      } catch (err) {
-        badge.className = 'px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-300 text-xs font-bold border border-rose-500/30';
-        badge.textContent = `✕ เชื่อมต่อ DB ไม่สำเร็จ`;
-        console.error(err);
-      }
-    }
-
-    async function reloadLabData() {
-      const [gResp, iResp, rResp] = await Promise.all([
-        db.from('lab_group_responses').select('*').eq('lab_no', currentLab).order('group_no'),
-        db.from('lab_individual_responses').select('*').eq('lab_no', currentLab),
-        db.from('lab_rubric_scores').select('*').eq('lab_no', currentLab).order('group_no')
-      ]);
-
-      groupResponses = gResp.data || [];
-      indivResponses = iResp.data || [];
-
-      // Parse rubric scores
-      rubricScores = {};
-      const localRubric = JSON.parse(localStorage.getItem(`ethics_rubric_lab${currentLab}`) || '{}');
-      for (let g = 1; g <= 10; g++) {
-        const dbRow = (rResp.data || []).find(r => r.group_no === g);
-        if (dbRow) {
-          rubricScores[g] = {
-            c1_issue: Number(dbRow.c1_issue || 0),
-            c2_stakeholder: Number(dbRow.c2_stakeholder || 0),
-            c3_reasoning: Number(dbRow.c3_reasoning || 0),
-            c4_alternatives: Number(dbRow.c4_alternatives || 0),
-            c5_new_info: Number(dbRow.c5_new_info || 0),
-            c6_listening: Number(dbRow.c6_listening || 0),
-            feedback: dbRow.feedback || ''
-          };
-        } else if (localRubric[g] && Array.isArray(localRubric[g].d)) {
-          const d = localRubric[g].d;
-          rubricScores[g] = {
-            c1_issue: d[0]||0, c2_stakeholder: d[1]||0, c3_reasoning: d[2]||0,
-            c4_alternatives: d[3]||0, c5_new_info: d[4]||0, c6_listening: d[5]||0,
-            feedback: localRubric[g].feedback || ''
-          };
-        } else {
-          rubricScores[g] = {
-            c1_issue: 0, c2_stakeholder: 0, c3_reasoning: 0,
-            c4_alternatives: 0, c5_new_info: 0, c6_listening: 0,
-            feedback: ''
-          };
-        }
-      }
-
-      // Parse individual adjustments (stored in lab_individual_responses with step_key = 'grade_adj')
-      indivAdjustments = JSON.parse(localStorage.getItem(`ethics_indiv_adj_lab${currentLab}`) || '{}');
-      indivResponses.filter(r => r.step_key === 'grade_adj').forEach(r => {
-        const j = r.json_val || {};
-        indivAdjustments[r.student_id] = {
-          adj: Number(j.adj || 0),
-          note: j.note || r.text_val || ''
-        };
-      });
-
-      renderGroupCards();
-      renderIndividualTable();
-      updateKpis();
-    }
-
-    function getGroupRubricTotal(g) {
-      const s = rubricScores[g];
-      if (!s) return 0;
-      return +(s.c1_issue + s.c2_stakeholder + s.c3_reasoning + s.c4_alternatives + s.c5_new_info + s.c6_listening).toFixed(2);
-    }
-
-    function updateKpis() {
-      const submittedGroups = new Set(groupResponses.map(r => r.group_no)).size;
-      let gradedGroups = 0;
-      for (let g = 1; g <= 10; g++) {
-        if (getGroupRubricTotal(g) > 0) gradedGroups++;
-      }
-
-      const activeIndivIds = new Set(
-        indivResponses
-          .filter(r => r.step_key !== 'grade_adj' && !String(r.student_id).startsWith('ANON_'))
-          .map(r => r.student_id)
-      );
-
-      let sumNet = 0, countScored = 0;
-      studentsList.forEach(std => {
-        const gNo = groupAssignments[std.student_id]?.group_no;
-        if (gNo) {
-          const base = getGroupRubricTotal(gNo);
-          const adj = Number(indivAdjustments[std.student_id]?.adj || 0);
-          const net = Math.min(20, Math.max(0, base + adj));
-          sumNet += net;
-          countScored++;
-        }
-      });
-      const avg = countScored > 0 ? (sumNet / countScored).toFixed(2) : '0.00';
-
-      document.getElementById('kpi-group-sub').textContent = `${submittedGroups} / 10 กลุ่ม`;
-      document.getElementById('kpi-group-graded').textContent = `${gradedGroups} / 10 กลุ่ม`;
-      document.getElementById('kpi-indiv-active').textContent = `${activeIndivIds.size} / ${studentsList.length} คน`;
-      document.getElementById('kpi-avg-score').textContent = `${avg} / 20`;
-    }
-
-    // =========================================================================
-    // TAB 1: GROUP CARDS (SUBMISSION PREVIEW + 6-DIMENSION RUBRIC)
-    // =========================================================================
-    function formatGroupSubmissionHtml(gNo) {
-      const rows = groupResponses.filter(r => r.group_no === gNo);
-      if (rows.length === 0) {
-        return `<div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-500">ยังไม่มีการส่งผลงานกลุ่มในปฏิบัติการที่ ${currentLab}</div>`;
-      }
-
-      return rows.map(r => {
-        if (r.step_key === 'p6_disc1') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-sky-400">Page 6 — Group Discussion 1 (3 เหตุผลหลัก):</p>
-              <p class="text-emerald-300 font-semibold">${(r.selected_items || []).join(' • ')}</p>
-              <p class="text-slate-300">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p10_canvas') {
-          const j = r.json_val || {};
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1.5">
-              <div class="flex justify-between items-center">
-                <p class="font-bold text-sky-400">Page 10 — Ethical Reasoning Canvas (9 ช่อง):</p>
-                <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">Decision: ${j.decision || r.decision_val || '-'}</span>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-[11px] text-slate-300">
-                <div><strong class="text-slate-400">1. Facts:</strong> ${j.facts || '-'}</div>
-                <div><strong class="text-slate-400">2. Unknown:</strong> ${j.unknown || '-'}</div>
-                <div><strong class="text-slate-400">3. Stakeholders:</strong> ${j.stakeholders || '-'}</div>
-                <div><strong class="text-slate-400">4. Ethical Issue:</strong> ${j.issue || '-'}</div>
-                <div><strong class="text-slate-400">5. Values:</strong> ${j.values || '-'}</div>
-                <div><strong class="text-slate-400">6. Rules:</strong> ${j.rules || '-'}</div>
-                <div><strong class="text-slate-400">7. Options:</strong> ${j.options || '-'}</div>
-                <div><strong class="text-emerald-400">9. Why:</strong> ${j.why || '-'}</div>
-              </div>
-            </div>`;
-        }
-        if (r.step_key === 'p11_challenge') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-amber-400">Page 11 — Challenge: ${r.decision_val || ''}</p>
-              <p class="text-slate-300">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p13_framework') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-emerald-400">Page 13 — Framework Sequence:</p>
-              <p class="text-slate-200 font-mono">${r.text_val || (r.selected_items || []).join(' → ')}</p>
-            </div>`;
-        }
-        // Lab 2 Group Steps
-        if (r.step_key === 'p7_facts_unknowns') {
-          const j = r.json_val || {};
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-sky-400">Page 7 — Facts &amp; Unknowns (5 คำถาม):</p>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-[11px] text-slate-300">
-                <div><strong class="text-slate-400">1. Facts:</strong> ${j.facts || '-'}</div>
-                <div><strong class="text-amber-400">2. Unknown:</strong> ${j.unknown || '-'}</div>
-                <div><strong class="text-emerald-400">3. Stakeholders:</strong> ${j.stakeholders || '-'}</div>
-                <div><strong class="text-indigo-400">4. Ethical Issue:</strong> ${j.issue || '-'}</div>
-                <div class="md:col-span-2"><strong class="text-rose-400">5. Values in Conflict:</strong> ${j.values || '-'}</div>
-              </div>
-            </div>`;
-        }
-        if (r.step_key === 'p8_stakeholders') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-emerald-400">Page 8 — Stakeholder Map:</p>
-              <p class="text-slate-400 text-[11px]">ผู้เกี่ยวข้อง: ${(r.selected_items || []).join(', ') || '-'}</p>
-              <p class="text-slate-200"><strong class="text-amber-300">ได้รับผลกระทบมากที่สุด:</strong> ${r.text_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p9_issue') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-indigo-400">Page 9 — Ethical Issue:</p>
-              <p class="text-slate-200">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p10_tension_map') {
-          const j = r.json_val || {};
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <div class="flex justify-between items-center">
-                <p class="font-bold text-amber-400">Page 10 — Ethical Tension Map:</p>
-                <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-200 font-bold">${r.decision_val || ((j.valA||'') + ' ↔ ' + (j.valB||''))}</span>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-[11px] text-slate-300">
-                <div><strong class="text-sky-400">เน้น A เสีย:</strong> ${j.lossA || '-'}</div>
-                <div><strong class="text-amber-300">เน้น B เสีย:</strong> ${j.lossB || '-'}</div>
-              </div>
-            </div>`;
-        }
-        if (r.step_key === 'p11_options') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-sky-400">Page 11 — Options (ทางเลือก):</p>
-              <p class="text-slate-300 text-[11px]">${(r.selected_items || []).map((o, i) => `${i+1}) ${o}`).join(' • ') || '-'}</p>
-              <p class="text-emerald-300 font-semibold">ทางเลือกที่ดีที่สุด: ${r.decision_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p12_consequences') {
-          const j = r.json_val || {};
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-indigo-400">Page 12 — Consequences (ผลกระทบ):</p>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-1 text-[11px] text-slate-300">
-                <div><strong class="text-emerald-400">ได้ประโยชน์:</strong> ${j.gain || '-'}</div>
-                <div><strong class="text-rose-400">เสียประโยชน์:</strong> ${j.lose || '-'}</div>
-                <div><strong class="text-amber-400">ความเสี่ยง:</strong> ${j.risk || '-'}</div>
-                <div><strong class="text-sky-400">ผลระยะยาว:</strong> ${j.long_term || '-'}</div>
-              </div>
-            </div>`;
-        }
-        if (r.step_key === 'p13_decision') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <div class="flex justify-between items-center">
-                <p class="font-bold text-emerald-400">Page 13 — Group Decision:</p>
-                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">${r.decision_val || '-'}</span>
-              </div>
-              <p class="text-slate-200">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p14_challenge1') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-amber-400">Page 14 — Challenge 1 (นนท์พาแม่เข้า รพ.): <span class="text-sky-300">[${r.decision_val || '-'}]</span></p>
-              <p class="text-slate-300">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p15_challenge2') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-rose-400">Page 15 — Challenge 2 (สมาชิกคนอื่นทำงานเพิ่ม): <span class="text-sky-300">[${r.decision_val || '-'}]</span></p>
-              <p class="text-slate-300">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p17_framework') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-emerald-400">Page 17 — Decision Framework Sequence:</p>
-              <p class="text-slate-200 font-mono">${r.text_val || (r.selected_items || []).join(' → ')}</p>
-            </div>`;
-        }
-        // Lab 3 Group Steps
-        if (r.step_key === 'p6_group_virtue') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs flex justify-between items-center">
-              <span class="font-bold text-emerald-400">Page 6 — คุณธรรมที่กลุ่มเลือก:</span>
-              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-200 font-bold">${r.decision_val || '-'}</span>
-            </div>`;
-        }
-        if (r.step_key === 'p7_define_virtue') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-sky-400">Page 7 — นิยามความหมายคุณธรรม:</p>
-              <p class="text-slate-200">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p8_why_matters') {
-          const j = r.json_val || {};
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-rose-400">Page 8 — Why It Matters:</p>
-              <p class="text-amber-300 text-[11px]">ผลกระทบ: ${(j.impacts || []).map(x => x.split(' (')[0]).join(', ')} | เกี่ยวข้อง: ${(j.stakeholders || []).join(', ')}</p>
-              <p class="text-slate-200">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p9_evidence') {
-          const j = r.json_val || {};
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-emerald-400">Page 9 — Observable Evidence (3 พฤติกรรม):</p>
-              <p class="text-slate-200 text-[11px]">1) ${j.b1 || '-'} • 2) ${j.b2 || '-'} • 3) ${j.b3 || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p10_strongest_evidence') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-amber-400">Page 10 — Strongest Evidence (${r.decision_val || '-'}):</p>
-              <p class="text-slate-200">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p11_fake_virtue') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-purple-400">Page 11 — Virtue &ne; Virtue (ความเข้าใจผิด):</p>
-              <p class="text-slate-200">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p19_virtue_map') {
-          const j = r.json_val || {};
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-xs space-y-1">
-              <div class="flex justify-between items-center">
-                <p class="font-bold text-emerald-400">Page 19 — Professional Virtue Map:</p>
-                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-200 font-bold">${j.virtue || r.decision_val || '-'}</span>
-              </div>
-              <p class="text-[11px] text-slate-300"><strong>สำคัญ:</strong> ${j.why || '-'} | <strong>พฤติกรรม:</strong> ${j.behavior || '-'}</p>
-              <p class="text-[11px] text-slate-300"><strong>ขัดแย้ง:</strong> ${j.conflict || '-'} | <strong>รับมือ:</strong> ${j.respond || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p20_peer_challenge') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-sky-400">Page 20 — Peer Challenge:</p>
-              <p class="text-slate-200">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        // Generic fallback for Labs 3-12
-        return `
-          <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-            <p class="font-bold text-sky-400">ขั้นตอน: ${r.step_key} ${r.decision_val ? `(${r.decision_val})` : ''}</p>
-            <p class="text-slate-200 whitespace-pre-line">${r.text_val || JSON.stringify(r.json_val || {})}</p>
-          </div>`;
-      }).join('');
-    }
-
-    function renderGroupCards() {
-      const container = document.getElementById('group-cards-container');
-      let html = '';
-
-      for (let g = 1; g <= 10; g++) {
-        const members = studentsList.filter(s => groupAssignments[s.student_id]?.group_no === g);
-        const sc = rubricScores[g];
-        const total = getGroupRubricTotal(g);
-        const hasSub = groupResponses.some(r => r.group_no === g);
-
-        html += `
-          <div class="glass rounded-2xl p-5 border ${hasSub ? 'border-sky-500/30' : 'border-slate-800'} space-y-4">
-            <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-800 pb-3">
-              <div class="flex items-center gap-2.5 flex-wrap">
-                <span class="px-3 py-1 rounded-lg bg-sky-600/20 text-sky-300 border border-sky-500/30 text-sm font-extrabold">กลุ่มที่ ${g}</span>
-                <span class="text-xs text-slate-400">สมาชิก ${members.length} คน: ${members.map(m => m.full_name.split(' ')[0]).join(', ') || 'ยังไม่จัดสมาชิก'}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${hasSub ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400'}">
-                  ${hasSub ? '✓ ส่งงานกลุ่มแล้ว' : 'รอส่งงานกลุ่ม'}
-                </span>
-                <span class="px-3 py-1 rounded-lg bg-emerald-950 border border-emerald-700/60 text-emerald-300 text-sm font-extrabold">
-                  รวม: <span id="grp-tot-${g}">${total}</span> / 20
-                </span>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-              <!-- Left: Group Submitted Answers -->
-              <div class="lg:col-span-7 space-y-2 max-h-[340px] overflow-y-auto pr-1">
-                ${formatGroupSubmissionHtml(g)}
-              </div>
-
-              <!-- Right: 6-Dimension Rubric Inputs -->
-              <div class="lg:col-span-5 bg-slate-900/90 rounded-xl p-4 border border-slate-800 space-y-3">
-                <div class="grid grid-cols-3 gap-2">
-                  ${[
-                    ['c1_issue', 'C1 ปัญหา (4)', 4],
-                    ['c2_stakeholder', 'C2 ผู้เกี่ยวข้อง (4)', 4],
-                    ['c3_reasoning', 'C3 เหตุผลหลัก (4)', 4],
-                    ['c4_alternatives', 'C4 ทางเลือก (3)', 3],
-                    ['c5_new_info', 'C5 ข้อมูลใหม่ (3)', 3],
-                    ['c6_listening', 'C6 การฟัง (2)', 2]
-                  ].map(([col, label, max]) => `
-                    <div>
-                      <label class="block text-[11px] font-bold text-slate-300 mb-1">${label}</label>
-                      <input type="number" step="0.5" min="0" max="${max}" value="${sc[col]}"
-                        onchange="updateGroupRubric(${g}, '${col}', this.value, ${max})"
-                        class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-center text-sm font-extrabold text-white focus:border-sky-500 focus:outline-none">
-                    </div>
-                  `).join('')}
-                </div>
+    <!-- Top Navigation -->
+    <nav class="sticky top-0 z-50 glass-card border-b border-slate-700/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <a href="index.html" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="กลับหน้าหลัก">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                </a>
                 <div>
-                  <label class="block text-[11px] font-bold text-slate-300 mb-1">ข้อเสนอแนะถึงกลุ่ม (Feedback)</label>
-                  <input type="text" value="${(sc.feedback || '').replace(/"/g, '&quot;')}" placeholder="จุดเด่น / ข้อควรพัฒนา..."
-                    onchange="updateGroupRubric(${g}, 'feedback', this.value, 0)"
-                    class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white focus:border-sky-500 focus:outline-none">
+                    <span class="text-xs font-medium text-indigo-400 tracking-wider uppercase">180433 จรรยาบรรณวิชาชีพ (2/2568)</span>
+                    <h1 class="text-base sm:text-lg font-display font-semibold text-white">ระบบประเมินผล Rubric & คำนวณเกณฑ์ผ่าน (MPL)</h1>
                 </div>
-              </div>
             </div>
-          </div>`;
-      }
+            <div class="flex items-center space-x-2">
+                <a href="lab4-180433.html" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-sky-600/20 text-sky-300 border border-sky-500/30 hover:bg-sky-600/30 transition">
+                    <i data-lucide="external-link" class="w-3.5 h-3.5 mr-1.5"></i>
+                    เปิดหน้า Lab 4
+                </a>
+                <button onclick="exportCSV()" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition">
+                    <i data-lucide="download" class="w-3.5 h-3.5 mr-1.5"></i>
+                    Export CSV
+                </button>
+            </div>
+        </div>
+    </nav>
 
-      container.innerHTML = html;
-    }
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    async function updateGroupRubric(gNo, col, val, maxVal) {
-      const sc = rubricScores[gNo];
-      if (col === 'feedback') {
-        sc.feedback = val;
-      } else {
-        let num = parseFloat(val);
-        if (isNaN(num) || num < 0) num = 0;
-        if (num > maxVal) num = maxVal;
-        sc[col] = num;
-      }
+        <!-- Lab Selector & Weight Overview (Aligned with 2/2568 Syllabus) -->
+        <div class="glass-card rounded-2xl p-5 space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-display font-semibold text-white">เลือกปฏิบัติการที่ต้องการประเมินผล</h2>
+                    <p class="text-xs text-slate-400">สัดส่วนคะแนนและเกณฑ์ MPL ตามแผนการสอน 180433 (Modified Cohen Method = 65% × P90)</p>
+                </div>
+                <div class="flex flex-wrap gap-2" id="labSelector">
+                    <button onclick="selectLab('lab2')" data-lab="lab2" class="lab-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Lab 2 (เสวนาธรรม)</button>
+                    <button onclick="selectLab('lab3')" data-lab="lab3" class="lab-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Lab 3 (นำเสนอ 10%)</button>
+                    <button onclick="selectLab('lab4')" data-lab="lab4" class="lab-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white shadow transition">Lab 4 (ภาพยนตร์ & อภิปราย)</button>
+                    <button onclick="selectLab('lab5')" data-lab="lab5" class="lab-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Lab 5 (เสวนาวิชาชีพ 7.5%)</button>
+                    <button onclick="selectLab('lab6_8')" data-lab="lab6_8" class="lab-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Lab 6–8 (กรณีศึกษา 37.5%)</button>
+                    <button onclick="selectLab('lab10_11')" data-lab="lab10_11" class="lab-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Lab 10–11 (30%)</button>
+                </div>
+            </div>
 
-      const dims = [sc.c1_issue, sc.c2_stakeholder, sc.c3_reasoning, sc.c4_alternatives, sc.c5_new_info, sc.c6_listening];
-      const total = +dims.reduce((a, b) => a + b, 0).toFixed(2);
+            <!-- Active Lab Metadata Bar -->
+            <div id="labMetaBar" class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-700/80">
+                <div class="bg-slate-900/70 rounded-xl p-3 border border-slate-800">
+                    <div class="text-xs text-slate-400">หัวข้อปฏิบัติการ</div>
+                    <div id="metaTopic" class="text-sm font-semibold text-white mt-0.5">Lab 4: การพัฒนาจริยธรรมเชิงวิชาชีพทางการแพทย์</div>
+                </div>
+                <div class="bg-slate-900/70 rounded-xl p-3 border border-slate-800">
+                    <div class="text-xs text-slate-400">หมวดน้ำหนักคะแนน (มคอ.3)</div>
+                    <div id="metaWeight" class="text-sm font-semibold text-sky-400 mt-0.5">บันทึกงาน Lab 2 + Lab 4 (รวม 15.00%)</div>
+                </div>
+                <div class="bg-slate-900/70 rounded-xl p-3 border border-slate-800">
+                    <div class="text-xs text-slate-400">คะแนนเต็ม Rubric ดิบ</div>
+                    <div id="metaMaxScore" class="text-sm font-semibold text-emerald-400 mt-0.5">20 คะแนน (4 เกณฑ์ × 5 คะแนน)</div>
+                </div>
+                <div class="bg-slate-900/70 rounded-xl p-3 border border-slate-800">
+                    <div class="text-xs text-slate-400">เกณฑ์ผ่าน MPL (65% × P90)</div>
+                    <div id="metaMpl" class="text-sm font-semibold text-amber-400 mt-0.5">คำนวณอัตโนมัติจากข้อมูลนิสิต</div>
+                </div>
+            </div>
+        </div>
 
-      const totEl = document.getElementById(`grp-tot-${gNo}`);
-      if (totEl) totEl.textContent = total;
+        <!-- Lab 4 Specific Rubric Criteria Card -->
+        <div id="rubricCriteriaCard" class="glass-card rounded-2xl p-5 space-y-3 border-l-4 border-l-indigo-500">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-display font-semibold text-white flex items-center">
+                    <i data-lucide="award" class="w-4 h-4 mr-2 text-indigo-400"></i>
+                    <span id="rubricTitle">เกณฑ์การประเมินคุณภาพบันทึกงาน Lab 4 (Rubric เต็ม 20 คะแนน)</span>
+                </h3>
+                <span class="text-xs text-slate-400">ระดับคะแนน: 1 (ต้องปรับปรุง) – 5 (ดีเยี่ยม)</span>
+            </div>
+            <div id="rubricGrid" class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+                    <div class="font-semibold text-sky-300 mb-1">1. การระบุประเด็นจริยธรรม (5 คะแนน)</div>
+                    <p class="text-slate-300">ระบุความขัดแย้งทางจริยธรรม ตัวละคร และผลกระทบต่อผู้ป่วย/สังคมได้ครบถ้วน ชัดเจน</p>
+                </div>
+                <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+                    <div class="font-semibold text-sky-300 mb-1">2. การวิเคราะห์หลักจริยธรรม (5 คะแนน)</div>
+                    <p class="text-slate-300">ประยุกต์หลัก Biomedical Ethics และข้อบังคับจรรยาบรรณวิชาชีพเภสัชกรรมได้ถูกต้อง</p>
+                </div>
+                <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+                    <div class="font-semibold text-sky-300 mb-1">3. การสะท้อนคิดเชิงวิชาชีพ (5 คะแนน)</div>
+                    <p class="text-slate-300">แสดงแนวคิดการตัดสินใจเชิงจริยธรรมและการนำไปปรับใช้ในวิชาชีพได้อย่างลึกซึ้ง</p>
+                </div>
+                <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+                    <div class="font-semibold text-sky-300 mb-1">4. การมีส่วนร่วมอภิปรายกลุ่ม (5 คะแนน)</div>
+                    <p class="text-slate-300">แลกเปลี่ยนความคิดเห็นในกลุ่มย่อย (7 กลุ่ม) อย่างสร้างสรรค์และส่งงานตรงเวลา</p>
+                </div>
+            </div>
+        </div>
 
-      // Sync local cache for index.html & lab pages
-      const cached = JSON.parse(localStorage.getItem(`ethics_rubric_lab${currentLab}`) || '{}');
-      cached[gNo] = { d: dims, total: total, feedback: sc.feedback || '' };
-      localStorage.setItem(`ethics_rubric_lab${currentLab}`, JSON.stringify(cached));
+        <!-- Grading Workspace: Add/Score Students & View Submissions -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left: Scoring Form -->
+            <div class="glass-card rounded-2xl p-5 space-y-4 h-fit">
+                <h3 class="text-base font-display font-semibold text-white flex items-center">
+                    <i data-lucide="user-check" class="w-4 h-4 mr-2 text-emerald-400"></i>
+                    บันทึกคะแนนรายบุคคล
+                </h3>
+                <form id="scoreForm" onsubmit="saveScore(event)" class="space-y-3 text-sm">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">รหัสนิสิต</label>
+                        <input type="text" id="evalStudentId" required pattern="[0-9]{8}" maxlength="8" placeholder="เช่น 65210001"
+                            class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">ชื่อ-นามสกุล</label>
+                            <input type="text" id="evalStudentName" required placeholder="ชื่อนิสิต"
+                                class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">กลุ่มที่ (1–7)</label>
+                            <select id="evalGroup" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500">
+                                <option value="1">กลุ่ม 1 (ภ.6203)</option>
+                                <option value="2">กลุ่ม 2 (ภ.6306)</option>
+                                <option value="3">กลุ่ม 3 (ภ.6307)</option>
+                                <option value="4">กลุ่ม 4 (ภ.1307)</option>
+                                <option value="5">กลุ่ม 5 (ภ.1308)</option>
+                                <option value="6">กลุ่ม 6 (ภ.2207)</option>
+                                <option value="7">กลุ่ม 7 (ภ.2208)</option>
+                            </select>
+                        </div>
+                    </div>
 
-      await db.from('lab_rubric_scores').upsert({
-        lab_no: currentLab,
-        lab_code: `lab${currentLab}`,
-        group_no: gNo,
-        c1_issue: sc.c1_issue,
-        c2_stakeholder: sc.c2_stakeholder,
-        c3_reasoning: sc.c3_reasoning,
-        c4_alternatives: sc.c4_alternatives,
-        c5_new_info: sc.c5_new_info,
-        c6_listening: sc.c6_listening,
-        criteria_scores: dims,
-        total_score: total,
-        feedback: sc.feedback || '',
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'lab_no,group_no' });
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <div>
+                            <label class="block text-xs text-slate-300 mb-1">เกณฑ์ 1 (เต็ม 5)</label>
+                            <input type="number" id="c1" min="0" max="5" step="0.5" value="4" required onchange="updatePreviewTotal()"
+                                class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-300 mb-1">เกณฑ์ 2 (เต็ม 5)</label>
+                            <input type="number" id="c2" min="0" max="5" step="0.5" value="4" required onchange="updatePreviewTotal()"
+                                class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-300 mb-1">เกณฑ์ 3 (เต็ม 5)</label>
+                            <input type="number" id="c3" min="0" max="5" step="0.5" value="4" required onchange="updatePreviewTotal()"
+                                class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-300 mb-1">เกณฑ์ 4 (เต็ม 5)</label>
+                            <input type="number" id="c4" min="0" max="5" step="0.5" value="4" required onchange="updatePreviewTotal()"
+                                class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+                        </div>
+                    </div>
 
-      renderIndividualTable();
-      updateKpis();
-    }
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">ข้อเสนอแนะ (Feedback)</label>
+                        <input type="text" id="evalComment" placeholder="บันทึกความเห็นเพิ่มเติม..."
+                            class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs">
+                    </div>
 
-    async function autoFillFullSample() {
-      if (!confirm('กำหนดคะแนนเริ่มต้น 16 คะแนน (3, 3, 3, 2.5, 2.5, 2) ให้เฉพาะกลุ่มที่ยังได้ 0 คะแนนหรือไม่?')) return;
-      for (let g = 1; g <= 10; g++) {
-        if (getGroupRubricTotal(g) === 0) {
-          rubricScores[g] = {
-            c1_issue: 3, c2_stakeholder: 3, c3_reasoning: 3,
-            c4_alternatives: 2.5, c5_new_info: 2.5, c6_listening: 2,
-            feedback: rubricScores[g].feedback || ''
-          };
-          await updateGroupRubric(g, 'c6_listening', 2, 2);
-        }
-      }
-      renderGroupCards();
-    }
+                    <div class="flex items-center justify-between bg-slate-900/80 px-3 py-2 rounded-lg border border-slate-800">
+                        <span class="text-xs text-slate-400">คะแนนรวมดิบ:</span>
+                        <span id="previewTotal" class="text-base font-display font-bold text-emerald-400">16.00 / 20</span>
+                    </div>
 
-    // =========================================================================
-    // TAB 2: INDIVIDUAL HYBRID TABLE (BASE GROUP SCORE + INDIVIDUAL ADJ)
-    // =========================================================================
-    function getStudentIndivSummary(sid) {
-      const items = indivResponses.filter(r => r.student_id === sid && r.step_key !== 'grade_adj');
-      if (items.length === 0) return { count: 0, html: '<span class="text-slate-500">ยังไม่ส่งคำตอบเดี่ยว</span>' };
+                    <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition">
+                        บันทึกคะแนนเข้าระบบ
+                    </button>
+                </form>
 
-      const badges = items.map(it => {
-        if (it.step_key === 'p3_word') return `<span class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300">Word: ${it.text_val}</span>`;
-        if (it.step_key === 'p7_vote') return `<span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300">D2: ${it.choice_val}</span>`;
-        if (it.step_key === 'p8_why') return `<span class="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300">Why: ${(it.reason_tags||[]).join('/')}</span>`;
-        if (it.step_key === 'p9_vote') return `<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Before: ${it.choice_val}</span>`;
-        if (it.step_key === 'p12_revote') return `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">After: ${it.choice_val}</span>`;
-        if (it.step_key === 'p14_reflection') {
-          const j = it.json_val || {};
-          const tip = `Q1: ${j.q1||'-'} | Q2: ${j.q2||'-'} | Q3: ${j.q3||'-'}`.replace(/"/g, '&quot;');
-          return `<span title="${tip}" class="px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 cursor-help">✓ Reflection</span>`;
-        }
-        // Lab 2 Individual Badges
-        if (it.step_key === 'p3_scen1_vote') return `<span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300">Scen1: ${it.choice_val}</span>`;
-        if (it.step_key === 'p5_why') {
-          const noteTip = (it.text_val || '').replace(/"/g, '&quot;');
-          return `<span title="${noteTip}" class="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 cursor-help">Why: ${(it.reason_tags||[]).map(t => t.split(' (')[0]).join('/')}</span>`;
-        }
-        if (it.step_key === 'p6_scen2_before') return `<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Before: ${it.choice_val}</span>`;
-        if (it.step_key === 'p16_scen2_after') return `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">After: ${it.choice_val}</span>`;
-        if (it.step_key === 'p18_bridge') {
-          const bTip = (it.reason_tags||[]).map(t => t.split(' (')[0]).join(', ').replace(/"/g, '&quot;');
-          return `<span title="${bTip}" class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 cursor-help">Bridge (${(it.reason_tags||[]).length})</span>`;
-        }
-        if (it.step_key === 'p19_reflection') {
-          const j = it.json_val || {};
-          const tip = `Before: ${j.before||'-'} | Now: ${j.now||'-'} | Next: ${j.next||'-'}`.replace(/"/g, '&quot;');
-          return `<span title="${tip}" class="px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 cursor-help">✓ Reflection</span>`;
-        }
-        return `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">${it.step_key}: ${it.choice_val || it.text_val || '✓'}</span>`;
-      });
+                <div class="pt-3 border-t border-slate-700/80">
+                    <button onclick="importFromStudentSubmissions()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-medium border border-slate-700 transition flex items-center justify-center">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5 mr-1.5"></i>
+                        ซิงก์รายชื่อจากแบบส่งงานนักศึกษา (LocalStorage)
+                    </button>
+                </div>
+            </div>
 
-      return { count: items.length, html: `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` };
-    }
+            <!-- Right: Score Table & Modified Cohen MPL Stats -->
+            <div class="lg:col-span-2 glass-card rounded-2xl p-5 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h3 class="text-base font-display font-semibold text-white">ตารางคะแนนและสถิติการประเมินผล</h3>
+                        <p class="text-xs text-slate-400">เรียงตามรหัสนิสิต | คำนวณ P90 และ MPL (Modified Cohen Method = 0.65 × P90) อัตโนมัติ</p>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300">จำนวน: <strong id="statCount" class="text-white">0</strong> คน</span>
+                        <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-sky-300">P90: <strong id="statP90">-</strong></span>
+                        <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30">MPL: <strong id="statMpl">-</strong></span>
+                    </div>
+                </div>
 
-    function renderIndividualTable() {
-      const tbody = document.getElementById('indiv-tbody');
-      const q = (document.getElementById('indiv-search').value || '').trim().toLowerCase();
-      const gFilter = document.getElementById('indiv-group-filter').value;
-      const stFilter = document.getElementById('indiv-status-filter').value;
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-700 text-slate-400">
+                                <th class="py-2.5 px-3">รหัสนิสิต</th>
+                                <th class="py-2.5 px-3">ชื่อ-นามสกุล</th>
+                                <th class="py-2.5 px-2 text-center">กลุ่ม</th>
+                                <th class="py-2.5 px-2 text-center">เกณฑ์ 1-4</th>
+                                <th class="py-2.5 px-3 text-right">รวม (20)</th>
+                                <th class="py-2.5 px-3 text-right">เทียบ %</th>
+                                <th class="py-2.5 px-3 text-center">สถานะ MPL</th>
+                                <th class="py-2.5 px-2 text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scoreTableBody" class="divide-y divide-slate-800 text-slate-200">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
 
-      const filtered = studentsList.filter(std => {
-        const gNo = groupAssignments[std.student_id]?.group_no || 0;
-        if (gFilter !== 'all' && String(gNo) !== gFilter) return false;
-        if (q && !std.student_id.includes(q) && !std.full_name.toLowerCase().includes(q)) return false;
-        const sub = getStudentIndivSummary(std.student_id);
-        if (stFilter === 'submitted' && sub.count === 0) return false;
-        if (stFilter === 'missing' && sub.count > 0) return false;
-        return true;
-      });
+                <!-- Student Submission Viewer Modal/Panel -->
+                <div id="submissionViewer" class="hidden bg-slate-900/90 border border-sky-500/40 rounded-xl p-4 space-y-2 text-xs">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span class="font-semibold text-sky-300" id="viewerHeader">รายละเอียดคำตอบบันทึกงาน</span>
+                        <button onclick="document.getElementById('submissionViewer').classList.add('hidden')" class="text-slate-400 hover:text-white">ปิด</button>
+                    </div>
+                    <div id="viewerBody" class="space-y-2 text-slate-300 leading-relaxed"></div>
+                </div>
+            </div>
+        </div>
 
-      tbody.innerHTML = filtered.map(std => {
-        const grp = groupAssignments[std.student_id] || {};
-        const gNo = grp.group_no || 0;
-        const role = grp[`role_lab${currentLab}`] || grp.role_lab1 || '-';
-        const baseScore = gNo ? getGroupRubricTotal(gNo) : 0;
-        const adjObj = indivAdjustments[std.student_id] || { adj: 0, note: '' };
-        const netScore = +Math.min(20, Math.max(0, baseScore + Number(adjObj.adj || 0))).toFixed(2);
-        const sub = getStudentIndivSummary(std.student_id);
+    </main>
 
-        return `
-          <tr class="hover:bg-slate-900/60">
-            <td class="p-2.5 text-slate-400">${std.seq}</td>
-            <td class="p-2.5 font-mono font-bold text-slate-200">${std.student_id}</td>
-            <td class="p-2.5 font-semibold text-white">${std.full_name}</td>
-            <td class="p-2.5 text-center">
-              ${gNo ? `<span class="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold">กลุ่ม ${gNo}</span>` : `<span class="text-rose-400">-</span>`}
-            </td>
-            <td class="p-2.5 text-slate-400">${role}</td>
-            <td class="p-2.5">${sub.html}</td>
-            <td class="p-2.5 text-center font-bold text-slate-300">${baseScore}</td>
-            <td class="p-2.5 text-center">
-              <input type="number" step="0.5" min="-20" max="20" value="${adjObj.adj || 0}"
-                onchange="saveIndividualAdjustment('${std.student_id}', 'adj', this.value)"
-                class="w-16 px-2 py-1 rounded-lg bg-slate-950 border border-slate-700 text-center font-bold ${adjObj.adj > 0 ? 'text-emerald-400' : adjObj.adj < 0 ? 'text-rose-400' : 'text-white'}">
-            </td>
-            <td id="indiv-net-${std.student_id}" class="p-2.5 text-center font-extrabold text-emerald-400 text-sm">${netScore}</td>
-            <td class="p-2.5">
-              <input type="text" value="${(adjObj.note || '').replace(/"/g, '&quot;')}" placeholder="หมายเหตุ..."
-                onchange="saveIndividualAdjustment('${std.student_id}', 'note', this.value)"
-                class="w-full min-w-[130px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white">
-            </td>
-          </tr>`;
-      }).join('');
-    }
+    <script>
+        lucide.createIcons();
 
-    async function saveIndividualAdjustment(sid, field, val) {
-      if (!indivAdjustments[sid]) indivAdjustments[sid] = { adj: 0, note: '' };
-      if (field === 'adj') {
-        indivAdjustments[sid].adj = parseFloat(val) || 0;
-      } else {
-        indivAdjustments[sid].note = val;
-      }
-
-      localStorage.setItem(`ethics_indiv_adj_lab${currentLab}`, JSON.stringify(indivAdjustments));
-
-      const gNo = groupAssignments[sid]?.group_no || 0;
-      const baseScore = gNo ? getGroupRubricTotal(gNo) : 0;
-      const netScore = +Math.min(20, Math.max(0, baseScore + Number(indivAdjustments[sid].adj || 0))).toFixed(2);
-      const netEl = document.getElementById(`indiv-net-${sid}`);
-      if (netEl) netEl.textContent = netScore;
-
-      await db.from('lab_individual_responses').upsert({
-        lab_no: currentLab,
-        step_key: 'grade_adj',
-        student_id: sid,
-        text_val: indivAdjustments[sid].note,
-        json_val: { adj: indivAdjustments[sid].adj, note: indivAdjustments[sid].note, net_score: netScore },
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'lab_no,step_key,student_id' });
-
-      updateKpis();
-    }
-
-    async function applyAutoIndividualBonus() {
-      if (!confirm('ระบบจะปรับคะแนนเดี่ยว = -1 สำหรับนิสิตที่ยังไม่ส่งคำตอบเดี่ยวใด ๆ ในปฏิบัติการนี้ และตั้ง = 0 สำหรับคนที่ส่งแล้ว ยืนยันหรือไม่?')) return;
-      for (const std of studentsList) {
-        const sub = getStudentIndivSummary(std.student_id);
-        const newAdj = sub.count === 0 ? -1 : 0;
-        const note = sub.count === 0 ? 'ยังไม่ส่งงานเดี่ยว' : '';
-        indivAdjustments[std.student_id] = { adj: newAdj, note };
-        await saveIndividualAdjustment(std.student_id, 'adj', newAdj);
-        if (note) await saveIndividualAdjustment(std.student_id, 'note', note);
-      }
-      renderIndividualTable();
-    }
-
-    async function resetIndividualAdjustments() {
-      if (!confirm('ล้างค่าปรับคะแนนเดี่ยวของทุกคนใน Lab นี้ให้เป็น 0 หรือไม่?')) return;
-      for (const std of studentsList) {
-        indivAdjustments[std.student_id] = { adj: 0, note: '' };
-        await saveIndividualAdjustment(std.student_id, 'adj', 0);
-      }
-      renderIndividualTable();
-    }
-
-    // =========================================================================
-    // TAB 3: TERM OVERVIEW MATRIX (LAB 1–12)
-    // =========================================================================
-    async function loadAllLabsMatrix() {
-      const [allRubricRes, allAdjRes] = await Promise.all([
-        db.from('lab_rubric_scores').select('*'),
-        db.from('lab_individual_responses').select('*').eq('step_key', 'grade_adj')
-      ]);
-
-      const rRows = allRubricRes.data || [];
-      const aRows = allAdjRes.data || [];
-
-      const rMap = {}; // `${lab}_${group}` -> total
-      rRows.forEach(r => {
-        const lNo = r.lab_no || Number(String(r.lab_code || '').replace(/\D/g, ''));
-        const sumC = Number(r.c1_issue||0) + Number(r.c2_stakeholder||0) + Number(r.c3_reasoning||0) + Number(r.c4_alternatives||0) + Number(r.c5_new_info||0) + Number(r.c6_listening||0);
-        rMap[`${lNo}_${r.group_no}`] = r.total_score ?? sumC;
-      });
-
-      const aMap = {}; // `${lab}_${sid}` -> adj
-      aRows.forEach(r => {
-        aMap[`${r.lab_no}_${r.student_id}`] = Number(r.json_val?.adj || 0);
-      });
-
-      const tbody = document.getElementById('overview-tbody');
-      tbody.innerHTML = studentsList.map(std => {
-        const gNo = groupAssignments[std.student_id]?.group_no || 0;
-        let total240 = 0;
-        let cells = '';
-        for (let l = 1; l <= 12; l++) {
-          const base = gNo ? Number(rMap[`${l}_${gNo}`] || 0) : 0;
-          const adj = Number(aMap[`${l}_${std.student_id}`] || 0);
-          const net = base > 0 || adj !== 0 ? +Math.min(20, Math.max(0, base + adj)).toFixed(2) : 0;
-          total240 += net;
-          cells += `<td class="p-2 text-center ${net > 0 ? 'text-slate-200 font-semibold' : 'text-slate-600'}">${net > 0 ? net : '-'}</td>`;
-        }
-        const pct = ((total240 / 240) * 100).toFixed(1);
-        return `
-          <tr class="hover:bg-slate-900/60">
-            <td class="p-2 text-slate-400">${std.seq}</td>
-            <td class="p-2 font-mono font-bold text-slate-200">${std.student_id}</td>
-            <td class="p-2 font-semibold text-white whitespace-nowrap">${std.full_name}</td>
-            <td class="p-2 text-center text-sky-300 font-bold">${gNo || '-'}</td>
-            ${cells}
-            <td class="p-2 text-center font-extrabold text-emerald-400">${total240.toFixed(2)}</td>
-            <td class="p-2 text-center font-bold text-sky-400">${pct}%</td>
-          </tr>`;
-      }).join('');
-    }
-
-    // =========================================================================
-    // EXCEL EXPORTS (CURRENT LAB + ALL LABS)
-    // =========================================================================
-    function exportCurrentLabExcel() {
-      const indivSheet = studentsList.map(std => {
-        const grp = groupAssignments[std.student_id] || {};
-        const gNo = grp.group_no || 0;
-        const base = gNo ? getGroupRubricTotal(gNo) : 0;
-        const adjObj = indivAdjustments[std.student_id] || { adj: 0, note: '' };
-        const net = +Math.min(20, Math.max(0, base + Number(adjObj.adj || 0))).toFixed(2);
-        const items = indivResponses.filter(r => r.student_id === std.student_id && r.step_key !== 'grade_adj');
-        return {
-          'ลำดับ': std.seq,
-          'รหัสนิสิต': std.student_id,
-          'ชื่อ-สกุล': std.full_name,
-          'กลุ่ม': gNo || '',
-          'บทบาท': grp[`role_lab${currentLab}`] || grp.role_lab1 || '',
-          'จำนวนกิจกรรมเดี่ยวที่ส่ง': items.length,
-          'คะแนนฐานกลุ่ม (20)': base,
-          'ปรับคะแนนรายบุคคล (+/-)': adjObj.adj || 0,
-          'คะแนนสุทธิ Lab (20)': net,
-          'หมายเหตุ': adjObj.note || ''
+        const LAB_CONFIG = {
+            lab2: {
+                topic: 'Lab 2: เสวนาคุณธรรม “จริยธรรมในการดำเนินชีวิต”',
+                weight: 'บันทึกงาน Lab 2 + Lab 4 (รวม 15.00%)',
+                max: 20,
+                criteria: ['สรุปสาระสำคัญเสวนา (5)', 'วิเคราะห์คุณธรรมพื้นฐาน (5)', 'การประยุกต์ใช้ในชีวิต (5)', 'การเข้าร่วมและส่งตรงเวลา (5)']
+            },
+            lab3: {
+                topic: 'Lab 3: คุณธรรมจริยธรรมของนิสิตนักศึกษาทางการแพทย์',
+                weight: 'นำเสนอ 7.50% + รายงาน 2.50% (รวม 10.00%)',
+                max: 20,
+                criteria: ['ความถูกต้องเนื้อหาสืบค้น (5)', 'ทักษะการนำเสนอ (5)', 'การตอบคำถาม/อภิปราย (5)', 'คุณภาพรูปเล่มรายงาน (5)']
+            },
+            lab4: {
+                topic: 'Lab 4: การพัฒนาจริยธรรมเชิงวิชาชีพทางการแพทย์ (ชมภาพยนตร์)',
+                weight: 'บันทึกงาน Lab 2 + Lab 4 (รวม 15.00%)',
+                max: 20,
+                criteria: ['การระบุประเด็นจริยธรรม (5)', 'การวิเคราะห์หลักจริยธรรม (5)', 'การสะท้อนคิดเชิงวิชาชีพ (5)', 'การมีส่วนร่วมอภิปรายกลุ่ม (5)']
+            },
+            lab5: {
+                topic: 'Lab 5: เสวนาวิชาชีพ เภสัชกรยุคใหม่เปี่ยมด้วยจรรยาบรรณวิชาชีพ',
+                weight: 'คุณภาพบันทึกงานหลังเสวนาวิชาชีพ (7.50%)',
+                max: 20,
+                criteria: ['จับประเด็นจากวิทยากร (5)', 'เชื่อมโยงจรรยาบรรณวิชาชีพ (5)', 'มุมมองเภสัชกรยุคใหม่ (5)', 'ความสมบูรณ์ของบันทึกงาน (5)']
+            },
+            lab6_8: {
+                topic: 'Lab 6–8: กรณีศึกษาจริยธรรม (ชุมชน / โรงพยาบาล / การตลาด)',
+                weight: 'อภิปราย 22.50% + บันทึกงาน 15.00% (รวม 37.50%)',
+                max: 20,
+                criteria: ['การระบุปัญหาและผู้มีส่วนได้เสีย (5)', 'การอ้างอิงกฎหมายและจรรยาบรรณ (5)', 'ทางเลือกและการตัดสินใจเชิงจริยธรรม (5)', 'การร่วมอภิปรายในกลุ่มย่อย (5)']
+            },
+            lab10_11: {
+                topic: 'Lab 10–11: สังคมกับวิชาชีพเภสัชกรรม & เภสัชกรในดวงใจ',
+                weight: 'นำเสนอ 20.00% + รายงาน 10.00% (รวม 30.00%)',
+                max: 20,
+                criteria: ['ความลุ่มลึกของการวิเคราะห์ข่าว/บุคคล (5)', 'การนำเสนออย่างสร้างสรรค์ (5)', 'การอภิปรายแลกเปลี่ยน (5)', 'คุณภาพรายงาน (5)']
+            }
         };
-      });
 
-      const groupSheet = [];
-      for (let g = 1; g <= 10; g++) {
-        const sc = rubricScores[g];
-        groupSheet.push({
-          'กลุ่มที่': g,
-          'C1_ระบุปัญหา(4)': sc.c1_issue,
-          'C2_ผู้เกี่ยวข้อง(4)': sc.c2_stakeholder,
-          'C3_เหตุผลหลัก(4)': sc.c3_reasoning,
-          'C4_ทางเลือก(3)': sc.c4_alternatives,
-          'C5_ข้อมูลใหม่(3)': sc.c5_new_info,
-          'C6_การฟัง(2)': sc.c6_listening,
-          'คะแนนรวมกลุ่ม(20)': getGroupRubricTotal(g),
-          'Feedback': sc.feedback || ''
-        });
-      }
+        let currentLab = 'lab4';
 
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(indivSheet), `คะแนนรายบุคคล_Lab${currentLab}`);
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(groupSheet), `คะแนนRubricกลุ่ม_Lab${currentLab}`);
-      XLSX.writeFile(wb, `ประเมินผลปฏิบัติการที่_${currentLab}_180433.xlsx`);
-    }
+        function selectLab(labKey) {
+            currentLab = labKey;
+            document.querySelectorAll('.lab-pill').forEach(btn => {
+                const active = btn.dataset.lab === labKey;
+                btn.className = active
+                    ? 'lab-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white shadow transition'
+                    : 'lab-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+            });
 
-    async function exportAllLabsSummaryExcel() {
-      const [allRubricRes, allAdjRes] = await Promise.all([
-        db.from('lab_rubric_scores').select('*'),
-        db.from('lab_individual_responses').select('*').eq('step_key', 'grade_adj')
-      ]);
-      const rRows = allRubricRes.data || [];
-      const aRows = allAdjRes.data || [];
+            const cfg = LAB_CONFIG[labKey];
+            document.getElementById('metaTopic').textContent = cfg.topic;
+            document.getElementById('metaWeight').textContent = cfg.weight;
+            document.getElementById('rubricTitle').textContent = `เกณฑ์การประเมิน ${cfg.topic} (Rubric เต็ม ${cfg.max} คะแนน)`;
 
-      const rMap = {};
-      rRows.forEach(r => {
-        const lNo = r.lab_no || Number(String(r.lab_code || '').replace(/\D/g, ''));
-        const sumC = Number(r.c1_issue||0) + Number(r.c2_stakeholder||0) + Number(r.c3_reasoning||0) + Number(r.c4_alternatives||0) + Number(r.c5_new_info||0) + Number(r.c6_listening||0);
-        rMap[`${lNo}_${r.group_no}`] = r.total_score ?? sumC;
-      });
-      const aMap = {};
-      aRows.forEach(r => aMap[`${r.lab_no}_${r.student_id}`] = Number(r.json_val?.adj || 0));
+            const grid = document.getElementById('rubricGrid');
+            grid.innerHTML = cfg.criteria.map((c, idx) => `
+                <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+                    <div class="font-semibold text-sky-300 mb-1">เกณฑ์ที่ ${idx + 1}: ${c}</div>
+                    <p class="text-slate-400">ประเมินตามระดับคุณภาพ 1–5 คะแนน (ไม่ปัดเศษทศนิยม)</p>
+                </div>
+            `).join('');
 
-      const rows = studentsList.map(std => {
-        const gNo = groupAssignments[std.student_id]?.group_no || 0;
-        const obj = {
-          'ลำดับ': std.seq,
-          'รหัสนิสิต': std.student_id,
-          'ชื่อ-สกุล': std.full_name,
-          'กลุ่ม': gNo || ''
-        };
-        let total = 0;
-        for (let l = 1; l <= 12; l++) {
-          const base = gNo ? Number(rMap[`${l}_${gNo}`] || 0) : 0;
-          const adj = Number(aMap[`${l}_${std.student_id}`] || 0);
-          const net = (base > 0 || adj !== 0) ? +Math.min(20, Math.max(0, base + adj)).toFixed(2) : 0;
-          obj[`Lab_${l}`] = net;
-          total += net;
+            renderTable();
         }
-        obj['รวมทั้งเทอม(240)'] = +total.toFixed(2);
-        obj['ร้อยละ'] = +((total / 240) * 100).toFixed(2);
-        return obj;
-      });
 
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'สรุปคะแนนปฏิบัติการ_180433');
-      XLSX.writeFile(wb, 'สรุปคะแนนปฏิบัติการทั้งหมด_180433_2-2569.xlsx');
-    }
-  </script>
+        function updatePreviewTotal() {
+            const total = ['c1', 'c2', 'c3', 'c4'].reduce((sum, id) => sum + (parseFloat(document.getElementById(id).value) || 0), 0);
+            document.getElementById('previewTotal').textContent = `${total.toFixed(2)} / 20`;
+        }
+
+        function getScoresStore() {
+            return JSON.parse(localStorage.getItem('180433_grades') || '{}');
+        }
+
+        function saveScore(e) {
+            e.preventDefault();
+            const store = getScoresStore();
+            if (!store[currentLab]) store[currentLab] = {};
+
+            const sid = document.getElementById('evalStudentId').value.trim();
+            const c1 = parseFloat(document.getElementById('c1').value) || 0;
+            const c2 = parseFloat(document.getElementById('c2').value) || 0;
+            const c3 = parseFloat(document.getElementById('c3').value) || 0;
+            const c4 = parseFloat(document.getElementById('c4').value) || 0;
+            const total = Math.floor((c1 + c2 + c3 + c4) * 100) / 100;
+
+            store[currentLab][sid] = {
+                studentId: sid,
+                studentName: document.getElementById('evalStudentName').value.trim(),
+                groupNo: document.getElementById('evalGroup').value,
+                c1, c2, c3, c4,
+                total,
+                comment: document.getElementById('evalComment').value.trim(),
+                updatedAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('180433_grades', JSON.stringify(store));
+            renderTable();
+        }
+
+        function deleteScore(sid) {
+            const store = getScoresStore();
+            if (store[currentLab] && store[currentLab][sid]) {
+                delete store[currentLab][sid];
+                localStorage.setItem('180433_grades', JSON.stringify(store));
+                renderTable();
+            }
+        }
+
+        function importFromStudentSubmissions() {
+            const submissions = JSON.parse(localStorage.getItem('180433_submissions') || '{}');
+            const labSubs = submissions[currentLab] || {};
+            const keys = Object.keys(labSubs);
+            if (keys.length === 0) {
+                alert('ไม่พบข้อมูลการส่งงานใหม่ของนิสิตใน ' + currentLab.toUpperCase());
+                return;
+            }
+            const store = getScoresStore();
+            if (!store[currentLab]) store[currentLab] = {};
+            let added = 0;
+            keys.forEach(sid => {
+                if (!store[currentLab][sid]) {
+                    const s = labSubs[sid];
+                    store[currentLab][sid] = {
+                        studentId: s.studentId,
+                        studentName: s.studentName,
+                        groupNo: s.groupNo || '1',
+                        c1: 0, c2: 0, c3: 0, c4: 0,
+                        total: 0,
+                        comment: 'รอตรวจบันทึกงาน',
+                        updatedAt: new Date().toISOString()
+                    };
+                    added++;
+                }
+            });
+            localStorage.setItem('180433_grades', JSON.stringify(store));
+            renderTable();
+            alert(`ซิงก์รายชื่อนิสิตเรียบร้อย (เพิ่มใหม่ ${added} รายการ)`);
+        }
+
+        function viewSubmission(sid) {
+            const submissions = JSON.parse(localStorage.getItem('180433_submissions') || '{}');
+            const sub = submissions[currentLab] && submissions[currentLab][sid];
+            const viewer = document.getElementById('submissionViewer');
+            const header = document.getElementById('viewerHeader');
+            const body = document.getElementById('viewerBody');
+
+            if (!sub) {
+                alert('ไม่พบไฟล์บันทึกงานที่นิสิตส่งเข้ามาในเครื่องนี้สำหรับรหัส ' + sid);
+                return;
+            }
+            header.textContent = `บันทึกงาน ${currentLab.toUpperCase()} — ${sub.studentId} ${sub.studentName} (กลุ่ม ${sub.groupNo})`;
+            body.innerHTML = `
+                <p><strong class="text-sky-400">1. ประเด็นปัญหาทางจริยธรรม:</strong> ${sub.q1 || '-'}</p>
+                <p><strong class="text-sky-400">2. การวิเคราะห์ตามหลักจริยธรรม/จรรยาบรรณ:</strong> ${sub.q2 || '-'}</p>
+                <p><strong class="text-sky-400">3. การสะท้อนคิดเชิงวิชาชีพ:</strong> ${sub.q3 || '-'}</p>
+            `;
+            viewer.classList.remove('hidden');
+        }
+
+        function calculateP90(sortedTotals) {
+            if (sortedTotals.length === 0) return 0;
+            const pos = 0.90 * (sortedTotals.length - 1);
+            const base = Math.floor(pos);
+            const rest = pos - base;
+            if (sortedTotals[base + 1] !== undefined) {
+                return sortedTotals[base] + rest * (sortedTotals[base + 1] - sortedTotals[base]);
+            }
+            return sortedTotals[base];
+        }
+
+        function renderTable() {
+            const store = getScoresStore();
+            const records = Object.values(store[currentLab] || {}).sort((a, b) => a.studentId.localeCompare(b.studentId));
+            const tbody = document.getElementById('scoreTableBody');
+
+            document.getElementById('statCount').textContent = records.length;
+
+            if (records.length === 0) {
+                document.getElementById('statP90').textContent = '-';
+                document.getElementById('statMpl').textContent = '-';
+                document.getElementById('metaMpl').textContent = 'ยังไม่มีข้อมูลคะแนน';
+                tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-500">ยังไม่มีข้อมูลคะแนนในปฏิบัติการนี้ กรอกคะแนนด้านซ้ายหรือกดซิงก์รายชื่อจากนักศึกษา</td></tr>`;
+                return;
+            }
+
+            const totals = records.map(r => r.total).sort((a, b) => a - b);
+            const p90 = calculateP90(totals);
+            const mplRaw = 0.65 * p90;
+            const mplPct = (mplRaw / 20) * 100;
+
+            document.getElementById('statP90').textContent = `${p90.toFixed(2)} (${((p90/20)*100).toFixed(2)}%)`;
+            document.getElementById('statMpl').textContent = `${mplRaw.toFixed(2)} (${mplPct.toFixed(2)}%)`;
+            document.getElementById('metaMpl').textContent = `${mplRaw.toFixed(2)} / 20 คะแนน (${mplPct.toFixed(2)}%)`;
+
+            tbody.innerHTML = records.map(r => {
+                const pct = Math.floor(((r.total / 20) * 100) * 100) / 100;
+                const pass = r.total >= mplRaw;
+                return `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="py-2.5 px-3 font-mono text-sky-300">${r.studentId}</td>
+                        <td class="py-2.5 px-3">${r.studentName}</td>
+                        <td class="py-2.5 px-2 text-center">${r.groupNo}</td>
+                        <td class="py-2.5 px-2 text-center text-slate-400">${r.c1} / ${r.c2} / ${r.c3} / ${r.c4}</td>
+                        <td class="py-2.5 px-3 text-right font-semibold text-white">${r.total.toFixed(2)}</td>
+                        <td class="py-2.5 px-3 text-right text-slate-300">${pct.toFixed(2)}%</td>
+                        <td class="py-2.5 px-3 text-center">
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-medium ${pass ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}">
+                                ${pass ? 'ผ่าน MPL' : 'ต่ำกว่า MPL'}
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-2 text-center space-x-1">
+                            <button onclick="viewSubmission('${r.studentId}')" class="text-sky-400 hover:text-sky-300 px-1" title="ดูคำตอบที่ส่ง">ดูงาน</button>
+                            <button onclick="deleteScore('${r.studentId}')" class="text-rose-400 hover:text-rose-300 px-1" title="ลบ">ลบ</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function exportCSV() {
+            const store = getScoresStore();
+            const records = Object.values(store[currentLab] || {}).sort((a, b) => a.studentId.localeCompare(b.studentId));
+            if (records.length === 0) {
+                alert('ไม่มีข้อมูลสำหรับ Export');
+                return;
+            }
+            const header = ['StudentID', 'Name', 'Group', 'C1', 'C2', 'C3', 'C4', 'RawTotal(20)', 'Percent(100)', 'Comment'];
+            const rows = records.map(r => [
+                r.studentId,
+                `"${r.studentName}"`,
+                r.groupNo,
+                r.c1, r.c2, r.c3, r.c4,
+                r.total.toFixed(2),
+                (Math.floor(((r.total / 20) * 100) * 100) / 100).toFixed(2),
+                `"${(r.comment || '').replace(/"/g, '""')}"`
+            ]);
+            const csv = '﻿' + [header.join(','), ...rows.map(e => e.join(','))].join('
+');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `180433_${currentLab}_grades.csv`;
+            a.click();
+        }
+
+        // Initialize default view on Lab 4
+        selectLab('lab4');
+    </script>
 </body>
 </html>
