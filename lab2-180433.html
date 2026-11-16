@@ -3,513 +3,1845 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lab 2 (180433) • Everyday Ethical Decision Making (10 กลุ่ม + Rubric 7 มิติ)</title>
+  <title>Lab 2: Everyday Ethical Decision Making | 180433</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Pridi:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Sarabun', sans-serif; background-color: #090d16; color: #e2e8f0; }
-    h1, h2, h3, .font-display { font-family: 'Pridi', serif; }
-    .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.7); }
+    body { font-family: 'Sarabun', sans-serif; background-color: #0b1120; color: #f8fafc; }
+    .glass { background: rgba(30, 41, 59, 0.78); backdrop-filter: blur(12px); border: 1px solid rgba(148, 163, 184, 0.16); }
+    .card-pill { transition: all 0.15s ease; }
+    .card-pill:hover { transform: translateY(-1px); }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0f172a; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
-  <!-- Top Bar -->
-  <header class="glass sticky top-0 z-40 px-4 py-3 border-b border-slate-800">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+
+  <!-- TOP NAVBAR -->
+  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur border-b border-slate-800 px-4 py-3">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <a href="index.html" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sm text-slate-200 font-semibold flex items-center gap-1.5 transition">
+        <a href="index.html" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1 transition">
           <span>&larr;</span> <span>หน้าเช็กชื่อ</span>
         </a>
+        <span class="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-400 font-extrabold text-xs border border-indigo-500/30">180433 • LAB 2</span>
         <div>
-          <h1 class="text-lg md:text-xl font-bold text-white">Lab 2: Everyday Ethical Decision Making</h1>
-          <p class="text-xs text-slate-400">รายวิชา 180433 • 10 กลุ่มทั้งหมด • โหวต S1/S2 Before-After • Canvas/Tension/Challenge • Rubric 7 มิติ (20 คะแนน)</p>
+          <h1 class="text-base md:text-lg font-bold text-white leading-tight">Everyday Ethical Decision Making</h1>
+          <p class="text-xs text-slate-400">การคิดและตัดสินใจทางจริยธรรมในชีวิตประจำวัน • กลุ่มเรียน 1 (2/2569)</p>
         </div>
       </div>
 
       <div class="flex items-center gap-2">
-        <span id="save-badge" class="px-3 py-1.5 rounded-lg bg-emerald-950/70 border border-emerald-500/40 text-xs text-emerald-300">✓ บันทึกอัตโนมัติ</span>
-        <div class="bg-slate-900 p-1 rounded-xl border border-slate-800 flex text-xs font-medium">
-          <button id="mode-stu" onclick="switchMode('student')" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white transition">มุมมองนิสิต</button>
-          <button id="mode-tea" onclick="switchMode('teacher')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition">มุมมองอาจารย์</button>
-        </div>
-        <button onclick="exportLab2Excel()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg transition flex items-center gap-1.5">
-          <span>⬇</span> <span>Export Excel (.xlsx)</span>
+        <!-- Student Profile Badge -->
+        <button onclick="openStudentLoginModal()" id="btn-student-badge" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-amber-400" id="login-dot"></span>
+          <span id="student-badge-text">ระบุรหัสนิสิต / กลุ่ม</span>
         </button>
+
+        <!-- Mode Toggle -->
+        <button onclick="switchRole('student')" id="btn-role-student" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow">นิสิต</button>
+        <button onclick="promptInstructor()" id="btn-role-admin" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">อาจารย์</button>
       </div>
     </div>
   </header>
 
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
-
-    <!-- STUDENT WORKSPACE -->
-    <section id="lab2-student-view" class="space-y-6">
-      <div class="grid lg:grid-cols-2 gap-6">
-        <!-- Individual Vote S1/S2 Before-After + Reflection -->
-        <div class="glass rounded-2xl p-5 space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h2 class="text-lg font-bold text-white">ส่วนที่ 1: แบบบันทึกรายบุคคล (โหวต Before–After &amp; Reflection)</h2>
-            <span class="text-xs text-indigo-300">10 กลุ่มคงที่</span>
-          </div>
-          <div class="grid sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs text-slate-400 mb-1">รหัสนิสิต</label>
-              <input type="text" id="l2-stu-id" placeholder="เช่น 66310001" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm" />
-            </div>
-            <div>
-              <label class="block text-xs text-slate-400 mb-1">เลือกกลุ่มนิสิต (กลุ่ม 1–10)</label>
-              <select id="l2-stu-group" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm"></select>
-            </div>
-          </div>
-
-          <div class="grid sm:grid-cols-2 gap-3">
-            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 space-y-2">
-              <div class="text-xs font-bold text-sky-300">Scenario 1 (S1): Before &rarr; After</div>
-              <select id="l2-s1-before" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white">
-                <option value="">-- เลือกคำตอบ S1 (Before) --</option>
-                <option value="A: จ่ายยาตามคำขอทันที">A: จ่ายยาตามคำขอทันที</option>
-                <option value="B: ปฏิเสธและอธิบายเหตุผลทางวิชาชีพ">B: ปฏิเสธและอธิบายเหตุผลทางวิชาชีพ</option>
-                <option value="C: เสนอทางเลือกที่ปลอดภัยกว่า">C: เสนอทางเลือกที่ปลอดภัยกว่า</option>
-              </select>
-              <select id="l2-s1-after" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white">
-                <option value="">-- เลือกคำตอบ S1 (After อภิปราย) --</option>
-                <option value="A: จ่ายยาตามคำขอทันที">A: จ่ายยาตามคำขอทันที</option>
-                <option value="B: ปฏิเสธและอธิบายเหตุผลทางวิชาชีพ">B: ปฏิเสธและอธิบายเหตุผลทางวิชาชีพ</option>
-                <option value="C: เสนอทางเลือกที่ปลอดภัยกว่า">C: เสนอทางเลือกที่ปลอดภัยกว่า</option>
-              </select>
-            </div>
-
-            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 space-y-2">
-              <div class="text-xs font-bold text-amber-300">Scenario 2 (S2): Before &rarr; After</div>
-              <select id="l2-s2-before" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white">
-                <option value="">-- เลือกคำตอบ S2 (Before) --</option>
-                <option value="A: แจ้งแพทย์ผู้สั่งใช้ยาโดยตรง">A: แจ้งแพทย์ผู้สั่งใช้ยาโดยตรง</option>
-                <option value="B: ปรึกษาหัวหน้าเภสัชกรก่อนดำเนินการ">B: ปรึกษาหัวหน้าเภสัชกรก่อนดำเนินการ</option>
-                <option value="C: บันทึกอุบัติการณ์และแจ้งผู้ป่วย">C: บันทึกอุบัติการณ์และแจ้งผู้ป่วย</option>
-              </select>
-              <select id="l2-s2-after" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white">
-                <option value="">-- เลือกคำตอบ S2 (After อภิปราย) --</option>
-                <option value="A: แจ้งแพทย์ผู้สั่งใช้ยาโดยตรง">A: แจ้งแพทย์ผู้สั่งใช้ยาโดยตรง</option>
-                <option value="B: ปรึกษาหัวหน้าเภสัชกรก่อนดำเนินการ">B: ปรึกษาหัวหน้าเภสัชกรก่อนดำเนินการ</option>
-                <option value="C: บันทึกอุบัติการณ์และแจ้งผู้ป่วย">C: บันทึกอุบัติการณ์และแจ้งผู้ป่วย</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Individual Reflection (สิ่งที่ได้เรียนรู้และมุมมองที่เปลี่ยนไป)</label>
-            <textarea id="l2-reflection" rows="3" placeholder="เขียนสะท้อนคิดรายบุคคล..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white"></textarea>
-          </div>
-
-          <button onclick="saveIndividualVote()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition">
-            บันทึกข้อมูลรายบุคคล
-          </button>
-        </div>
-
-        <!-- Group Workspace: Canvas / Tension / Challenge (10 Groups) -->
-        <div class="glass rounded-2xl p-5 space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h2 class="text-lg font-bold text-white">ส่วนที่ 2: ใบงานกลุ่ม (Canvas / Tension / Challenge)</h2>
-            <select id="l2-work-group" onchange="loadGroupWorkspaceToForm()" class="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs text-amber-300 font-bold"></select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-sky-300 mb-1">1. Ethical Decision-Making Canvas (ข้อเท็จจริง &amp; หลักจริยธรรมที่เกี่ยวข้อง)</label>
-            <textarea id="l2-canvas" rows="3" placeholder="สรุปประเด็นสำคัญจาก Ethical Canvas ของกลุ่ม..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white"></textarea>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-amber-300 mb-1">2. Ethical Tension (ความขัดแย้งทางคุณค่า / หลักการที่ปะทะกัน)</label>
-            <textarea id="l2-tension" rows="2" placeholder="ระบุความขัดแย้ง เช่น Autonomy vs Beneficence..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white"></textarea>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-emerald-300 mb-1">3. Practical Challenge &amp; Action Plan (แนวทางรับมือในสถานการณ์จริง)</label>
-            <textarea id="l2-challenge" rows="2" placeholder="ระบุแนวทางสื่อสารและจัดการความท้าทาย..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white"></textarea>
-          </div>
-
-          <button onclick="saveGroupWorkspace()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition">
-            ส่งคำตอบใบงานกลุ่ม
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- TEACHER WORKSPACE -->
-    <section id="lab2-teacher-view" class="hidden space-y-6">
-      <!-- 10 Groups Progress Tracker -->
-      <div class="glass rounded-2xl p-5 space-y-3">
-        <div class="flex items-center justify-between">
-          <h2 class="text-base font-bold text-white">แผงติดตามความคืบหน้าทั้ง 10 กลุ่ม (Real-time Group Progress)</h2>
-          <span class="text-xs text-slate-400">คลิกที่การ์ดกลุ่มเพื่อดูคำตอบ Canvas / Tension / Challenge</span>
-        </div>
-        <div id="l2-progress-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
-        <div id="l2-preview-box" class="hidden bg-slate-900/90 border border-slate-700 rounded-xl p-4 text-xs space-y-2"></div>
+  <!-- INSTRUCTOR CONTROL BAR (VISIBLE ONLY IN ADMIN MODE) -->
+  <div id="admin-control-bar" class="hidden bg-slate-900 border-b border-amber-500/30 px-4 py-2.5">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">ควบคุมห้องเรียน:</span>
+        <button onclick="changeInstructorPage(-1)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold border border-slate-700">◀ ก่อนหน้า</button>
+        <select id="admin-page-select" onchange="setInstructorPage(parseInt(this.value))" class="px-3 py-1 rounded bg-slate-950 border border-amber-500/40 text-amber-300 text-xs font-bold max-w-[260px] md:max-w-none">
+          <option value="1">PAGE 1: Welcome (คำถามเปิดประเด็น Lab 2)</option>
+          <option value="2">PAGE 2: From Lab 1 → Lab 2 (ทบทวนกรอบคิด)</option>
+          <option value="3">PAGE 3: Scenario 1 — Quick Decision (โหวตเดี่ยว)</option>
+          <option value="4">PAGE 4: See The Room (ผลโหวต Scenario 1)</option>
+          <option value="5">PAGE 5: Why? (เหตุผลสำคัญสูงสุด 2 ข้อ)</option>
+          <option value="6">PAGE 6: Scenario 2 — Case “นนท์ดูแลแม่ที่ป่วย” (Pre-Vote)</option>
+          <option value="7">PAGE 7: Group Discussion — Facts &amp; Unknowns (5 ข้อ)</option>
+          <option value="8">PAGE 8: Stakeholder Map (ใครได้รับผลกระทบมากที่สุด)</option>
+          <option value="9">PAGE 9: Ethical Issue (ระบุคู่ความขัดแย้งทางจริยธรรม)</option>
+          <option value="10">PAGE 10: Ethical Tension Map (Value A ↔ Value B)</option>
+          <option value="11">PAGE 11: Options (เสนออย่างน้อย 3 ทางเลือก)</option>
+          <option value="12">PAGE 12: Consequences (วิเคราะห์ผลดี–ผลเสีย–ความเสี่ยง)</option>
+          <option value="13">PAGE 13: Group Decision (เลือกทางออกและให้เหตุผล)</option>
+          <option value="14">PAGE 14: Challenge 1 (นนท์พาแม่เข้า รพ. หลายครั้ง)</option>
+          <option value="15">PAGE 15: Challenge 2 (สมาชิกคนอื่นทำงานหนักขึ้น)</option>
+          <option value="16">PAGE 16: Re-Vote (เปรียบเทียบ Before → After)</option>
+          <option value="17">PAGE 17: Build the Decision Framework (เรียงการ์ด)</option>
+          <option value="18">PAGE 18: Professional Bridge (เชื่อมสู่วิชาชีพเภสัชกร)</option>
+          <option value="19">PAGE 19: Exit Reflection (Before / Now / Next)</option>
+        </select>
+        <button onclick="changeInstructorPage(1)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold border border-slate-700">ถัดไป ▶</button>
       </div>
 
-      <!-- Rubric 7 Dimensions (20 Points) + Group Feedback -->
-      <div class="glass rounded-2xl p-5 space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-          <div>
-            <h2 class="text-lg font-bold text-white">ตารางให้คะแนน Rubric 7 มิติ (รวม 20 คะแนน) + Feedback รายกลุ่ม (10 กลุ่ม)</h2>
-            <p class="text-xs text-slate-400">เกณฑ์ 7 มิติ: [1] ระบุประเด็น (3) • [2] วิเคราะห์ Tension (3) • [3] ใช้ Canvas (3) • [4] ทางเลือก (3) • [5] แผนรับมือ Challenge (3) • [6] เหตุผลจรรยาบรรณ (3) • [7] การมีส่วนร่วม (2)</p>
-          </div>
-          <span class="text-xs text-emerald-300">บันทึกอัตโนมัติ &rarr; รวมคะแนนใน index.html</span>
-        </div>
-
-        <div class="overflow-x-auto rounded-xl border border-slate-800">
-          <table class="w-full text-xs text-left border-collapse">
-            <thead class="bg-slate-900 text-slate-200">
-              <tr>
-                <th class="p-2.5 border-b border-slate-800 w-24">กลุ่มที่</th>
-                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 1<br><span class="text-indigo-400">(3)</span></th>
-                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 2<br><span class="text-indigo-400">(3)</span></th>
-                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 3<br><span class="text-indigo-400">(3)</span></th>
-                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 4<br><span class="text-indigo-400">(3)</span></th>
-                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 5<br><span class="text-indigo-400">(3)</span></th>
-                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 6<br><span class="text-indigo-400">(3)</span></th>
-                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 7<br><span class="text-indigo-400">(2)</span></th>
-                <th class="p-2.5 border-b border-slate-800 text-center w-20 bg-emerald-950/40 text-emerald-300">รวม<br>(20)</th>
-                <th class="p-2.5 border-b border-slate-800 min-w-[240px]">Feedback รายกลุ่ม</th>
-              </tr>
-            </thead>
-            <tbody id="lab2-tbody" class="divide-y divide-slate-800 bg-slate-950/50"></tbody>
-          </table>
-        </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer bg-slate-800 px-2.5 py-1 rounded border border-slate-700">
+          <input type="checkbox" id="chk-sync-lock" onchange="toggleSyncLock(this.checked)" checked class="accent-amber-500">
+          <span>ล็อกหน้าจอนิสิตตามอาจารย์</span>
+        </label>
+        <a href="grading-180433.html?lab=2" class="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-sm">ประเมินผล (เดี่ยว + กลุ่ม)</a>
+        <button onclick="openAdminDrawer('qr')" class="px-2.5 py-1 rounded bg-sky-600/80 hover:bg-sky-600 text-white text-xs font-bold">QR เข้า Lab 2</button>
+        <button onclick="exportLab2Excel()" class="px-2.5 py-1 rounded bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold">Export Excel</button>
       </div>
-    </section>
+    </div>
+  </div>
+
+  <!-- STEP PROGRESS BAR & FREE NAVIGATION (WHEN UNLOCKED OR ADMIN) -->
+  <div class="bg-slate-900/50 border-b border-slate-800/80 px-4 py-2">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      <div class="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar" id="step-pills-container"></div>
+      <span id="sync-status-pill" class="shrink-0 text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+        ● Sync ตามหน้าจออาจารย์
+      </span>
+    </div>
+  </div>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 w-full max-w-6xl mx-auto p-4 md:p-6">
+    <div id="page-container"></div>
   </main>
 
-  <script>
-    const DEFAULT_URL = "https://iproktvvetsbxxmpptuj.supabase.co";
-    const url = localStorage.getItem("sb_url") || DEFAULT_URL;
-    const key = localStorage.getItem("sb_key") || "";
-    const sb = (url && key && window.supabase)
-      ? window.supabase.createClient(url, key, { db: { schema: "ethics" } })
-      : null;
+  <!-- ==================== STUDENT LOGIN / GROUP MODAL ==================== -->
+  <div id="student-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-md glass rounded-2xl p-6 shadow-2xl border border-slate-700 space-y-4">
+      <div class="text-center">
+        <h3 class="text-lg font-bold text-white">ข้อมูลผู้เข้าร่วมปฏิบัติการที่ 2</h3>
+        <p class="text-xs text-slate-400 mt-1">กรอกรหัสนิสิต 8 หลัก ระบบจะดึงชื่อและกลุ่มคงที่ของท่านอัตโนมัติ</p>
+      </div>
 
-    // 7 Dimensions = 3 + 3 + 3 + 3 + 3 + 3 + 2 = 20 points
-    const MAX_DIMS = [3, 3, 3, 3, 3, 3, 2];
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1">รหัสนิสิต (8 หลัก)</label>
+        <input type="text" id="modal-sid" maxlength="8" inputmode="numeric" placeholder="เช่น 66210052"
+          class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-lg tracking-widest focus:outline-none focus:border-indigo-500" />
+        <p id="modal-std-preview" class="text-xs mt-1.5 text-slate-400">กรอกรหัสนิสิตเพื่อตรวจสอบรายชื่อ</p>
+      </div>
 
-    let rubricState = JSON.parse(localStorage.getItem("ethics_rubric_lab2") || "{}");
-    let groupWorkState = JSON.parse(localStorage.getItem("ethics_work_lab2") || "{}");
-    let individualVotes = JSON.parse(localStorage.getItem("ethics_votes_lab2") || "{}");
-    let studentsList = [];
-
-    for (let g = 1; g <= 10; g++) {
-      if (!rubricState[g]) rubricState[g] = { d: [0, 0, 0, 0, 0, 0, 0], total: 0, feedback: "" };
-      if (!groupWorkState[g]) groupWorkState[g] = { canvas: "", tension: "", challenge: "", updated_at: null };
-    }
-
-    function generateFallbackStudents() {
-      const list = [];
-      for (let i = 1; i <= 90; i++) {
-        list.push({
-          seq: i,
-          student_id: "6631" + String(i).padStart(4, "0"),
-          full_name: `นิสิตเภสัชศาสตร์ ลำดับที่ ${i}`,
-          group_no: Math.ceil(i / 9)
-        });
-      }
-      return list;
-    }
-
-    function populateGroupSelects() {
-      const sSel = document.getElementById("l2-stu-group");
-      const wSel = document.getElementById("l2-work-group");
-      sSel.innerHTML = "";
-      wSel.innerHTML = "";
-      for (let g = 1; g <= 10; g++) {
-        sSel.innerHTML += `<option value="${g}">กลุ่มที่ ${g}</option>`;
-        wSel.innerHTML += `<option value="${g}">กลุ่มที่ ${g}</option>`;
-      }
-    }
-
-    function switchMode(mode) {
-      const isTeacher = mode === "teacher";
-      document.getElementById("lab2-student-view").classList.toggle("hidden", isTeacher);
-      document.getElementById("lab2-teacher-view").classList.toggle("hidden", !isTeacher);
-      document.getElementById("mode-stu").className = isTeacher
-        ? "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition"
-        : "px-3 py-1.5 rounded-lg bg-indigo-600 text-white transition";
-      document.getElementById("mode-tea").className = isTeacher
-        ? "px-3 py-1.5 rounded-lg bg-indigo-600 text-white transition"
-        : "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition";
-      if (isTeacher) {
-        renderProgressGrid();
-        renderRubricTable();
-      }
-    }
-
-    function loadGroupWorkspaceToForm() {
-      const g = Number(document.getElementById("l2-work-group").value);
-      const data = groupWorkState[g] || { canvas: "", tension: "", challenge: "" };
-      document.getElementById("l2-canvas").value = data.canvas || "";
-      document.getElementById("l2-tension").value = data.tension || "";
-      document.getElementById("l2-challenge").value = data.challenge || "";
-    }
-
-    async function saveIndividualVote() {
-      const sid = document.getElementById("l2-stu-id").value.trim();
-      if (!sid) { alert("กรุณากรอกรหัสนิสิต"); return; }
-      const g = Number(document.getElementById("l2-stu-group").value);
-      const record = {
-        student_id: sid,
-        group_no: g,
-        s1_before: document.getElementById("l2-s1-before").value,
-        s1_after: document.getElementById("l2-s1-after").value,
-        s2_before: document.getElementById("l2-s2-before").value,
-        s2_after: document.getElementById("l2-s2-after").value,
-        reflection: document.getElementById("l2-reflection").value.trim(),
-        updated_at: new Date().toISOString()
-      };
-      individualVotes[sid] = record;
-      localStorage.setItem("ethics_votes_lab2", JSON.stringify(individualVotes));
-
-      if (sb) {
-        try {
-          await sb.from("lab2_individual_responses").upsert(record, { onConflict: "student_id" });
-        } catch (e) { console.warn("lab2_individual_responses:", e); }
-      }
-      alert(`บันทึกผลโหวต S1/S2 และ Reflection ของรหัส ${sid} (กลุ่มที่ ${g}) เรียบร้อยแล้ว`);
-    }
-
-    async function saveGroupWorkspace() {
-      const g = Number(document.getElementById("l2-work-group").value);
-      const payload = {
-        group_no: g,
-        canvas: document.getElementById("l2-canvas").value.trim(),
-        tension: document.getElementById("l2-tension").value.trim(),
-        challenge: document.getElementById("l2-challenge").value.trim(),
-        updated_at: new Date().toISOString()
-      };
-      groupWorkState[g] = payload;
-      localStorage.setItem("ethics_work_lab2", JSON.stringify(groupWorkState));
-
-      if (sb) {
-        try {
-          await sb.from("lab2_group_responses").upsert(payload, { onConflict: "group_no" });
-        } catch (e) { console.warn("lab2_group_responses:", e); }
-      }
-      alert(`ส่งคำตอบ Canvas / Tension / Challenge ของกลุ่มที่ ${g} เรียบร้อยแล้ว`);
-    }
-
-    function renderProgressGrid() {
-      const grid = document.getElementById("l2-progress-grid");
-      grid.innerHTML = "";
-      for (let g = 1; g <= 10; g++) {
-        const w = groupWorkState[g] || {};
-        const done = Boolean((w.canvas || "").trim() || (w.tension || "").trim() || (w.challenge || "").trim());
-        const score = rubricState[g]?.total || 0;
-        grid.innerHTML += `
-          <button onclick="previewGroup(${g})" class="text-left p-3 rounded-xl border ${done ? "bg-emerald-950/30 border-emerald-500/50" : "bg-slate-900/80 border-slate-800"} hover:border-indigo-400 transition">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-white text-sm">กลุ่มที่ ${g}</span>
-              <span class="text-[11px] px-2 py-0.5 rounded ${done ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-800 text-slate-400"}">${done ? "ส่งงานแล้ว" : "รอดำเนินการ"}</span>
-            </div>
-            <div class="text-xs text-amber-300 font-semibold mt-1.5">Rubric: ${score} / 20</div>
-          </button>
-        `;
-      }
-    }
-
-    function previewGroup(g) {
-      const w = groupWorkState[g] || {};
-      const box = document.getElementById("l2-preview-box");
-      box.classList.remove("hidden");
-      box.innerHTML = `
-        <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
-          <strong class="text-sm text-amber-300">คำตอบของกลุ่มที่ ${g}</strong>
-          <button onclick="document.getElementById('l2-preview-box').classList.add('hidden')" class="text-slate-400 hover:text-white">ปิด</button>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">กลุ่มคงที่ (1–10)</label>
+          <select id="modal-group" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm">
+            <option value="">-- เลือกกลุ่ม --</option>
+            <option value="1">กลุ่มที่ 1</option>
+            <option value="2">กลุ่มที่ 2</option>
+            <option value="3">กลุ่มที่ 3</option>
+            <option value="4">กลุ่มที่ 4</option>
+            <option value="5">กลุ่มที่ 5</option>
+            <option value="6">กลุ่มที่ 6</option>
+            <option value="7">กลุ่มที่ 7</option>
+            <option value="8">กลุ่มที่ 8</option>
+            <option value="9">กลุ่มที่ 9</option>
+            <option value="10">กลุ่มที่ 10</option>
+          </select>
         </div>
-        <div><span class="text-sky-300 font-semibold">Canvas:</span> ${w.canvas || "-"}</div>
-        <div><span class="text-amber-300 font-semibold">Tension:</span> ${w.tension || "-"}</div>
-        <div><span class="text-emerald-300 font-semibold">Challenge:</span> ${w.challenge || "-"}</div>
-      `;
-    }
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">บทบาทใน Lab 2</label>
+          <select id="modal-role" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm">
+            <option value="Facilitator">Facilitator (ชวนคุย)</option>
+            <option value="Recorder">Recorder (บันทึกผล)</option>
+            <option value="Skeptic">Skeptic (ตั้งคำถามแย้ง)</option>
+            <option value="Member" selected>Member (ร่วมวิเคราะห์)</option>
+          </select>
+        </div>
+      </div>
 
-    function renderRubricTable() {
-      const tbody = document.getElementById("lab2-tbody");
-      tbody.innerHTML = "";
-      for (let g = 1; g <= 10; g++) {
-        const item = rubricState[g];
-        let inputs = "";
-        for (let idx = 0; idx < 7; idx++) {
-          inputs += `
-            <td class="p-1.5 text-center">
-              <input type="number" step="0.5" min="0" max="${MAX_DIMS[idx]}" value="${item.d[idx]}"
-                oninput="updateDim(${g}, ${idx}, this.value)"
-                class="w-14 px-1.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-center text-white font-semibold focus:border-indigo-400 focus:outline-none" />
-            </td>
-          `;
-        }
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-900/80">
-            <td class="p-2.5 font-bold text-amber-300">กลุ่มที่ ${g}</td>
-            ${inputs}
-            <td class="p-2 text-center bg-emerald-950/30">
-              <span id="l2-total-${g}" class="text-base font-bold text-emerald-300">${item.total}</span>
-            </td>
-            <td class="p-2">
-              <textarea rows="2" placeholder="Feedback กลุ่มที่ ${g}..."
-                oninput="updateFeedback(${g}, this.value)"
-                class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:border-indigo-400 focus:outline-none">${item.feedback || ""}</textarea>
-            </td>
-          </tr>
-        `;
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeStudentLoginModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold">ปิด</button>
+        <button onclick="saveStudentProfile()" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow">บันทึกข้อมูล</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== INSTRUCTOR PIN MODAL ==================== -->
+  <div id="pin-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-sm glass rounded-2xl p-6 shadow-2xl border border-slate-700">
+      <h3 class="text-lg font-bold text-white text-center">เข้าสู่โหมดอาจารย์ผู้สอน</h3>
+      <p class="text-xs text-slate-400 text-center mt-1 mb-4">กรอกรหัสผ่านผู้สอน (6 หลัก)</p>
+      <form id="pin-form" class="space-y-4">
+        <input type="password" id="input-pin" inputmode="numeric" placeholder="••••••" required
+          class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-center text-2xl tracking-[0.4em] focus:outline-none focus:border-indigo-500" />
+        <p id="pin-error" class="hidden text-xs text-rose-400 text-center font-semibold">รหัสผ่านไม่ถูกต้อง</p>
+        <div class="flex gap-2">
+          <button type="button" onclick="document.getElementById('pin-modal').classList.add('hidden')" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-sm font-semibold">ยกเลิก</button>
+          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold">ยืนยัน</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== ADMIN DRAWER MODAL (QR) ==================== -->
+  <div id="admin-drawer" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-md glass rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+        <h3 id="drawer-title" class="text-lg font-bold text-white">QR Code เข้า Lab 2</h3>
+        <button onclick="document.getElementById('admin-drawer').classList.add('hidden')" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-bold">✕ ปิด</button>
+      </div>
+      <div id="drawer-body" class="p-6"></div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // SUPABASE CONFIGURATION (โปรเจกต์ iproktvvetsbxxmpptuj • Schema: ethics)
+    // =========================================================================
+    const SUPABASE_URL = localStorage.getItem('sb_url') || 'https://iproktvvetsbxxmpptuj.supabase.co';
+    const SUPABASE_ANON_KEY = localStorage.getItem('sb_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwcm9rdHZ2ZXRzYnh4bXBwdHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyOTU3NDEsImV4cCI6MjEwMjg3MTc0MX0.Kc0USo30u4gvZNJ1bsOdD9k6nwEBcY7lNMAQxWEFzqw';
+    const INSTRUCTOR_PIN = '641023';
+    const LAB_NO = 2;
+
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      db: { schema: 'ethics' }
+    });
+
+    // Global State
+    let isAdmin = false;
+    let studentsList = [];
+    let groupAssignments = {};
+    let controlState = { current_page: 1, active_challenge: 1, is_locked: false };
+    let currentViewPage = 1;
+    let pollTimer = null;
+    let activeCharts = {};
+
+    let studentProfile = JSON.parse(localStorage.getItem('lab1_student_profile') || 'null');
+
+    const PAGE_TITLES = [
+      "1. Welcome", "2. Lab1→2", "3. Scen 1", "4. See Room", "5. Why?",
+      "6. Scen 2", "7. Facts/Unk", "8. Stakehold", "9. Issue", "10. Tension",
+      "11. Options", "12. Conseq", "13. Decision", "14. Chal 1", "15. Chal 2",
+      "16. Re-Vote", "17. Framewk", "18. Bridge", "19. Reflect"
+    ];
+
+    // =========================================================================
+    // INITIALIZATION & REALTIME SYNC
+    // =========================================================================
+    async function init() {
+      const [stdRes, grpRes, ctrlRes] = await Promise.all([
+        db.from('students_180433').select('*').order('seq', { ascending: true }),
+        db.from('lab_groups').select('*'),
+        db.from('lab_control').select('*').eq('lab_no', LAB_NO).maybeSingle()
+      ]);
+
+      if (stdRes.data) studentsList = stdRes.data;
+      if (grpRes.data) {
+        grpRes.data.forEach(g => groupAssignments[g.student_id] = g);
+      }
+      if (ctrlRes.data) {
+        controlState = ctrlRes.data;
+        currentViewPage = controlState.current_page;
+      } else {
+        // Ensure row for lab_no = 2 exists
+        await db.from('lab_control').upsert({ lab_no: LAB_NO, current_page: 1, active_challenge: 1, is_locked: false }, { onConflict: 'lab_no' });
+      }
+
+      syncStudentProfileWithDB();
+      updateStudentBadgeUI();
+      renderStepPills();
+      await renderCurrentPage();
+
+      pollTimer = setInterval(syncLoop, 3500);
+
+      // Normal Lab view on open; redirect legacy ?tab=grading to separate grading hub
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') === 'grading' || params.get('tab') === 'rubric') {
+        window.location.href = 'grading-180433.html?lab=2';
+        return;
       }
     }
 
-    function updateDim(g, dimIdx, rawVal) {
-      let val = parseFloat(rawVal);
-      if (isNaN(val) || val < 0) val = 0;
-      if (val > MAX_DIMS[dimIdx]) val = MAX_DIMS[dimIdx];
-      rubricState[g].d[dimIdx] = val;
-      rubricState[g].total = +rubricState[g].d.reduce((a, b) => a + b, 0).toFixed(2);
-      document.getElementById(`l2-total-${g}`).textContent = rubricState[g].total;
-      renderProgressGrid();
-      persistGroupScore(g);
-    }
+    async function syncLoop() {
+      const { data: ctrl } = await db.from('lab_control').select('*').eq('lab_no', LAB_NO).maybeSingle();
+      if (ctrl) {
+        const pageChanged = ctrl.current_page !== controlState.current_page;
+        const lockChanged = ctrl.is_locked !== controlState.is_locked;
+        controlState = ctrl;
 
-    function updateFeedback(g, text) {
-      rubricState[g].feedback = text;
-      persistGroupScore(g);
-    }
-
-    let saveTimers = {};
-    function persistGroupScore(g) {
-      const badge = document.getElementById("save-badge");
-      badge.textContent = "⏳ กำลังบันทึก...";
-      badge.className = "px-3 py-1.5 rounded-lg bg-amber-950/70 border border-amber-500/40 text-xs text-amber-300";
-
-      localStorage.setItem("ethics_rubric_lab2", JSON.stringify(rubricState));
-
-      clearTimeout(saveTimers[g]);
-      saveTimers[g] = setTimeout(async () => {
-        if (sb) {
-          try {
-            const item = rubricState[g];
-            await sb.from("lab_rubric_scores").upsert({
-              lab_no: 2,
-              lab_code: "lab2",
-              group_no: g,
-              criteria_scores: item.d,
-              total_score: item.total,
-              feedback: item.feedback,
-              updated_at: new Date().toISOString()
-            }, { onConflict: "lab_no,group_no" });
-          } catch (e) { console.warn("Upsert lab2:", e); }
+        if (!isAdmin && controlState.is_locked && currentViewPage !== controlState.current_page) {
+          currentViewPage = controlState.current_page;
+          renderStepPills();
+          await renderCurrentPage();
+          return;
         }
-        badge.textContent = "✓ บันทึกอัตโนมัติ & ส่งรวมหน้า index.html แล้ว";
-        badge.className = "px-3 py-1.5 rounded-lg bg-emerald-950/70 border border-emerald-500/40 text-xs text-emerald-300";
-      }, 300);
+        if (lockChanged || pageChanged) {
+          renderStepPills();
+        }
+      }
+
+      if ([4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].includes(currentViewPage)) {
+        await refreshLiveSection(currentViewPage);
+      }
     }
 
-    async function initData() {
-      populateGroupSelects();
-      studentsList = generateFallbackStudents();
+    // =========================================================================
+    // STUDENT PROFILE & GROUP MANAGEMENT
+    // =========================================================================
+    function syncStudentProfileWithDB() {
+      if (studentProfile && studentProfile.student_id) {
+        const dbGrp = groupAssignments[studentProfile.student_id];
+        if (dbGrp) {
+          studentProfile.group_no = dbGrp.group_no;
+          localStorage.setItem('lab1_student_profile', JSON.stringify(studentProfile));
+        }
+      }
+    }
 
-      if (sb) {
-        try {
-          const { data: stus } = await sb.from("students_180433").select("*").order("seq", { ascending: true });
-          const { data: grps } = await sb.from("lab_groups").select("*");
-          if (stus && stus.length > 0) {
-            const grpMap = {};
-            (grps || []).forEach(g => { grpMap[g.student_id] = g.group_no; });
-            studentsList = stus.map((s, idx) => ({
-              seq: s.seq || idx + 1,
-              student_id: s.student_id,
-              full_name: s.full_name,
-              group_no: grpMap[s.student_id] || s.group_no || Math.ceil((idx + 1) / 9)
-            }));
+    function updateStudentBadgeUI() {
+      const badgeText = document.getElementById('student-badge-text');
+      const dot = document.getElementById('login-dot');
+      if (studentProfile && studentProfile.student_id) {
+        const grpLabel = studentProfile.group_no ? `กลุ่ม ${studentProfile.group_no}` : 'ยังไม่ระบุกลุ่ม';
+        badgeText.textContent = `${studentProfile.student_id} (${grpLabel})`;
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+      } else {
+        badgeText.textContent = 'ระบุรหัสนิสิต / กลุ่ม';
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
+      }
+    }
+
+    function openStudentLoginModal() {
+      document.getElementById('student-modal').classList.remove('hidden');
+      if (studentProfile) {
+        document.getElementById('modal-sid').value = studentProfile.student_id || '';
+        document.getElementById('modal-group').value = studentProfile.group_no || '';
+        document.getElementById('modal-role').value = studentProfile.role || 'Member';
+        previewModalStudent(studentProfile.student_id);
+      }
+    }
+
+    function closeStudentLoginModal() {
+      document.getElementById('student-modal').classList.add('hidden');
+    }
+
+    document.getElementById('modal-sid').addEventListener('input', (e) => {
+      previewModalStudent(e.target.value.trim());
+    });
+
+    function previewModalStudent(sid) {
+      const prev = document.getElementById('modal-std-preview');
+      if (sid && sid.length === 8) {
+        const found = studentsList.find(s => s.student_id === sid);
+        if (found) {
+          const dbGrp = groupAssignments[sid];
+          if (dbGrp && !document.getElementById('modal-group').value) {
+            document.getElementById('modal-group').value = dbGrp.group_no;
           }
+          prev.innerHTML = `<span class="text-emerald-400 font-semibold">✓ ${found.full_name} (ลำดับที่ ${found.seq})</span>`;
+          return;
+        }
+        prev.innerHTML = `<span class="text-rose-400">✕ ไม่พบรหัสนิสิตนี้ในรายวิชา 180433</span>`;
+      } else {
+        prev.textContent = 'กรอกรหัสนิสิต 8 หลักเพื่อตรวจสอบรายชื่อ';
+      }
+    }
 
-          const { data: rows } = await sb.from("lab_rubric_scores").select("*").eq("lab_no", 2);
-          if (rows && rows.length > 0) {
-            rows.forEach(r => {
-              const g = r.group_no;
-              if (g >= 1 && g <= 10) {
-                const dims = Array.isArray(r.criteria_scores) && r.criteria_scores.length === 7
-                  ? r.criteria_scores.map(Number)
-                  : [r.c1||0, r.c2||0, r.c3||0, r.c4||0, r.c5||0, r.c6||0, r.c7||0].map(Number);
-                const tot = r.total_score ?? dims.reduce((a, b) => a + b, 0);
-                rubricState[g] = { d: dims, total: Number(tot), feedback: r.feedback || "" };
+    async function saveStudentProfile() {
+      const sid = document.getElementById('modal-sid').value.trim();
+      const grp = parseInt(document.getElementById('modal-group').value);
+      const role = document.getElementById('modal-role').value;
+
+      const found = studentsList.find(s => s.student_id === sid);
+      if (!found) return alert('กรุณากรอกรหัสนิสิต 8 หลักให้ถูกต้อง');
+      if (!grp) return alert('กรุณาเลือกกลุ่มคงที่ 1–10');
+
+      studentProfile = { student_id: sid, full_name: found.full_name, group_no: grp, role: role };
+      localStorage.setItem('lab1_student_profile', JSON.stringify(studentProfile));
+
+      await db.from('lab_groups').upsert({
+        student_id: sid,
+        group_no: grp,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'student_id' });
+
+      groupAssignments[sid] = { student_id: sid, group_no: grp };
+      updateStudentBadgeUI();
+      closeStudentLoginModal();
+      renderCurrentPage();
+    }
+
+    function requireStudent() {
+      if (!studentProfile || !studentProfile.student_id) {
+        openStudentLoginModal();
+        return false;
+      }
+      return true;
+    }
+
+    function requireGroup() {
+      if (!requireStudent()) return false;
+      if (!studentProfile.group_no) {
+        openStudentLoginModal();
+        return false;
+      }
+      return true;
+    }
+
+    // =========================================================================
+    // ROLE SWITCHING & INSTRUCTOR CONTROLS
+    // =========================================================================
+    function promptInstructor() {
+      if (isAdmin) { switchRole('admin'); return; }
+      document.getElementById('pin-error').classList.add('hidden');
+      document.getElementById('input-pin').value = '';
+      document.getElementById('pin-modal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('input-pin').focus(), 50);
+    }
+
+    document.getElementById('pin-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (document.getElementById('input-pin').value === INSTRUCTOR_PIN) {
+        document.getElementById('pin-modal').classList.add('hidden');
+        switchRole('admin');
+      } else {
+        document.getElementById('pin-error').classList.remove('hidden');
+      }
+    });
+
+    function switchRole(role) {
+      isAdmin = (role === 'admin');
+      document.getElementById('admin-control-bar').classList.toggle('hidden', !isAdmin);
+      document.getElementById('btn-role-admin').className = isAdmin
+        ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white shadow'
+        : 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700';
+      document.getElementById('btn-role-student').className = !isAdmin
+        ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow'
+        : 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700';
+
+      if (isAdmin) {
+        document.getElementById('admin-page-select').value = currentViewPage;
+        document.getElementById('chk-sync-lock').checked = controlState.is_locked;
+      }
+      renderStepPills();
+      renderCurrentPage();
+    }
+
+    async function setInstructorPage(pageNo) {
+      if (pageNo < 1 || pageNo > 19) return;
+      currentViewPage = pageNo;
+      controlState.current_page = pageNo;
+      if (isAdmin) {
+        document.getElementById('admin-page-select').value = pageNo;
+        await db.from('lab_control').upsert({
+          lab_no: LAB_NO,
+          current_page: pageNo,
+          active_challenge: controlState.active_challenge || 1,
+          is_locked: controlState.is_locked,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'lab_no' });
+      }
+      renderStepPills();
+      await renderCurrentPage();
+    }
+
+    function changeInstructorPage(delta) {
+      setInstructorPage(currentViewPage + delta);
+    }
+
+    async function toggleSyncLock(locked) {
+      controlState.is_locked = locked;
+      await db.from('lab_control').upsert({
+        lab_no: LAB_NO,
+        current_page: currentViewPage,
+        active_challenge: controlState.active_challenge || 1,
+        is_locked: locked,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no' });
+      renderStepPills();
+    }
+
+    function navigateToPage(p) {
+      if (!isAdmin && controlState.is_locked && p !== controlState.current_page) {
+        return;
+      }
+      if (isAdmin) {
+        setInstructorPage(p);
+      } else {
+        currentViewPage = p;
+        renderStepPills();
+        renderCurrentPage();
+      }
+    }
+
+    function renderStepPills() {
+      const container = document.getElementById('step-pills-container');
+      const syncPill = document.getElementById('sync-status-pill');
+      syncPill.innerHTML = controlState.is_locked
+        ? `🔒 ควบคุมหน้าจอตามอาจารย์ (Page ${controlState.current_page})`
+        : `🔓 เปิดอิสระ (อาจารย์อยู่ Page ${controlState.current_page})`;
+
+      container.innerHTML = PAGE_TITLES.map((title, idx) => {
+        const p = idx + 1;
+        const active = p === currentViewPage;
+        const disabled = !isAdmin && controlState.is_locked && p !== controlState.current_page;
+        let cls = 'px-2 py-1 rounded-md text-[11px] font-bold whitespace-nowrap transition ';
+        if (active) cls += 'bg-indigo-600 text-white shadow';
+        else if (disabled) cls += 'bg-slate-900/40 text-slate-600 cursor-not-allowed';
+        else cls += 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 cursor-pointer';
+        return `<button onclick="navigateToPage(${p})" ${disabled ? 'disabled' : ''} class="${cls}">${title}</button>`;
+      }).join('');
+    }
+
+    // =========================================================================
+    // PAGE RENDERERS (PAGES 1 TO 19 — LAB 2 SPECIFICATION)
+    // =========================================================================
+    async function renderCurrentPage() {
+      Object.values(activeCharts).forEach(c => { try { c.destroy(); } catch(e){} });
+      activeCharts = {};
+
+      const container = document.getElementById('page-container');
+      const p = currentViewPage;
+
+      // PAGE 1 — Welcome
+      if (p === 1) {
+        container.innerHTML = `
+          <div class="glass rounded-3xl p-8 md:p-12 text-center space-y-6 max-w-4xl mx-auto">
+            <span class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold border border-indigo-500/30">ปฏิบัติการที่ 2 (110 นาที) • 180433 Professional Ethics</span>
+            <h2 class="text-3xl md:text-5xl font-extrabold text-white leading-tight">
+              การคิดและตัดสินใจทางจริยธรรม<span class="text-amber-400">ในชีวิตประจำวัน</span>
+            </h2>
+            <p class="text-base md:text-lg text-slate-300 max-w-2xl mx-auto">
+              “เมื่อเจอสถานการณ์จริงที่มีหลายฝ่ายได้รับผลกระทบ และไม่มีทางเลือกใดสมบูรณ์แบบ เราจะตัดสินใจอย่างไร?”
+            </p>
+            <div class="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 max-w-2xl mx-auto">
+              <p class="text-amber-300 text-lg md:text-xl font-extrabold">
+                📌 กติกาสำคัญวันนี้: “วันนี้ไม่มีคะแนนสำหรับการตอบเหมือนอาจารย์ คะแนนอยู่ที่คุณภาพของเหตุผล”
+              </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left pt-2">
+              <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+                <p class="text-xs font-bold text-sky-400">1. Facilitator — ชวนคุย</p>
+                <p class="text-sm text-slate-300 mt-1">กระตุ้นให้สมาชิกทุกคนในกลุ่มแสดงความคิดเห็นอย่างทั่วถึง</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+                <p class="text-xs font-bold text-emerald-400">2. Recorder — บันทึกผล</p>
+                <p class="text-sm text-slate-300 mt-1">สรุปและส่งคำตอบของกลุ่มลง Dashboard ในแต่ละขั้นตอน</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+                <p class="text-xs font-bold text-amber-400">3. Skeptic — ตั้งคำถามแย้ง</p>
+                <p class="text-sm text-slate-300 mt-1">ตั้งคำถามว่า “ถ้าเปลี่ยนข้อมูลล่ะ?” “มีใครได้รับผลกระทบที่เราลืมหรือไม่?”</p>
+              </div>
+            </div>
+            <div class="pt-2 flex flex-wrap justify-center gap-3">
+              <button onclick="openStudentLoginModal()" class="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold">
+                ระบุรหัสนิสิต / กลุ่มคงที่
+              </button>
+              <button onclick="navigateToPage(2)" class="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold shadow-lg">
+                START LAB 2 &rarr;
+              </button>
+            </div>
+          </div>`;
+      }
+
+      // PAGE 2 — Connect to Lab 1
+      else if (p === 2) {
+        container.innerHTML = `
+          <div class="glass rounded-3xl p-6 md:p-10 space-y-6 max-w-4xl mx-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+              <h2 class="text-2xl font-extrabold text-white">PAGE 2 — จาก Lab 1 &rarr; Lab 2</h2>
+              <span class="text-xs font-bold text-indigo-400">เชื่อมความรู้เดิม (0–8 นาที)</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="p-6 rounded-2xl bg-slate-900/90 border border-sky-500/30 space-y-2">
+                <span class="text-xs font-bold text-sky-400 uppercase">Lab 1 เราถามว่า:</span>
+                <p class="text-xl font-extrabold text-white">“อะไรทำให้การกระทำหนึ่งถูก หรือไม่ถูกต้อง?”</p>
+              </div>
+              <div class="p-6 rounded-2xl bg-slate-900/90 border border-emerald-500/30 space-y-2">
+                <span class="text-xs font-bold text-emerald-400 uppercase">Lab 2 วันนี้เราจะถามต่อว่า:</span>
+                <p class="text-xl font-extrabold text-white">“เมื่อเจอสถานการณ์จริง เราจะตัดสินใจอย่างไร?”</p>
+              </div>
+            </div>
+            <div class="p-5 rounded-2xl bg-gradient-to-r from-indigo-950 to-slate-900 border border-indigo-500/30 text-center space-y-2">
+              <p class="text-xs text-indigo-300 font-bold uppercase tracking-wider">ทบทวน Ethical Reasoning Framework จาก Lab 1</p>
+              <p class="text-sm md:text-lg font-extrabold text-white tracking-wide">
+                FACTS &rarr; STAKEHOLDERS &rarr; ETHICAL ISSUE &rarr; VALUES &rarr; OPTIONS &rarr; CONSEQUENCES &rarr; DECISION &rarr; WHY
+              </p>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 text-center text-sm text-slate-300">
+              สถานการณ์ &rarr; มองเห็นปัญหา &rarr; ชั่งน้ำหนักคุณค่า &rarr; พิจารณาผลกระทบ &rarr; ตัดสินใจ &rarr; อธิบายเหตุผล &rarr; พร้อมเปลี่ยนการตัดสินใจเมื่อข้อมูลเปลี่ยน
+            </div>
+          </div>`;
+      }
+
+      // PAGE 3 — Scenario 1: Quick Decision
+      else if (p === 3) {
+        const opts = [
+          { code: 'A', label: 'A. ใส่ชื่อให้ เพราะเป็นเพื่อนกัน' },
+          { code: 'B', label: 'B. ไม่ใส่ชื่อ เพราะไม่ได้ช่วยงาน' },
+          { code: 'C', label: 'C. ใส่ชื่อ แต่บอกเพื่อนว่าครั้งหน้าต้องรับผิดชอบมากกว่านี้' },
+          { code: 'D', label: 'D. คุยกับเพื่อนก่อน แล้วหาทางออกที่เหมาะสม' },
+          { code: 'E', label: 'E. อื่น ๆ' }
+        ];
+        container.innerHTML = `
+          <div class="glass rounded-3xl p-6 md:p-10 max-w-3xl mx-auto space-y-6">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-indigo-400">PAGE 3 • SCENARIO 1: QUICK DECISION (8–18 นาที)</span>
+              <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold">โหวตคนเดียวก่อน (ยังไม่คุยกลุ่ม)</span>
+            </div>
+            <div class="p-5 rounded-2xl bg-slate-900 border border-slate-700 space-y-2">
+              <p class="text-xs text-slate-400 uppercase font-bold">สถานการณ์</p>
+              <p class="text-base md:text-lg text-slate-100 leading-relaxed">
+                คุณทำงานกลุ่มกับเพื่อน 5 คน เพื่อนคนหนึ่งแทบไม่ได้ช่วยทำงาน แต่เมื่อใกล้ส่งงาน เพื่อนขอให้ใส่ชื่อของเขาในรายงานด้วย
+              </p>
+              <p class="text-xl font-extrabold text-amber-300 pt-1">“คุณควรทำอย่างไร?”</p>
+            </div>
+            <div class="space-y-2.5">
+              ${opts.map(o => `
+                <button onclick="submitIndividualVote('p3_scen1_vote', '${o.code}')" class="w-full text-left p-4 rounded-xl bg-slate-900/90 hover:bg-indigo-950/60 border border-slate-700 hover:border-indigo-500 text-sm md:text-base font-semibold text-slate-100 transition">
+                  ${o.label}
+                </button>
+              `).join('')}
+            </div>
+            <div id="p3-feedback" class="hidden p-3 rounded-xl bg-emerald-950 text-emerald-300 border border-emerald-700 text-sm text-center font-bold"></div>
+          </div>`;
+      }
+
+      // PAGE 4 — See the Room
+      else if (p === 4) {
+        container.innerHTML = `
+          <div class="glass rounded-3xl p-6 md:p-8 max-w-4xl mx-auto space-y-6">
+            <div class="flex justify-between items-center">
+              <div>
+                <span class="text-xs font-bold text-indigo-400">PAGE 4 • SEE THE ROOM (18–28 นาที)</span>
+                <h2 class="text-2xl font-extrabold text-white">ห้องนี้คิดอย่างไร? — ผลโหวต Scenario 1 (<span id="p4-count">0</span> คน)</h2>
+              </div>
+              <button onclick="navigateToPage(5)" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold">CONTINUE &rarr;</button>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 h-[300px]">
+              <canvas id="chart-p4"></canvas>
+            </div>
+            <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-center">
+              <p class="text-lg font-extrabold text-amber-300">“ทำไมคนในห้องจึงเลือกต่างกัน?”</p>
+              <p class="text-xs text-slate-300 mt-1">ยังไม่เฉลย — เปลี่ยนคำถามจาก “ใครตอบถูก?” &rarr; “เรามีเหตุผลต่างกันอย่างไร?”</p>
+            </div>
+          </div>`;
+        await refreshLiveSection(4);
+      }
+
+      // PAGE 5 — Why?
+      else if (p === 5) {
+        const whyOpts = [
+          "ความยุติธรรม (Fairness)", "ความซื่อสัตย์ (Honesty)", "ความรับผิดชอบ (Responsibility)",
+          "ความสัมพันธ์กับเพื่อน (Relationship)", "ผลกระทบต่อกลุ่ม (Impact)", "กฎ/ระเบียบ (Rules)",
+          "ความเห็นอกเห็นใจ (Compassion)", "การให้โอกาส (Opportunity)", "ประโยชน์ของส่วนรวม (Common good)", "อื่น ๆ (Other)"
+        ];
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-4">
+              <span class="text-xs font-bold text-indigo-400">PAGE 5 • WHY? (เหตุผลเบื้องหลังการตัดสินใจ)</span>
+              <h2 class="text-xl font-extrabold text-white">เหตุผลที่สำคัญที่สุดที่ทำให้คุณเลือกคำตอบนี้คืออะไร?</h2>
+              <p class="text-xs text-slate-400">เลือกได้ <strong>สูงสุด 2 ข้อ</strong>:</p>
+              <div class="grid grid-cols-2 gap-2">
+                ${whyOpts.map(w => `
+                  <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer hover:border-indigo-500 text-xs font-semibold">
+                    <input type="checkbox" value="${w}" class="p5-chk accent-indigo-500" onchange="limitCheckboxes('.p5-chk', 2)">
+                    <span>${w}</span>
+                  </label>
+                `).join('')}
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">“ถ้าคนสองคนเลือกคำตอบต่างกัน แปลว่าคนหนึ่งมีจริยธรรม แต่อีกคนไม่มีหรือไม่?” (ตอบสั้น ๆ)</label>
+                <textarea id="p5-note" rows="2" placeholder="พิมพ์ความเห็นสั้น ๆ..."
+                  class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"></textarea>
+              </div>
+              <button onclick="submitP5Why()" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow">ส่งเหตุผลของคุณ</button>
+            </div>
+            <div class="lg:col-span-6 glass rounded-2xl p-6 flex flex-col">
+              <h3 class="text-lg font-bold text-white mb-3">เหตุผลที่เพื่อนในห้องให้ความสำคัญ (<span id="p5-count">0</span> คน)</h3>
+              <div class="flex-1 min-h-[260px] p-4 rounded-xl bg-slate-950/80 border border-slate-800">
+                <canvas id="chart-p5"></canvas>
+              </div>
+            </div>
+          </div>`;
+        await refreshLiveSection(5);
+      }
+
+      // PAGE 6 — Scenario 2: Ethical Dilemma (Pre-Vote)
+      else if (p === 6) {
+        const opts = [
+          { code: 'A', label: 'A. ใส่ชื่อ เพราะมีเหตุจำเป็น' },
+          { code: 'B', label: 'B. ไม่ใส่ชื่อ เพราะไม่ได้มีส่วนร่วมกับงาน' },
+          { code: 'C', label: 'C. ใส่ชื่อ แต่ต้องปรับวิธีประเมิน/แบ่งงานให้เหมาะสม' },
+          { code: 'D', label: 'D. คุยกันก่อน แล้วหาวิธีให้สมาชิกมีส่วนร่วมชดเชย' },
+          { code: 'E', label: 'E. อื่น ๆ' }
+        ];
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-4">
+              <span class="text-xs font-bold text-emerald-400">PAGE 6 • SCENARIO 2: ETHICAL DILEMMA (28–43 นาที • Pre-Vote)</span>
+              <h2 class="text-xl font-extrabold text-white">Case: “เพื่อนที่มีเหตุผล”</h2>
+              <div class="p-4 rounded-xl bg-slate-900 border border-emerald-500/30 text-sm text-slate-200 leading-relaxed space-y-2">
+                <p>คุณทำงานกลุ่ม 5 คน สมาชิกคนหนึ่งชื่อ <strong>“นนท์”</strong> แทบไม่ได้เข้าร่วมประชุมและไม่ได้ช่วยทำรายงานในช่วงที่ผ่านมา</p>
+                <p class="text-amber-300 font-semibold">ก่อนส่งงาน 1 วัน นนท์มาบอกว่า “ช่วงที่ผ่านมาแม่เราป่วยหนัก เราต้องดูแลแม่ เลยไม่มีเวลาช่วยงาน แต่เราก็อยากให้มีชื่อในงานด้วย”</p>
+                <p>สมาชิกคนอื่น ๆ ต้องตัดสินใจว่าจะทำอย่างไร — <strong>“คุณคิดว่ากลุ่มควรทำอย่างไร?”</strong></p>
+              </div>
+              <div class="space-y-2">
+                ${opts.map(o => `
+                  <button onclick="submitIndividualVote('p6_scen2_before', '${o.code}')" class="w-full text-left p-3.5 rounded-xl bg-slate-900 hover:bg-emerald-950/60 border border-slate-700 hover:border-emerald-500 text-sm font-semibold text-white transition">
+                    ${o.label}
+                  </button>
+                `).join('')}
+              </div>
+              <div id="p6-feedback" class="hidden p-2.5 rounded-xl bg-emerald-950 text-emerald-300 border border-emerald-700 text-xs text-center font-bold"></div>
+            </div>
+            <div class="lg:col-span-6 glass rounded-2xl p-6 flex flex-col">
+              <h3 class="text-lg font-bold text-white mb-3">ผลโหวต Scenario 2 (Before) (<span id="p6-count">0</span> คน)</h3>
+              <div class="flex-1 min-h-[280px] p-4 rounded-xl bg-slate-950/80 border border-slate-800">
+                <canvas id="chart-p6"></canvas>
+              </div>
+            </div>
+          </div>`;
+        await refreshLiveSection(6);
+      }
+
+      // PAGE 7 — Group Discussion: Facts & Unknowns (5 Questions)
+      else if (p === 7) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-3">
+              <span class="text-xs font-bold text-sky-400">PAGE 7 • GROUP DISCUSSION: FACTS &amp; UNKNOWNS (43–58 นาที)</span>
+              <h2 class="text-lg font-extrabold text-white">“อย่าเพิ่งตัดสินใจจนกว่าจะตรวจสอบว่าเรามีข้อมูลเพียงพอหรือไม่”</h2>
+              <div class="space-y-2.5">
+                <div>
+                  <label class="block text-xs font-bold text-sky-300 mb-1">1. FACTS — เรารู้อะไรแน่นอนจากสถานการณ์นี้?</label>
+                  <textarea id="p7-facts" rows="2" class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-amber-300 mb-1">2. UNKNOWN — เรายังไม่รู้อะไรที่อาจมีผลต่อการตัดสินใจ?</label>
+                  <textarea id="p7-unknown" rows="2" class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-emerald-300 mb-1">3. STAKEHOLDERS — ใครบ้างที่จะได้รับผลกระทบ?</label>
+                  <textarea id="p7-stakeholders" rows="2" class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-indigo-300 mb-1">4. ETHICAL ISSUE — จริง ๆ แล้ว “ปัญหาจริยธรรม” ของกรณีนี้คืออะไร?</label>
+                  <textarea id="p7-issue" rows="2" class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-rose-300 mb-1">5. VALUES IN CONFLICT — มีคุณค่า/หน้าที่อะไรบ้างที่กำลังขัดแย้งกัน?</label>
+                  <textarea id="p7-values" rows="2" placeholder="เช่น ความยุติธรรม ↔ ความเห็นอกเห็นใจ..." class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+                </div>
+              </div>
+              <button onclick="submitP7Facts()" class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold shadow">บันทึก Facts &amp; Unknowns ของกลุ่ม</button>
+            </div>
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-3">
+              <h3 class="text-lg font-bold text-white">สรุปการวิเคราะห์ทั้ง 10 กลุ่ม (<span id="p7-grp-count">0</span>/10 กลุ่ม)</h3>
+              <div id="p7-results-list" class="space-y-3 max-h-[520px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(7);
+      }
+
+      // PAGE 8 — Stakeholder Map
+      else if (p === 8) {
+        const stks = ["ตัวเรา", "เพื่อนในกลุ่ม", "นนท์", "อาจารย์", "สมาชิกคนอื่นในชั้นเรียน", "อื่น ๆ"];
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-4">
+              <span class="text-xs font-bold text-emerald-400">PAGE 8 • STAKEHOLDER MAP</span>
+              <h2 class="text-xl font-extrabold text-white">ใครได้รับผลกระทบจากกรณีนี้บ้าง?</h2>
+              <div class="grid grid-cols-2 gap-2">
+                ${stks.map(s => `
+                  <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer hover:border-emerald-500 text-xs font-semibold">
+                    <input type="checkbox" value="${s}" class="p8-chk accent-emerald-500" checked>
+                    <span>${s}</span>
+                  </label>
+                `).join('')}
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-amber-300 mb-1">“ใครได้รับผลกระทบมากที่สุด เพราะเหตุใด?”</label>
+                <textarea id="p8-most" rows="3" placeholder="ระบุผู้ที่ได้รับผลกระทบมากที่สุดและเหตุผลของกลุ่ม..."
+                  class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"></textarea>
+              </div>
+              <button onclick="submitP8Stakeholder()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow">บันทึก Stakeholder Map ของกลุ่ม</button>
+            </div>
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-3">
+              <h3 class="text-lg font-bold text-white">มุมมอง Stakeholder ของทั้ง 10 กลุ่ม (<span id="p8-grp-count">0</span>/10)</h3>
+              <div id="p8-results-list" class="space-y-3 max-h-[440px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(8);
+      }
+
+      // PAGE 9 — Ethical Issue
+      else if (p === 9) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-4">
+              <span class="text-xs font-bold text-indigo-400">PAGE 9 • ETHICAL ISSUE</span>
+              <h2 class="text-xl font-extrabold text-white">ปัญหาจริยธรรมจริง ๆ ของกรณีนี้คืออะไร?</h2>
+              <div class="p-4 rounded-xl bg-slate-900 border border-slate-700 space-y-3">
+                <p class="text-sm font-bold text-slate-200">“ปัญหาจริยธรรมของกรณีนี้คือ ________ กับ ________ ขัดแย้งกัน”</p>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs text-sky-400 font-bold mb-1">ด้านที่ 1</label>
+                    <input type="text" id="p9-side1" placeholder="เช่น ความยุติธรรมต่อคนทำงาน" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm text-white">
+                  </div>
+                  <div>
+                    <label class="block text-xs text-amber-400 font-bold mb-1">ด้านที่ 2</label>
+                    <input type="text" id="p9-side2" placeholder="เช่น ความเห็นอกเห็นใจเพื่อน" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm text-white">
+                  </div>
+                </div>
+              </div>
+              <button onclick="submitP9Issue()" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow">บันทึก Ethical Issue ของกลุ่ม</button>
+            </div>
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-3">
+              <h3 class="text-lg font-bold text-white">นิยามปัญหาจริยธรรมของแต่ละกลุ่ม (<span id="p9-grp-count">0</span>/10)</h3>
+              <div id="p9-results-list" class="space-y-2.5 max-h-[400px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(9);
+      }
+
+      // PAGE 10 — Ethical Tension Map
+      else if (p === 10) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-4">
+              <span class="text-xs font-bold text-amber-400">PAGE 10 • ETHICAL TENSION MAP (58–70 นาที • กิจกรรมสำคัญ)</span>
+              <h2 class="text-xl font-extrabold text-white">คุณค่าอะไรที่กำลังขัดแย้งกัน? (Value A &larr;&mdash;&rarr; Value B)</h2>
+              <p class="text-xs text-slate-300">Ethical dilemma ไม่ใช่การเลือกระหว่าง “ถูก” กับ “ผิด” เสมอไป แต่บางครั้งเป็นการเลือกระหว่างคุณค่าที่ดีสองอย่างที่ขัดกัน</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-sky-400 mb-1">VALUE A</label>
+                  <input type="text" id="p10-valA" placeholder="เช่น ความยุติธรรม" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-amber-400 mb-1">VALUE B</label>
+                  <input type="text" id="p10-valB" placeholder="เช่น ความเห็นอกเห็นใจ" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-sky-300 mb-1">“ถ้าคุณให้ความสำคัญกับ Value A มากขึ้น คุณจะเสียอะไร?”</label>
+                <textarea id="p10-lossA" rows="2" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-amber-300 mb-1">“ถ้าคุณให้ความสำคัญกับ Value B มากขึ้น คุณจะเสียอะไร?”</label>
+                <textarea id="p10-lossB" rows="2" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+              </div>
+              <button onclick="submitP10Tension()" class="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold shadow">บันทึก Ethical Tension Map</button>
+            </div>
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-3">
+              <h3 class="text-lg font-bold text-white">Ethical Tension Map ทั้ง 10 กลุ่ม (<span id="p10-grp-count">0</span>/10)</h3>
+              <div id="p10-results-list" class="space-y-3 max-h-[480px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(10);
+      }
+
+      // PAGE 11 — Options
+      else if (p === 11) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-3">
+              <span class="text-xs font-bold text-sky-400">PAGE 11 • OPTIONS</span>
+              <h2 class="text-xl font-extrabold text-white">เรามีทางเลือกอะไรบ้าง? (เสนออย่างน้อย 3 ทางเลือก)</h2>
+              <div class="space-y-2.5">
+                <input type="text" id="p11-opt1" placeholder="ทางเลือกที่ 1..." class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white">
+                <input type="text" id="p11-opt2" placeholder="ทางเลือกที่ 2..." class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white">
+                <input type="text" id="p11-opt3" placeholder="ทางเลือกที่ 3..." class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white">
+                <div>
+                  <label class="block text-xs font-bold text-emerald-400 mb-1">“ทางเลือกใดดีที่สุด ณ ตอนนี้?”</label>
+                  <input type="text" id="p11-best" placeholder="ระบุทางเลือกที่กลุ่มเห็นว่าดีที่สุด..." class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-emerald-500/40 text-sm text-white">
+                </div>
+              </div>
+              <button onclick="submitP11Options()" class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold shadow">บันทึกทางเลือกของกลุ่ม</button>
+            </div>
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-3">
+              <h3 class="text-lg font-bold text-white">ทางเลือกที่แต่ละกลุ่มเสนอ (<span id="p11-grp-count">0</span>/10)</h3>
+              <div id="p11-results-list" class="space-y-3 max-h-[440px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(11);
+      }
+
+      // PAGE 12 — Consequences
+      else if (p === 12) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-3">
+              <span class="text-xs font-bold text-indigo-400">PAGE 12 • CONSEQUENCES</span>
+              <h2 class="text-xl font-extrabold text-white">สำหรับทางเลือกที่กลุ่มเลือก: ผลที่ตามมาคืออะไร?</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-emerald-400 mb-1">1. ใครได้ประโยชน์?</label>
+                  <textarea id="p12-gain" rows="2" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-rose-400 mb-1">2. ใครเสียประโยชน์?</label>
+                  <textarea id="p12-lose" rows="2" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-amber-400 mb-1">3. ความเสี่ยงคืออะไร?</label>
+                  <textarea id="p12-risk" rows="2" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-sky-400 mb-1">4. มีผลระยะยาวหรือไม่?</label>
+                  <textarea id="p12-long" rows="2" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+                </div>
+              </div>
+              <button onclick="submitP12Conseq()" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow">บันทึกการวิเคราะห์ผลกระทบ</button>
+            </div>
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-3">
+              <h3 class="text-lg font-bold text-white">ผลกระทบที่ทั้ง 10 กลุ่มวิเคราะห์ (<span id="p12-grp-count">0</span>/10)</h3>
+              <div id="p12-results-list" class="space-y-3 max-h-[440px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(12);
+      }
+
+      // PAGE 13 — Group Decision
+      else if (p === 13) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-4">
+              <span class="text-xs font-bold text-emerald-400">PAGE 13 • GROUP DECISION</span>
+              <h2 class="text-xl font-extrabold text-white">กลุ่มของคุณตัดสินใจว่า...</h2>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">เลือกแนวทางหลัก (A / B / C / D / E)</label>
+                <select id="p13-choice" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white">
+                  <option value="A. ใส่ชื่อ เพราะมีเหตุจำเป็น">A. ใส่ชื่อ เพราะมีเหตุจำเป็น</option>
+                  <option value="B. ไม่ใส่ชื่อ เพราะไม่ได้มีส่วนร่วมกับงาน">B. ไม่ใส่ชื่อ เพราะไม่ได้มีส่วนร่วมกับงาน</option>
+                  <option value="C. ใส่ชื่อ แต่ต้องปรับวิธีประเมิน/แบ่งงานให้เหมาะสม">C. ใส่ชื่อ แต่ต้องปรับวิธีประเมิน/แบ่งงานให้เหมาะสม</option>
+                  <option value="D. คุยกันก่อน แล้วหาวิธีให้สมาชิกมีส่วนร่วมชดเชย">D. คุยกันก่อน แล้วหาวิธีให้สมาชิกมีส่วนร่วมชดเชย</option>
+                  <option value="E. อื่น ๆ">E. อื่น ๆ</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-emerald-300 mb-1">สรุปเหตุผลของกลุ่ม (ไม่เกิน 50–80 คำ):</label>
+                <textarea id="p13-stmt" rows="3" placeholder="เราเลือก ______ เพราะ ______ โดยให้ความสำคัญกับ ______ มากที่สุด"
+                  class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"></textarea>
+              </div>
+              <button onclick="submitP13Decision()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow">ส่งการตัดสินใจของกลุ่ม</button>
+            </div>
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-3">
+              <h3 class="text-lg font-bold text-white">การตัดสินใจของทั้ง 10 กลุ่ม (<span id="p13-grp-count">0</span>/10)</h3>
+              <div id="p13-results-list" class="space-y-3 max-h-[420px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(13);
+      }
+
+      // PAGE 14 — Challenge 1
+      else if (p === 14) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-4">
+              <span class="text-xs font-bold text-amber-400">PAGE 14 • CHANGE ONE FACTOR — CHALLENGE 1 (70–82 นาที)</span>
+              <h2 class="text-xl font-extrabold text-white">เพิ่มข้อมูลใหม่ (Challenge 1)</h2>
+              <div class="p-4 rounded-2xl bg-amber-950/50 border border-amber-500/40 space-y-1">
+                <p class="text-xs font-extrabold text-amber-400">ข้อมูลใหม่:</p>
+                <p class="text-base font-bold text-white leading-relaxed">“นนท์ไม่ได้เพียงดูแลแม่ แต่ต้องพาแม่เข้าโรงพยาบาลหลายครั้งในช่วงที่กลุ่มทำงาน”</p>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">“การตัดสินใจของกลุ่มเปลี่ยนหรือไม่?”</label>
+                <select id="p14-stance" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white">
+                  <option value="เปลี่ยน">เปลี่ยน</option>
+                  <option value="ไม่เปลี่ยน">ไม่เปลี่ยน</option>
+                  <option value="ยังตัดสินใจไม่ได้">ยังตัดสินใจไม่ได้</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">“ข้อมูลใหม่นี้เปลี่ยนอะไรในเหตุผลของคุณ?”</label>
+                <textarea id="p14-reason" rows="3" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"></textarea>
+              </div>
+              <button onclick="submitP14Chal1()" class="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold shadow">บันทึกผล Challenge 1</button>
+            </div>
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-3">
+              <h3 class="text-lg font-bold text-white">การตอบสนอง Challenge 1 (<span id="p14-grp-count">0</span>/10 กลุ่ม)</h3>
+              <div id="p14-results-list" class="space-y-3 max-h-[440px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(14);
+      }
+
+      // PAGE 15 — Challenge 2
+      else if (p === 15) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-4">
+              <span class="text-xs font-bold text-rose-400">PAGE 15 • CHANGE ONE FACTOR — CHALLENGE 2</span>
+              <h2 class="text-xl font-extrabold text-white">เพิ่มข้อมูลอีกหนึ่งด้าน (Challenge 2)</h2>
+              <div class="p-4 rounded-2xl bg-rose-950/40 border border-rose-500/40 space-y-1">
+                <p class="text-xs font-extrabold text-rose-400">ข้อมูลเพิ่มเติม:</p>
+                <p class="text-base font-bold text-white leading-relaxed">“แต่สมาชิกคนอื่นต้องทำงานเพิ่มทั้งหมด และหากใส่ชื่อทุกคน คะแนนของสมาชิกที่ทำงานหนักกับสมาชิกที่ไม่ได้ทำงานจะเท่ากัน”</p>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">“ตอนนี้คุณยังตัดสินใจเหมือนเดิมหรือไม่?”</label>
+                <select id="p15-stance" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white">
+                  <option value="เปลี่ยน">เปลี่ยน</option>
+                  <option value="ไม่เปลี่ยน">ไม่เปลี่ยน</option>
+                  <option value="ยังตัดสินใจไม่ได้">ยังตัดสินใจไม่ได้</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">เหตุผลในการชั่งน้ำหนักใหม่:</label>
+                <textarea id="p15-reason" rows="3" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"></textarea>
+              </div>
+              <button onclick="submitP15Chal2()" class="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold shadow">บันทึกผล Challenge 2</button>
+            </div>
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-3">
+              <h3 class="text-lg font-bold text-white">การตอบสนอง Challenge 2 (<span id="p15-grp-count">0</span>/10 กลุ่ม)</h3>
+              <div id="p15-results-list" class="space-y-3 max-h-[440px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(15);
+      }
+
+      // PAGE 16 — RE-VOTE
+      else if (p === 16) {
+        const opts = [
+          { code: 'A', label: 'A. ใส่ชื่อ เพราะมีเหตุจำเป็น' },
+          { code: 'B', label: 'B. ไม่ใส่ชื่อ เพราะไม่ได้มีส่วนร่วมกับงาน' },
+          { code: 'C', label: 'C. ใส่ชื่อ แต่ต้องปรับวิธีประเมิน/แบ่งงานให้เหมาะสม' },
+          { code: 'D', label: 'D. คุยกันก่อน แล้วหาวิธีให้สมาชิกมีส่วนร่วมชดเชย' },
+          { code: 'E', label: 'E. อื่น ๆ' }
+        ];
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-5 glass rounded-2xl p-6 space-y-4">
+              <span class="text-xs font-bold text-sky-400">PAGE 16 • RE-VOTE (82–90 นาที)</span>
+              <h2 class="text-xl font-extrabold text-white">หลังจากได้ข้อมูลเพิ่มเติม คุณคิดว่ากลุ่มควรทำอย่างไร?</h2>
+              <div class="space-y-2">
+                ${opts.map(o => `
+                  <button onclick="submitIndividualVote('p16_scen2_after', '${o.code}')" class="w-full text-left p-3 rounded-xl bg-slate-900 hover:bg-sky-950/60 border border-slate-700 hover:border-sky-500 text-sm font-semibold text-white transition">
+                    ${o.label}
+                  </button>
+                `).join('')}
+              </div>
+              <div id="p16-feedback" class="hidden p-2.5 rounded-xl bg-emerald-950 text-emerald-300 border border-emerald-700 text-xs text-center font-bold"></div>
+            </div>
+            <div class="lg:col-span-7 glass rounded-2xl p-6 space-y-4">
+              <h3 class="text-lg font-bold text-white">เปรียบเทียบ BEFORE (Page 6) &rarr; AFTER (Page 16)</h3>
+              <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 h-[270px]">
+                <canvas id="chart-p16"></canvas>
+              </div>
+              <div id="p16-shift-summary" class="text-xs text-slate-300 bg-slate-900/80 p-3 rounded-xl border border-slate-800"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(16);
+      }
+
+      // PAGE 17 — Build the Decision Framework (Card Sorting)
+      else if (p === 17) {
+        const cards = [
+          "FACTS", "STAKEHOLDERS", "ETHICAL ISSUE", "VALUES", "RULES",
+          "OPTIONS", "CONSEQUENCES", "DECISION", "JUSTIFICATION"
+        ];
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-4">
+              <span class="text-xs font-bold text-emerald-400">PAGE 17 • BUILD THE DECISION FRAMEWORK (90–101 นาที)</span>
+              <h2 class="text-xl font-extrabold text-white">“ถ้าคุณต้องตัดสินใจเรื่องจริยธรรมจริง ๆ คุณจะคิดตามลำดับใด?”</h2>
+              <p class="text-xs text-slate-400">คลิกเรียงการ์ดด้านล่างตามลำดับของกลุ่ม:</p>
+              <div class="flex flex-wrap gap-2">
+                ${cards.map(c => `
+                  <button onclick="pickFrameworkCard('${c}')" class="card-pill px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-indigo-700 border border-slate-600 text-xs font-bold text-white">
+                    + ${c}
+                  </button>
+                `).join('')}
+              </div>
+              <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 min-h-[120px] space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs font-bold text-indigo-400">ลำดับที่กลุ่มเรียงไว้:</span>
+                  <button onclick="resetFrameworkCards()" class="text-xs text-rose-400 hover:underline">ล้างลำดับใหม่</button>
+                </div>
+                <div id="p17-selected-sequence" class="flex flex-wrap gap-1.5 text-xs"></div>
+              </div>
+              <button onclick="submitP17Framework()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow">ส่ง Framework ของกลุ่ม</button>
+            </div>
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-4">
+              <h3 class="text-lg font-bold text-white">ลำดับการตัดสินใจของทั้ง 10 กลุ่ม (<span id="p17-grp-count">0</span>/10)</h3>
+              <div id="p17-results-list" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1"></div>
+              ${isAdmin ? `
+                <div class="p-4 rounded-xl bg-indigo-950/70 border border-indigo-500/40 text-xs space-y-1">
+                  <p class="font-extrabold text-indigo-300">สรุปกรอบแนวคิด (ไม่ใช่สูตรตายตัว แต่ช่วยให้เหตุผลชัดขึ้น):</p>
+                  <p class="text-white font-mono">1. FACTS &rarr; 2. STAKEHOLDERS &rarr; 3. ETHICAL ISSUE &rarr; 4. VALUES / DUTIES &rarr; 5. OPTIONS &rarr; 6. CONSEQUENCES &rarr; 7. DECISION &rarr; 8. JUSTIFICATION</p>
+                </div>
+              ` : ''}
+            </div>
+          </div>`;
+        window.p17Sequence = [];
+        await refreshLiveSection(17);
+      }
+
+      // PAGE 18 — Professional Bridge
+      else if (p === 18) {
+        const bridgeOpts = [
+          "ความรับผิดชอบต่อผู้ป่วย (Patient)", "กฎหมาย (Law)", "จรรยาบรรณวิชาชีพ (Professional ethics)",
+          "มาตรฐานวิชาชีพ (Professional standards)", "ความปลอดภัย (Safety)", "ความไว้วางใจของสังคม (Trust)",
+          "ผลกระทบต่อวิชาชีพ (Society)", "อื่น ๆ (Other)"
+        ];
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-4">
+              <span class="text-xs font-bold text-sky-400">PAGE 18 • PROFESSIONAL BRIDGE (101–107 นาที • เชื่อมไป Lab 3)</span>
+              <h2 class="text-xl font-extrabold text-white">“ถ้าสถานการณ์เดียวกันเกิดขึ้นกับเภสัชกร จะมีอะไรเพิ่มเข้ามาจากการตัดสินใจในชีวิตประจำวัน?”</h2>
+              <p class="text-xs text-slate-400">เลือกสิ่งที่คิดว่าจะเพิ่มขึ้น (เลือกได้หลายข้อ):</p>
+              <div class="grid grid-cols-2 gap-2">
+                ${bridgeOpts.map(b => `
+                  <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer hover:border-sky-500 text-xs font-semibold">
+                    <input type="checkbox" value="${b}" class="p18-chk accent-sky-500">
+                    <span>${b}</span>
+                  </label>
+                `).join('')}
+              </div>
+              <button onclick="submitP18Bridge()" class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold shadow">ส่งคำตอบ Professional Bridge</button>
+              <div class="p-3.5 rounded-xl bg-indigo-950/60 border border-indigo-500/30 text-xs text-indigo-200 leading-relaxed">
+                “ในชีวิตประจำวัน เราต้องรับผิดชอบต่อการตัดสินใจของเรา แต่เมื่อเราเป็นผู้ประกอบวิชาชีพ การตัดสินใจของเราจะมีทั้ง <strong>ผู้ป่วย วิชาชีพ กฎหมาย และสังคม</strong> เข้ามาเกี่ยวข้องด้วย”
+              </div>
+            </div>
+            <div class="lg:col-span-6 glass rounded-2xl p-6 flex flex-col">
+              <h3 class="text-lg font-bold text-white mb-3">สิ่งที่เพิ่มขึ้นในมุมมองวิชาชีพ (<span id="p18-count">0</span> คน)</h3>
+              <div class="flex-1 min-h-[280px] p-4 rounded-xl bg-slate-950/80 border border-slate-800">
+                <canvas id="chart-p18"></canvas>
+              </div>
+            </div>
+          </div>`;
+        await refreshLiveSection(18);
+      }
+
+      // PAGE 19 — Exit Reflection
+      else if (p === 19) {
+        container.innerHTML = `
+          <div class="glass rounded-3xl p-6 md:p-8 max-w-3xl mx-auto space-y-5">
+            <span class="text-xs font-bold text-emerald-400">PAGE 19 • EXIT REFLECTION (107–110 นาที — ตอบรายบุคคล)</span>
+            <h2 class="text-2xl font-extrabold text-white">สะท้อนการเรียนรู้ท้ายปฏิบัติการที่ 2</h2>
+            <p class="text-xs text-slate-300 bg-slate-900/90 p-3 rounded-xl border border-slate-700">
+              “การตัดสินใจทางจริยธรรมไม่ใช่แค่การรู้ว่าอะไรถูกหรือผิด แต่คือการสามารถอธิบายได้ว่า ทำไมเราจึงเลือกทางนั้น และพร้อมทบทวนการตัดสินใจเมื่อข้อมูลเปลี่ยน”
+            </p>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-bold text-sky-300 mb-1">1. BEFORE — ก่อน Lab วันนี้ ฉันคิดว่าการตัดสินใจทางจริยธรรมคือ...</label>
+                <textarea id="p19-before" rows="2" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-emerald-300 mb-1">2. NOW — ตอนนี้ฉันคิดว่าการตัดสินใจทางจริยธรรมคือ...</label>
+                <textarea id="p19-now" rows="2" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-amber-300 mb-1">3. NEXT — สิ่งหนึ่งที่ฉันจะนำไปใช้เมื่อต้องตัดสินใจเรื่องยาก ๆ คือ...</label>
+                <textarea id="p19-next" rows="2" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"></textarea>
+              </div>
+              <button onclick="submitP19Reflection()" class="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg">SUBMIT EXIT REFLECTION</button>
+            </div>
+            <div id="p19-feedback" class="hidden p-3 rounded-xl bg-emerald-950 text-emerald-300 border border-emerald-700 text-sm text-center font-bold"></div>
+            <p class="text-xs text-center text-slate-400">ส่งคำตอบแล้ว <span id="p19-count" class="text-emerald-400 font-bold">0</span> คน</p>
+          </div>`;
+        await refreshLiveSection(19);
+      }
+    }
+
+    // =========================================================================
+    // SUBMISSION HANDLERS
+    // =========================================================================
+    function limitCheckboxes(selector, max) {
+      const boxes = document.querySelectorAll(selector);
+      const checked = Array.from(boxes).filter(b => b.checked);
+      if (checked.length > max) {
+        event.target.checked = false;
+        alert(`เลือกได้สูงสุด ${max} ข้อครับ`);
+      }
+    }
+
+    async function submitIndividualVote(stepKey, choiceCode) {
+      if (!requireStudent()) return;
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: stepKey,
+        student_id: studentProfile.student_id,
+        choice_val: choiceCode,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,student_id' });
+
+      const mapFb = {
+        'p3_scen1_vote': ['p3-feedback', null],
+        'p6_scen2_before': ['p6-feedback', 6],
+        'p16_scen2_after': ['p16-feedback', 16]
+      };
+      const [fbId, pageNo] = mapFb[stepKey];
+      const fb = document.getElementById(fbId);
+      if (fb) {
+        fb.classList.remove('hidden');
+        fb.textContent = `✓ บันทึกคำตอบตัวเลือก ${choiceCode} สำเร็จ`;
+      }
+      if (pageNo) await refreshLiveSection(pageNo);
+    }
+
+    async function submitP5Why() {
+      if (!requireStudent()) return;
+      const checked = Array.from(document.querySelectorAll('.p5-chk:checked')).map(b => b.value);
+      const note = document.getElementById('p5-note').value.trim();
+      if (checked.length === 0 || checked.length > 2) return alert('กรุณาเลือกเหตุผลสำคัญ 1–2 ข้อ');
+
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: 'p5_why',
+        student_id: studentProfile.student_id,
+        reason_tags: checked,
+        text_val: note,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,student_id' });
+      await refreshLiveSection(5);
+      alert('บันทึกเหตุผลของคุณเรียบร้อยแล้ว');
+    }
+
+    async function submitP7Facts() {
+      if (!requireGroup()) return;
+      const payload = {
+        facts: document.getElementById('p7-facts').value.trim(),
+        unknown: document.getElementById('p7-unknown').value.trim(),
+        stakeholders: document.getElementById('p7-stakeholders').value.trim(),
+        issue: document.getElementById('p7-issue').value.trim(),
+        values: document.getElementById('p7-values').value.trim()
+      };
+      if (!payload.facts || !payload.issue) return alert('กรุณากรอกข้อมูลอย่างน้อยข้อ 1 (Facts) และข้อ 4 (Ethical Issue)');
+
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: 'p7_facts_unknowns',
+        group_no: studentProfile.group_no,
+        recorder_id: studentProfile.student_id,
+        json_val: payload,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,group_no' });
+      await refreshLiveSection(7);
+    }
+
+    async function submitP8Stakeholder() {
+      if (!requireGroup()) return;
+      const checked = Array.from(document.querySelectorAll('.p8-chk:checked')).map(b => b.value);
+      const most = document.getElementById('p8-most').value.trim();
+      if (!most) return alert('กรุณาระบุว่าใครได้รับผลกระทบมากที่สุด');
+
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: 'p8_stakeholders',
+        group_no: studentProfile.group_no,
+        recorder_id: studentProfile.student_id,
+        selected_items: checked,
+        text_val: most,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,group_no' });
+      await refreshLiveSection(8);
+    }
+
+    async function submitP9Issue() {
+      if (!requireGroup()) return;
+      const s1 = document.getElementById('p9-side1').value.trim();
+      const s2 = document.getElementById('p9-side2').value.trim();
+      if (!s1 || !s2) return alert('กรุณากรอกคู่ความขัดแย้งทั้ง 2 ด้าน');
+
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: 'p9_issue',
+        group_no: studentProfile.group_no,
+        recorder_id: studentProfile.student_id,
+        text_val: `${s1} กับ ${s2} ขัดแย้งกัน`,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,group_no' });
+      await refreshLiveSection(9);
+    }
+
+    async function submitP10Tension() {
+      if (!requireGroup()) return;
+      const valA = document.getElementById('p10-valA').value.trim();
+      const valB = document.getElementById('p10-valB').value.trim();
+      const lossA = document.getElementById('p10-lossA').value.trim();
+      const lossB = document.getElementById('p10-lossB').value.trim();
+      if (!valA || !valB) return alert('กรุณาระบุ Value A และ Value B');
+
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: 'p10_tension_map',
+        group_no: studentProfile.group_no,
+        recorder_id: studentProfile.student_id,
+        decision_val: `${valA} ↔ ${valB}`,
+        json_val: { valA, valB, lossA, lossB },
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,group_no' });
+      await refreshLiveSection(10);
+    }
+
+    async function submitP11Options() {
+      if (!requireGroup()) return;
+      const o1 = document.getElementById('p11-opt1').value.trim();
+      const o2 = document.getElementById('p11-opt2').value.trim();
+      const o3 = document.getElementById('p11-opt3').value.trim();
+      const best = document.getElementById('p11-best').value.trim();
+      if (!o1 || !o2 || !o3 || !best) return alert('กรุณาระบุทางเลือกให้ครบ 3 ข้อและเลือกทางที่ดีที่สุด');
+
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: 'p11_options',
+        group_no: studentProfile.group_no,
+        recorder_id: studentProfile.student_id,
+        selected_items: [o1, o2, o3],
+        decision_val: best,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,group_no' });
+      await refreshLiveSection(11);
+    }
+
+    async function submitP12Conseq() {
+      if (!requireGroup()) return;
+      const payload = {
+        gain: document.getElementById('p12-gain').value.trim(),
+        lose: document.getElementById('p12-lose').value.trim(),
+        risk: document.getElementById('p12-risk').value.trim(),
+        long_term: document.getElementById('p12-long').value.trim()
+      };
+      if (!payload.gain || !payload.lose) return alert('กรุณากรอกผลได้และผลเสีย');
+
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: 'p12_consequences',
+        group_no: studentProfile.group_no,
+        recorder_id: studentProfile.student_id,
+        json_val: payload,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,group_no' });
+      await refreshLiveSection(12);
+    }
+
+    async function submitP13Decision() {
+      if (!requireGroup()) return;
+      const choice = document.getElementById('p13-choice').value;
+      const stmt = document.getElementById('p13-stmt').value.trim();
+      if (!stmt) return alert('กรุณาเขียนสรุปเหตุผลของกลุ่ม');
+
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: 'p13_decision',
+        group_no: studentProfile.group_no,
+        recorder_id: studentProfile.student_id,
+        decision_val: choice,
+        text_val: stmt,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,group_no' });
+      await refreshLiveSection(13);
+    }
+
+    async function submitP14Chal1() {
+      if (!requireGroup()) return;
+      const stance = document.getElementById('p14-stance').value;
+      const reason = document.getElementById('p14-reason').value.trim();
+      if (!reason) return alert('กรุณาอธิบายว่าข้อมูลใหม่นี้เปลี่ยนอะไรในเหตุผลของคุณ');
+
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: 'p14_challenge1',
+        group_no: studentProfile.group_no,
+        recorder_id: studentProfile.student_id,
+        decision_val: stance,
+        text_val: reason,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,group_no' });
+      await refreshLiveSection(14);
+    }
+
+    async function submitP15Chal2() {
+      if (!requireGroup()) return;
+      const stance = document.getElementById('p15-stance').value;
+      const reason = document.getElementById('p15-reason').value.trim();
+      if (!reason) return alert('กรุณากรอกเหตุผลประกอบ Challenge 2');
+
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: 'p15_challenge2',
+        group_no: studentProfile.group_no,
+        recorder_id: studentProfile.student_id,
+        decision_val: stance,
+        text_val: reason,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,group_no' });
+      await refreshLiveSection(15);
+    }
+
+    function pickFrameworkCard(card) {
+      if (!window.p17Sequence) window.p17Sequence = [];
+      if (window.p17Sequence.includes(card)) return;
+      window.p17Sequence.push(card);
+      const box = document.getElementById('p17-selected-sequence');
+      if (box) {
+        box.innerHTML = window.p17Sequence.map((c, idx) => `
+          <span class="px-2.5 py-1 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 font-bold">
+            ${idx + 1}. ${c}
+          </span>
+        `).join('');
+      }
+    }
+
+    function resetFrameworkCards() {
+      window.p17Sequence = [];
+      const box = document.getElementById('p17-selected-sequence');
+      if (box) box.innerHTML = '';
+    }
+
+    async function submitP17Framework() {
+      if (!requireGroup()) return;
+      if (!window.p17Sequence || window.p17Sequence.length < 5) return alert('กรุณาคลิกเรียงการ์ดอย่างน้อย 5 ขั้นตอน');
+
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: 'p17_framework',
+        group_no: studentProfile.group_no,
+        recorder_id: studentProfile.student_id,
+        selected_items: window.p17Sequence,
+        text_val: window.p17Sequence.join(' → '),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,group_no' });
+      await refreshLiveSection(17);
+    }
+
+    async function submitP18Bridge() {
+      if (!requireStudent()) return;
+      const checked = Array.from(document.querySelectorAll('.p18-chk:checked')).map(b => b.value);
+      if (checked.length === 0) return alert('กรุณาเลือกอย่างน้อย 1 ข้อ');
+
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: 'p18_bridge',
+        student_id: studentProfile.student_id,
+        reason_tags: checked,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,student_id' });
+      await refreshLiveSection(18);
+      alert('บันทึกข้อมูล Professional Bridge เรียบร้อยแล้ว');
+    }
+
+    async function submitP19Reflection() {
+      if (!requireStudent()) return;
+      const before = document.getElementById('p19-before').value.trim();
+      const now = document.getElementById('p19-now').value.trim();
+      const next = document.getElementById('p19-next').value.trim();
+      if (!before || !now || !next) return alert('กรุณากรอกให้ครบทั้ง 3 ช่อง (Before / Now / Next)');
+
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO,
+        step_key: 'p19_reflection',
+        student_id: studentProfile.student_id,
+        json_val: { before, now, next },
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,step_key,student_id' });
+
+      const fb = document.getElementById('p19-feedback');
+      fb.classList.remove('hidden');
+      fb.textContent = '✓ บันทึก Exit Reflection Lab 2 เรียบร้อยแล้ว';
+      await refreshLiveSection(19);
+    }
+
+    // =========================================================================
+    // LIVE CHARTS & GROUP DASHBOARDS
+    // =========================================================================
+    async function refreshLiveSection(pageNo) {
+      if (pageNo === 4) {
+        const { data } = await db.from('lab_individual_responses').select('choice_val').eq('lab_no', LAB_NO).eq('step_key', 'p3_scen1_vote');
+        const rows = data || [];
+        const cntEl = document.getElementById('p4-count');
+        if (cntEl) cntEl.textContent = rows.length;
+        renderBarChart('chart-p4', ['A', 'B', 'C', 'D', 'E'], ['A. ใส่ชื่อให้', 'B. ไม่ใส่ชื่อ', 'C. ใส่ชื่อแต่เตือน', 'D. คุยและหาทางออก', 'E. อื่นๆ'], rows.map(r => r.choice_val), '#818cf8');
+      }
+
+      else if (pageNo === 5) {
+        const { data } = await db.from('lab_individual_responses').select('reason_tags').eq('lab_no', LAB_NO).eq('step_key', 'p5_why');
+        const rows = data || [];
+        const cntEl = document.getElementById('p5-count');
+        if (cntEl) cntEl.textContent = rows.length;
+        const counts = {};
+        rows.forEach(r => (r.reason_tags || []).forEach(t => {
+          const short = t.split(' (')[0];
+          counts[short] = (counts[short] || 0) + 1;
+        }));
+        const labels = Object.keys(counts);
+        const vals = Object.values(counts);
+        renderDynamicBarChart('chart-p5', labels, vals, '#38bdf8');
+      }
+
+      else if (pageNo === 6) {
+        const { data } = await db.from('lab_individual_responses').select('choice_val').eq('lab_no', LAB_NO).eq('step_key', 'p6_scen2_before');
+        const rows = data || [];
+        const cntEl = document.getElementById('p6-count');
+        if (cntEl) cntEl.textContent = rows.length;
+        renderBarChart('chart-p6', ['A', 'B', 'C', 'D', 'E'], ['A. ใส่ชื่อ', 'B. ไม่ใส่ชื่อ', 'C. ปรับวิธีประเมิน', 'D. หาวิธีชดเชย', 'E. อื่นๆ'], rows.map(r => r.choice_val), '#34d399');
+      }
+
+      else if (pageNo === 7) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p7_facts_unknowns').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p7-grp-count');
+        const listEl = document.getElementById('p7-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1 text-xs">
+              <span class="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-extrabold">กลุ่มที่ ${r.group_no}</span>
+              <p><strong class="text-slate-400">Facts:</strong> <span class="text-slate-200">${j.facts || '-'}</span></p>
+              <p><strong class="text-amber-400">Unknown:</strong> <span class="text-slate-200">${j.unknown || '-'}</span></p>
+              <p><strong class="text-indigo-400">Issue:</strong> <span class="text-white">${j.issue || '-'}</span></p>
+            </div>
+          `;
+        }).join('') || `<p class="text-xs text-slate-500">รอคำตอบจากกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 8) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p8_stakeholders').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p8-grp-count');
+        const listEl = document.getElementById('p8-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => `
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1 text-xs">
+            <div class="flex justify-between">
+              <span class="font-extrabold text-emerald-400">กลุ่มที่ ${r.group_no}</span>
+              <span class="text-slate-400">${(r.selected_items || []).join(', ')}</span>
+            </div>
+            <p class="text-slate-200">${r.text_val || ''}</p>
+          </div>
+        `).join('') || `<p class="text-xs text-slate-500">รอคำตอบจากกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 9) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p9_issue').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p9-grp-count');
+        const listEl = document.getElementById('p9-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => `
+          <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
+            <span class="font-extrabold text-indigo-400">กลุ่มที่ ${r.group_no}:</span> <span class="text-white">${r.text_val || ''}</span>
+          </div>
+        `).join('') || `<p class="text-xs text-slate-500">รอคำตอบจากกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 10) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p10_tension_map').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p10-grp-count');
+        const listEl = document.getElementById('p10-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="font-extrabold text-amber-400">กลุ่มที่ ${r.group_no}</span>
+                <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-200 font-bold">${j.valA || ''} &larr;&rarr; ${j.valB || ''}</span>
+              </div>
+              <p><strong class="text-sky-400">เน้น A เสีย:</strong> <span class="text-slate-200">${j.lossA || '-'}</span></p>
+              <p><strong class="text-amber-300">เน้น B เสีย:</strong> <span class="text-slate-200">${j.lossB || '-'}</span></p>
+            </div>
+          `;
+        }).join('') || `<p class="text-xs text-slate-500">รอคำตอบจากกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 11) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p11_options').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p11-grp-count');
+        const listEl = document.getElementById('p11-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => `
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1 text-xs">
+            <span class="font-extrabold text-sky-400">กลุ่มที่ ${r.group_no}</span>
+            <p class="text-slate-300">ทางเลือก: ${(r.selected_items || []).join(' | ')}</p>
+            <p class="text-emerald-400 font-bold">ทางเลือกที่ดีที่สุด: ${r.decision_val || '-'}</p>
+          </div>
+        `).join('') || `<p class="text-xs text-slate-500">รอคำตอบจากกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 12) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p12_consequences').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p12-grp-count');
+        const listEl = document.getElementById('p12-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1 text-xs">
+              <span class="font-extrabold text-indigo-400">กลุ่มที่ ${r.group_no}</span>
+              <p><strong class="text-emerald-400">ได้:</strong> ${j.gain || '-'} | <strong class="text-rose-400">เสีย:</strong> ${j.lose || '-'}</p>
+              <p><strong class="text-amber-400">เสี่ยง:</strong> ${j.risk || '-'} | <strong class="text-sky-400">ระยะยาว:</strong> ${j.long_term || '-'}</p>
+            </div>
+          `;
+        }).join('') || `<p class="text-xs text-slate-500">รอคำตอบจากกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 13) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p13_decision').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p13-grp-count');
+        const listEl = document.getElementById('p13-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => `
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1 text-xs">
+            <div class="flex justify-between">
+              <span class="font-extrabold text-emerald-400">กลุ่มที่ ${r.group_no}</span>
+              <span class="font-bold text-amber-300">${r.decision_val || ''}</span>
+            </div>
+            <p class="text-slate-200">${r.text_val || ''}</p>
+          </div>
+        `).join('') || `<p class="text-xs text-slate-500">รอคำตอบจากกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 14 || pageNo === 15) {
+        const step = pageNo === 14 ? 'p14_challenge1' : 'p15_challenge2';
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', step).order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById(`p${pageNo}-grp-count`);
+        const listEl = document.getElementById(`p${pageNo}-results-list`);
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => `
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1 text-xs">
+            <div class="flex justify-between">
+              <span class="font-extrabold text-amber-400">กลุ่มที่ ${r.group_no}</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800 text-sky-300 font-bold">${r.decision_val || ''}</span>
+            </div>
+            <p class="text-slate-200">${r.text_val || ''}</p>
+          </div>
+        `).join('') || `<p class="text-xs text-slate-500">รอคำตอบจากกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 16) {
+        const [beforeRes, afterRes] = await Promise.all([
+          db.from('lab_individual_responses').select('student_id, choice_val').eq('lab_no', LAB_NO).eq('step_key', 'p6_scen2_before'),
+          db.from('lab_individual_responses').select('student_id, choice_val').eq('lab_no', LAB_NO).eq('step_key', 'p16_scen2_after')
+        ]);
+        const bRows = beforeRes.data || [];
+        const aRows = afterRes.data || [];
+        const codes = ['A', 'B', 'C', 'D', 'E'];
+        const labels = ['A. ใส่ชื่อ', 'B. ไม่ใส่ชื่อ', 'C. ปรับวิธีประเมิน', 'D. หาวิธีชดเชย', 'E. อื่นๆ'];
+        const bCounts = codes.map(c => bRows.filter(r => r.choice_val === c).length);
+        const aCounts = codes.map(c => aRows.filter(r => r.choice_val === c).length);
+
+        const canvas = document.getElementById('chart-p16');
+        if (canvas) {
+          if (activeCharts['chart-p16']) {
+            activeCharts['chart-p16'].data.datasets[0].data = bCounts;
+            activeCharts['chart-p16'].data.datasets[1].data = aCounts;
+            activeCharts['chart-p16'].update('none');
+          } else {
+            activeCharts['chart-p16'] = new Chart(canvas, {
+              type: 'bar',
+              data: {
+                labels,
+                datasets: [
+                  { label: `Before (${bRows.length} คน)`, data: bCounts, backgroundColor: '#64748b', borderRadius: 6 },
+                  { label: `After (${aRows.length} คน)`, data: aCounts, backgroundColor: '#38bdf8', borderRadius: 6 }
+                ]
+              },
+              options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                scales: {
+                  x: { ticks: { color: '#cbd5e1' }, grid: { display: false } },
+                  y: { ticks: { color: '#cbd5e1', precision: 0 }, grid: { color: '#1e293b' } }
+                }
               }
             });
-            localStorage.setItem("ethics_rubric_lab2", JSON.stringify(rubricState));
           }
+        }
 
-          const { data: gWorks } = await sb.from("lab2_group_responses").select("*");
-          if (gWorks) {
-            gWorks.forEach(w => {
-              if (w.group_no >= 1 && w.group_no <= 10) groupWorkState[w.group_no] = w;
-            });
+        const bMap = {};
+        bRows.forEach(r => bMap[r.student_id] = r.choice_val);
+        let paired = 0, changed = 0;
+        aRows.forEach(r => {
+          if (bMap[r.student_id]) {
+            paired++;
+            if (bMap[r.student_id] !== r.choice_val) changed++;
           }
-
-          const { data: iVotes } = await sb.from("lab2_individual_responses").select("*");
-          if (iVotes) {
-            iVotes.forEach(v => { individualVotes[v.student_id] = v; });
-          }
-        } catch (err) {
-          console.warn("Supabase sync notice:", err);
+        });
+        const sumBox = document.getElementById('p16-shift-summary');
+        if (sumBox) {
+          const pct = paired > 0 ? Math.round((changed / paired) * 100) : 0;
+          sumBox.innerHTML = `จากนิสิตที่โหวตครบทั้ง 2 รอบ (<strong>${paired} คน</strong>): มีผู้เปลี่ยนคำตอบ <strong>${changed} คน (${pct}%)</strong> และยืนยันคำตอบเดิม <strong>${paired - changed} คน</strong> — “อะไรทำให้บางคนเปลี่ยนใจ?”`;
         }
       }
 
-      loadGroupWorkspaceToForm();
-      renderProgressGrid();
-      renderRubricTable();
+      else if (pageNo === 17) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p17_framework').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p17-grp-count');
+        const listEl = document.getElementById('p17-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => `
+          <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs space-y-1">
+            <span class="font-extrabold text-emerald-400">กลุ่มที่ ${r.group_no}:</span>
+            <p class="text-slate-200 font-mono leading-relaxed">${r.text_val || ''}</p>
+          </div>
+        `).join('') || `<p class="text-xs text-slate-500">รอแต่ละกลุ่มส่งลำดับการ์ด...</p>`;
+      }
+
+      else if (pageNo === 18) {
+        const { data } = await db.from('lab_individual_responses').select('reason_tags').eq('lab_no', LAB_NO).eq('step_key', 'p18_bridge');
+        const rows = data || [];
+        const cntEl = document.getElementById('p18-count');
+        if (cntEl) cntEl.textContent = rows.length;
+        const counts = {};
+        rows.forEach(r => (r.reason_tags || []).forEach(t => {
+          const short = t.split(' (')[0];
+          counts[short] = (counts[short] || 0) + 1;
+        }));
+        renderDynamicBarChart('chart-p18', Object.keys(counts), Object.values(counts), '#34d399');
+      }
+
+      else if (pageNo === 19) {
+        const { data } = await db.from('lab_individual_responses').select('student_id').eq('lab_no', LAB_NO).eq('step_key', 'p19_reflection');
+        const cntEl = document.getElementById('p19-count');
+        if (cntEl) cntEl.textContent = (data || []).length;
+      }
     }
 
-    function exportLab2Excel() {
-      // Sheet 1: รายบุคคล_90คน (ผลโหวต S1/S2 Before-After + Reflection + คะแนนกลุ่ม)
-      const sheet1 = studentsList.map(s => {
-        const v = individualVotes[s.student_id] || {};
-        const gScore = rubricState[s.group_no]?.total ?? 0;
+    function renderBarChart(canvasId, codes, labels, values, color) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const counts = codes.map(c => values.filter(v => v === c).length);
+      if (activeCharts[canvasId]) {
+        activeCharts[canvasId].data.datasets[0].data = counts;
+        activeCharts[canvasId].update('none');
+        return;
+      }
+      activeCharts[canvasId] = new Chart(canvas, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'จำนวนเสียงโหวต', data: counts, backgroundColor: color, borderRadius: 8 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#cbd5e1', font: { size: 11 } }, grid: { display: false } },
+            y: { ticks: { color: '#cbd5e1', precision: 0 }, grid: { color: '#1e293b' } }
+          }
+        }
+      });
+    }
+
+    function renderDynamicBarChart(canvasId, labels, vals, color) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      if (activeCharts[canvasId]) {
+        activeCharts[canvasId].data.labels = labels;
+        activeCharts[canvasId].data.datasets[0].data = vals;
+        activeCharts[canvasId].update('none');
+        return;
+      }
+      activeCharts[canvasId] = new Chart(canvas, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'จำนวนผู้เลือก', data: vals, backgroundColor: color, borderRadius: 8 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#cbd5e1', font: { size: 10 } }, grid: { display: false } },
+            y: { ticks: { color: '#cbd5e1', precision: 0 }, grid: { color: '#1e293b' } }
+          }
+        }
+      });
+    }
+
+    // =========================================================================
+    // ADMIN DRAWER (QR) & EXCEL EXPORT
+    // =========================================================================
+    function openAdminDrawer(type) {
+      const drawer = document.getElementById('admin-drawer');
+      const body = document.getElementById('drawer-body');
+      drawer.classList.remove('hidden');
+      const url = window.location.href.split('?')[0];
+      body.innerHTML = `
+        <div class="flex flex-col items-center justify-center p-6 bg-white rounded-2xl text-slate-900">
+          <div id="drawer-qr-box"></div>
+          <p class="font-extrabold text-base mt-3">180433 • Lab 2 Dashboard</p>
+          <p class="text-xs text-slate-500 font-mono mt-1 break-all text-center">${url}</p>
+        </div>`;
+      new QRCode(document.getElementById('drawer-qr-box'), { text: url, width: 220, height: 220 });
+    }
+
+    async function exportLab2Excel() {
+      const [indivRes, grpRes, rubricRes] = await Promise.all([
+        db.from('lab_individual_responses').select('*').eq('lab_no', LAB_NO),
+        db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO),
+        db.from('lab_rubric_scores').select('*').eq('lab_no', LAB_NO).order('group_no')
+      ]);
+
+      const indiv = indivRes.data || [];
+      const grp = grpRes.data || [];
+      const rubric = rubricRes.data || [];
+
+      const stdRows = studentsList.map(std => {
+        const findStep = (k) => indiv.find(r => r.student_id === std.student_id && r.step_key === k);
+        const s1 = findStep('p3_scen1_vote');
+        const w = findStep('p5_why');
+        const s2b = findStep('p6_scen2_before');
+        const s2a = findStep('p16_scen2_after');
+        const br = findStep('p18_bridge');
+        const ref = findStep('p19_reflection')?.json_val || {};
         return {
-          "ลำดับ": s.seq,
-          "รหัสนิสิต": s.student_id,
-          "ชื่อ-นามสกุล": s.full_name,
-          "กลุ่มที่": s.group_no,
-          "S1 (Before)": v.s1_before || "",
-          "S1 (After)": v.s1_after || "",
-          "S2 (Before)": v.s2_before || "",
-          "S2 (After)": v.s2_after || "",
-          "Reflection รายบุคคล": v.reflection || "",
-          "คะแนน Rubric กลุ่ม (20)": gScore
+          'ลำดับ': std.seq,
+          'รหัสนิสิต': std.student_id,
+          'ชื่อ-สกุล': std.full_name,
+          'กลุ่ม': groupAssignments[std.student_id]?.group_no || '',
+          'P3_Scenario1': s1?.choice_val || '',
+          'P5_WhyTags': (w?.reason_tags || []).join(', '),
+          'P5_Note': w?.text_val || '',
+          'P6_Scenario2_Before': s2b?.choice_val || '',
+          'P16_Scenario2_After': s2a?.choice_val || '',
+          'P18_ProfessionalBridge': (br?.reason_tags || []).join(', '),
+          'P19_Before': ref.before || '',
+          'P19_Now': ref.now || '',
+          'P19_Next': ref.next || ''
         };
       });
 
-      // Sheet 2: รายกลุ่ม_และ_Rubric (คำตอบ Canvas/Tension/Challenge + คะแนน Rubric 7 มิติ + Feedback)
-      const sheet2 = [];
+      const grpRows = [];
       for (let g = 1; g <= 10; g++) {
-        const w = groupWorkState[g] || {};
-        const r = rubricState[g] || { d: [0,0,0,0,0,0,0], total: 0, feedback: "" };
-        sheet2.push({
-          "กลุ่มที่": `กลุ่มที่ ${g}`,
-          "Canvas": w.canvas || "",
-          "Tension": w.tension || "",
-          "Challenge": w.challenge || "",
-          "มิติ 1 (3)": r.d[0],
-          "มิติ 2 (3)": r.d[1],
-          "มิติ 3 (3)": r.d[2],
-          "มิติ 4 (3)": r.d[3],
-          "มิติ 5 (3)": r.d[4],
-          "มิติ 6 (3)": r.d[5],
-          "มิติ 7 (2)": r.d[6],
-          "คะแนนรวม Rubric (20)": r.total,
-          "Feedback รายกลุ่ม": r.feedback || ""
+        const f = grp.find(r => r.group_no === g && r.step_key === 'p7_facts_unknowns')?.json_val || {};
+        const st = grp.find(r => r.group_no === g && r.step_key === 'p8_stakeholders');
+        const iss = grp.find(r => r.group_no === g && r.step_key === 'p9_issue');
+        const tm = grp.find(r => r.group_no === g && r.step_key === 'p10_tension_map');
+        const op = grp.find(r => r.group_no === g && r.step_key === 'p11_options');
+        const dc = grp.find(r => r.group_no === g && r.step_key === 'p13_decision');
+        const c1 = grp.find(r => r.group_no === g && r.step_key === 'p14_challenge1');
+        const c2 = grp.find(r => r.group_no === g && r.step_key === 'p15_challenge2');
+        const fw = grp.find(r => r.group_no === g && r.step_key === 'p17_framework');
+        const sc = rubric.find(r => r.group_no === g) || {};
+        const total = sc.total_score ?? ((sc.c1_issue||0) + (sc.c2_stakeholder||0) + (sc.c3_reasoning||0) + (sc.c4_alternatives||0) + (sc.c5_new_info||0) + (sc.c6_listening||0));
+
+        grpRows.push({
+          'กลุ่มที่': g,
+          'P7_Facts': f.facts || '',
+          'P7_Unknown': f.unknown || '',
+          'P8_Stakeholders': st?.text_val || '',
+          'P9_Issue': iss?.text_val || '',
+          'P10_TensionMap': tm?.decision_val || '',
+          'P11_BestOption': op?.decision_val || '',
+          'P13_Decision': `${dc?.decision_val || ''} | ${dc?.text_val || ''}`,
+          'P14_Challenge1': `${c1?.decision_val || ''} | ${c1?.text_val || ''}`,
+          'P15_Challenge2': `${c2?.decision_val || ''} | ${c2?.text_val || ''}`,
+          'P17_Framework': fw?.text_val || '',
+          'คะแนนรวม(20)': total,
+          'Feedback': sc.feedback || ''
         });
       }
 
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet1), "รายบุคคล_90คน");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet2), "รายกลุ่ม_และ_Rubric");
-      XLSX.writeFile(wb, "Lab2_180433_Everyday_Ethical_Decision_Making.xlsx");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stdRows), 'รายบุคคล_90คน');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(grpRows), 'รายกลุ่ม_และ_Rubric');
+      XLSX.writeFile(wb, 'ผลปฏิบัติการที่2_180433_2-2569.xlsx');
     }
 
-    initData();
+    init();
   </script>
 </body>
 </html>

@@ -111,6 +111,9 @@
           <button onclick="switchTeacherSubTab('scores')" id="subtab-scores" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-semibold transition flex items-center gap-2">
             <span>📊</span> <span id="btn-all-scores-label">คะแนนรวมทุกแล็บ</span>
           </button>
+          <a href="grading-180433.html" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold shadow transition flex items-center gap-2">
+            <span>📝</span> <span>ระบบประเมินผล (เดี่ยว + กลุ่ม)</span>
+          </a>
         </div>
         <div class="text-xs text-slate-400">Schema: <code class="text-emerald-400">ethics.*</code> • Project: <code class="text-sky-400">iproktvvetsbxxmpptuj</code></div>
       </div>
@@ -343,6 +346,7 @@
 
     let studentsList = generateFallbackStudents();
     let groupScoreMap = {};
+    let indivAdjMap = {};
     let dailyLabNo = localStorage.getItem("ethics_daily_lab") !== null
       ? (localStorage.getItem("ethics_daily_lab") === "" ? null : Number(localStorage.getItem("ethics_daily_lab")))
       : 2;
@@ -547,6 +551,7 @@
 
             <div class="flex items-center justify-end gap-1.5 pt-1 border-t border-slate-800/80">
               <a href="${lab.file}" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-sky-300">เปิดหน้า</a>
+              <a href="grading-180433.html?lab=${lab.no}" class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-sm">ประเมิน</a>
               <button onclick="setDailyLab(${lab.no})" class="px-2.5 py-1 rounded-lg ${isDaily ? "bg-emerald-600 text-white" : "bg-indigo-600/80 hover:bg-indigo-600 text-white"} text-xs font-semibold">
                 ${isDaily ? "✓ ประจำวัน" : "ตั้งเป็นประจำวัน"}
               </button>
@@ -608,6 +613,7 @@
 
     async function loadAllLabScores() {
       groupScoreMap = {};
+      indivAdjMap = {};
       const labNos = new Set(LABS_CATALOG.map(l => l.no));
       for (let i = 1; i <= 15; i++) labNos.add(i);
 
@@ -616,6 +622,12 @@
         Object.entries(cached).forEach(([gNo, obj]) => {
           if (obj && typeof obj.total === "number") {
             groupScoreMap[`lab${l}_${gNo}`] = Number(obj.total);
+          }
+        });
+        const cachedAdj = JSON.parse(localStorage.getItem(`ethics_indiv_adj_lab${l}`) || "{}");
+        Object.entries(cachedAdj).forEach(([sid, obj]) => {
+          if (obj && typeof obj.adj === "number") {
+            indivAdjMap[`lab${l}_${sid}`] = Number(obj.adj);
           }
         });
       });
@@ -647,6 +659,15 @@
               }
             });
           }
+
+          const { data: adjs } = await sb.from("lab_individual_responses").select("*").eq("step_key", "grade_adj");
+          if (adjs) {
+            adjs.forEach(row => {
+              if (row.lab_no && row.student_id && row.json_val && typeof row.json_val.adj === "number") {
+                indivAdjMap[`lab${row.lab_no}_${row.student_id}`] = Number(row.json_val.adj);
+              }
+            });
+          }
         } catch (err) {
           console.warn("Using local fallback scores:", err);
         }
@@ -660,10 +681,12 @@
       let sum = 0;
       let count = 0;
       LABS_CATALOG.forEach(lab => {
-        const val = groupScoreMap[`lab${lab.no}_${stu.group_no}`];
-        if (typeof val === "number" && !isNaN(val)) {
-          labs[lab.no] = val;
-          sum += val;
+        const baseVal = groupScoreMap[`lab${lab.no}_${stu.group_no}`];
+        const adjVal = indivAdjMap[`lab${lab.no}_${stu.student_id}`];
+        if (typeof baseVal === "number" && !isNaN(baseVal)) {
+          const net = +Math.min(20, Math.max(0, baseVal + (typeof adjVal === "number" ? adjVal : 0))).toFixed(2);
+          labs[lab.no] = net;
+          sum += net;
           count++;
         } else {
           labs[lab.no] = null;
