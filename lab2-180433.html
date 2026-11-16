@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab 2 (180433) • Everyday Ethical Decision Making (10 กลุ่ม + Rubric 7 มิติ)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Pridi:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #090d16; color: #e2e8f0; }
+    h1, h2, h3, .font-display { font-family: 'Pridi', serif; }
+    .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.7); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Top Bar -->
+  <header class="glass sticky top-0 z-40 px-4 py-3 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sm text-slate-200 font-semibold flex items-center gap-1.5 transition">
+          <span>&larr;</span> <span>หน้าเช็กชื่อ</span>
+        </a>
+        <div>
+          <h1 class="text-lg md:text-xl font-bold text-white">Lab 2: Everyday Ethical Decision Making</h1>
+          <p class="text-xs text-slate-400">รายวิชา 180433 • 10 กลุ่มทั้งหมด • โหวต S1/S2 Before-After • Canvas/Tension/Challenge • Rubric 7 มิติ (20 คะแนน)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span id="save-badge" class="px-3 py-1.5 rounded-lg bg-emerald-950/70 border border-emerald-500/40 text-xs text-emerald-300">✓ บันทึกอัตโนมัติ</span>
+        <div class="bg-slate-900 p-1 rounded-xl border border-slate-800 flex text-xs font-medium">
+          <button id="mode-stu" onclick="switchMode('student')" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white transition">มุมมองนิสิต</button>
+          <button id="mode-tea" onclick="switchMode('teacher')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition">มุมมองอาจารย์</button>
+        </div>
+        <button onclick="exportLab2Excel()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg transition flex items-center gap-1.5">
+          <span>⬇</span> <span>Export Excel (.xlsx)</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+    <!-- STUDENT WORKSPACE -->
+    <section id="lab2-student-view" class="space-y-6">
+      <div class="grid lg:grid-cols-2 gap-6">
+        <!-- Individual Vote S1/S2 Before-After + Reflection -->
+        <div class="glass rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h2 class="text-lg font-bold text-white">ส่วนที่ 1: แบบบันทึกรายบุคคล (โหวต Before–After &amp; Reflection)</h2>
+            <span class="text-xs text-indigo-300">10 กลุ่มคงที่</span>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">รหัสนิสิต</label>
+              <input type="text" id="l2-stu-id" placeholder="เช่น 66310001" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">เลือกกลุ่มนิสิต (กลุ่ม 1–10)</label>
+              <select id="l2-stu-group" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm"></select>
+            </div>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 space-y-2">
+              <div class="text-xs font-bold text-sky-300">Scenario 1 (S1): Before &rarr; After</div>
+              <select id="l2-s1-before" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white">
+                <option value="">-- เลือกคำตอบ S1 (Before) --</option>
+                <option value="A: จ่ายยาตามคำขอทันที">A: จ่ายยาตามคำขอทันที</option>
+                <option value="B: ปฏิเสธและอธิบายเหตุผลทางวิชาชีพ">B: ปฏิเสธและอธิบายเหตุผลทางวิชาชีพ</option>
+                <option value="C: เสนอทางเลือกที่ปลอดภัยกว่า">C: เสนอทางเลือกที่ปลอดภัยกว่า</option>
+              </select>
+              <select id="l2-s1-after" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white">
+                <option value="">-- เลือกคำตอบ S1 (After อภิปราย) --</option>
+                <option value="A: จ่ายยาตามคำขอทันที">A: จ่ายยาตามคำขอทันที</option>
+                <option value="B: ปฏิเสธและอธิบายเหตุผลทางวิชาชีพ">B: ปฏิเสธและอธิบายเหตุผลทางวิชาชีพ</option>
+                <option value="C: เสนอทางเลือกที่ปลอดภัยกว่า">C: เสนอทางเลือกที่ปลอดภัยกว่า</option>
+              </select>
+            </div>
+
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 space-y-2">
+              <div class="text-xs font-bold text-amber-300">Scenario 2 (S2): Before &rarr; After</div>
+              <select id="l2-s2-before" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white">
+                <option value="">-- เลือกคำตอบ S2 (Before) --</option>
+                <option value="A: แจ้งแพทย์ผู้สั่งใช้ยาโดยตรง">A: แจ้งแพทย์ผู้สั่งใช้ยาโดยตรง</option>
+                <option value="B: ปรึกษาหัวหน้าเภสัชกรก่อนดำเนินการ">B: ปรึกษาหัวหน้าเภสัชกรก่อนดำเนินการ</option>
+                <option value="C: บันทึกอุบัติการณ์และแจ้งผู้ป่วย">C: บันทึกอุบัติการณ์และแจ้งผู้ป่วย</option>
+              </select>
+              <select id="l2-s2-after" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white">
+                <option value="">-- เลือกคำตอบ S2 (After อภิปราย) --</option>
+                <option value="A: แจ้งแพทย์ผู้สั่งใช้ยาโดยตรง">A: แจ้งแพทย์ผู้สั่งใช้ยาโดยตรง</option>
+                <option value="B: ปรึกษาหัวหน้าเภสัชกรก่อนดำเนินการ">B: ปรึกษาหัวหน้าเภสัชกรก่อนดำเนินการ</option>
+                <option value="C: บันทึกอุบัติการณ์และแจ้งผู้ป่วย">C: บันทึกอุบัติการณ์และแจ้งผู้ป่วย</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Individual Reflection (สิ่งที่ได้เรียนรู้และมุมมองที่เปลี่ยนไป)</label>
+            <textarea id="l2-reflection" rows="3" placeholder="เขียนสะท้อนคิดรายบุคคล..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white"></textarea>
+          </div>
+
+          <button onclick="saveIndividualVote()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition">
+            บันทึกข้อมูลรายบุคคล
+          </button>
+        </div>
+
+        <!-- Group Workspace: Canvas / Tension / Challenge (10 Groups) -->
+        <div class="glass rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h2 class="text-lg font-bold text-white">ส่วนที่ 2: ใบงานกลุ่ม (Canvas / Tension / Challenge)</h2>
+            <select id="l2-work-group" onchange="loadGroupWorkspaceToForm()" class="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs text-amber-300 font-bold"></select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-sky-300 mb-1">1. Ethical Decision-Making Canvas (ข้อเท็จจริง &amp; หลักจริยธรรมที่เกี่ยวข้อง)</label>
+            <textarea id="l2-canvas" rows="3" placeholder="สรุปประเด็นสำคัญจาก Ethical Canvas ของกลุ่ม..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-amber-300 mb-1">2. Ethical Tension (ความขัดแย้งทางคุณค่า / หลักการที่ปะทะกัน)</label>
+            <textarea id="l2-tension" rows="2" placeholder="ระบุความขัดแย้ง เช่น Autonomy vs Beneficence..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-emerald-300 mb-1">3. Practical Challenge &amp; Action Plan (แนวทางรับมือในสถานการณ์จริง)</label>
+            <textarea id="l2-challenge" rows="2" placeholder="ระบุแนวทางสื่อสารและจัดการความท้าทาย..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white"></textarea>
+          </div>
+
+          <button onclick="saveGroupWorkspace()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition">
+            ส่งคำตอบใบงานกลุ่ม
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEACHER WORKSPACE -->
+    <section id="lab2-teacher-view" class="hidden space-y-6">
+      <!-- 10 Groups Progress Tracker -->
+      <div class="glass rounded-2xl p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-white">แผงติดตามความคืบหน้าทั้ง 10 กลุ่ม (Real-time Group Progress)</h2>
+          <span class="text-xs text-slate-400">คลิกที่การ์ดกลุ่มเพื่อดูคำตอบ Canvas / Tension / Challenge</span>
+        </div>
+        <div id="l2-progress-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
+        <div id="l2-preview-box" class="hidden bg-slate-900/90 border border-slate-700 rounded-xl p-4 text-xs space-y-2"></div>
+      </div>
+
+      <!-- Rubric 7 Dimensions (20 Points) + Group Feedback -->
+      <div class="glass rounded-2xl p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-lg font-bold text-white">ตารางให้คะแนน Rubric 7 มิติ (รวม 20 คะแนน) + Feedback รายกลุ่ม (10 กลุ่ม)</h2>
+            <p class="text-xs text-slate-400">เกณฑ์ 7 มิติ: [1] ระบุประเด็น (3) • [2] วิเคราะห์ Tension (3) • [3] ใช้ Canvas (3) • [4] ทางเลือก (3) • [5] แผนรับมือ Challenge (3) • [6] เหตุผลจรรยาบรรณ (3) • [7] การมีส่วนร่วม (2)</p>
+          </div>
+          <span class="text-xs text-emerald-300">บันทึกอัตโนมัติ &rarr; รวมคะแนนใน index.html</span>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead class="bg-slate-900 text-slate-200">
+              <tr>
+                <th class="p-2.5 border-b border-slate-800 w-24">กลุ่มที่</th>
+                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 1<br><span class="text-indigo-400">(3)</span></th>
+                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 2<br><span class="text-indigo-400">(3)</span></th>
+                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 3<br><span class="text-indigo-400">(3)</span></th>
+                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 4<br><span class="text-indigo-400">(3)</span></th>
+                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 5<br><span class="text-indigo-400">(3)</span></th>
+                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 6<br><span class="text-indigo-400">(3)</span></th>
+                <th class="p-2.5 border-b border-slate-800 text-center w-16">มิติ 7<br><span class="text-indigo-400">(2)</span></th>
+                <th class="p-2.5 border-b border-slate-800 text-center w-20 bg-emerald-950/40 text-emerald-300">รวม<br>(20)</th>
+                <th class="p-2.5 border-b border-slate-800 min-w-[240px]">Feedback รายกลุ่ม</th>
+              </tr>
+            </thead>
+            <tbody id="lab2-tbody" class="divide-y divide-slate-800 bg-slate-950/50"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const DEFAULT_URL = "https://iproktvvetsbxxmpptuj.supabase.co";
+    const url = localStorage.getItem("sb_url") || DEFAULT_URL;
+    const key = localStorage.getItem("sb_key") || "";
+    const sb = (url && key && window.supabase)
+      ? window.supabase.createClient(url, key, { db: { schema: "ethics" } })
+      : null;
+
+    // 7 Dimensions = 3 + 3 + 3 + 3 + 3 + 3 + 2 = 20 points
+    const MAX_DIMS = [3, 3, 3, 3, 3, 3, 2];
+
+    let rubricState = JSON.parse(localStorage.getItem("ethics_rubric_lab2") || "{}");
+    let groupWorkState = JSON.parse(localStorage.getItem("ethics_work_lab2") || "{}");
+    let individualVotes = JSON.parse(localStorage.getItem("ethics_votes_lab2") || "{}");
+    let studentsList = [];
+
+    for (let g = 1; g <= 10; g++) {
+      if (!rubricState[g]) rubricState[g] = { d: [0, 0, 0, 0, 0, 0, 0], total: 0, feedback: "" };
+      if (!groupWorkState[g]) groupWorkState[g] = { canvas: "", tension: "", challenge: "", updated_at: null };
+    }
+
+    function generateFallbackStudents() {
+      const list = [];
+      for (let i = 1; i <= 90; i++) {
+        list.push({
+          seq: i,
+          student_id: "6631" + String(i).padStart(4, "0"),
+          full_name: `นิสิตเภสัชศาสตร์ ลำดับที่ ${i}`,
+          group_no: Math.ceil(i / 9)
+        });
+      }
+      return list;
+    }
+
+    function populateGroupSelects() {
+      const sSel = document.getElementById("l2-stu-group");
+      const wSel = document.getElementById("l2-work-group");
+      sSel.innerHTML = "";
+      wSel.innerHTML = "";
+      for (let g = 1; g <= 10; g++) {
+        sSel.innerHTML += `<option value="${g}">กลุ่มที่ ${g}</option>`;
+        wSel.innerHTML += `<option value="${g}">กลุ่มที่ ${g}</option>`;
+      }
+    }
+
+    function switchMode(mode) {
+      const isTeacher = mode === "teacher";
+      document.getElementById("lab2-student-view").classList.toggle("hidden", isTeacher);
+      document.getElementById("lab2-teacher-view").classList.toggle("hidden", !isTeacher);
+      document.getElementById("mode-stu").className = isTeacher
+        ? "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition"
+        : "px-3 py-1.5 rounded-lg bg-indigo-600 text-white transition";
+      document.getElementById("mode-tea").className = isTeacher
+        ? "px-3 py-1.5 rounded-lg bg-indigo-600 text-white transition"
+        : "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition";
+      if (isTeacher) {
+        renderProgressGrid();
+        renderRubricTable();
+      }
+    }
+
+    function loadGroupWorkspaceToForm() {
+      const g = Number(document.getElementById("l2-work-group").value);
+      const data = groupWorkState[g] || { canvas: "", tension: "", challenge: "" };
+      document.getElementById("l2-canvas").value = data.canvas || "";
+      document.getElementById("l2-tension").value = data.tension || "";
+      document.getElementById("l2-challenge").value = data.challenge || "";
+    }
+
+    async function saveIndividualVote() {
+      const sid = document.getElementById("l2-stu-id").value.trim();
+      if (!sid) { alert("กรุณากรอกรหัสนิสิต"); return; }
+      const g = Number(document.getElementById("l2-stu-group").value);
+      const record = {
+        student_id: sid,
+        group_no: g,
+        s1_before: document.getElementById("l2-s1-before").value,
+        s1_after: document.getElementById("l2-s1-after").value,
+        s2_before: document.getElementById("l2-s2-before").value,
+        s2_after: document.getElementById("l2-s2-after").value,
+        reflection: document.getElementById("l2-reflection").value.trim(),
+        updated_at: new Date().toISOString()
+      };
+      individualVotes[sid] = record;
+      localStorage.setItem("ethics_votes_lab2", JSON.stringify(individualVotes));
+
+      if (sb) {
+        try {
+          await sb.from("lab2_individual_responses").upsert(record, { onConflict: "student_id" });
+        } catch (e) { console.warn("lab2_individual_responses:", e); }
+      }
+      alert(`บันทึกผลโหวต S1/S2 และ Reflection ของรหัส ${sid} (กลุ่มที่ ${g}) เรียบร้อยแล้ว`);
+    }
+
+    async function saveGroupWorkspace() {
+      const g = Number(document.getElementById("l2-work-group").value);
+      const payload = {
+        group_no: g,
+        canvas: document.getElementById("l2-canvas").value.trim(),
+        tension: document.getElementById("l2-tension").value.trim(),
+        challenge: document.getElementById("l2-challenge").value.trim(),
+        updated_at: new Date().toISOString()
+      };
+      groupWorkState[g] = payload;
+      localStorage.setItem("ethics_work_lab2", JSON.stringify(groupWorkState));
+
+      if (sb) {
+        try {
+          await sb.from("lab2_group_responses").upsert(payload, { onConflict: "group_no" });
+        } catch (e) { console.warn("lab2_group_responses:", e); }
+      }
+      alert(`ส่งคำตอบ Canvas / Tension / Challenge ของกลุ่มที่ ${g} เรียบร้อยแล้ว`);
+    }
+
+    function renderProgressGrid() {
+      const grid = document.getElementById("l2-progress-grid");
+      grid.innerHTML = "";
+      for (let g = 1; g <= 10; g++) {
+        const w = groupWorkState[g] || {};
+        const done = Boolean((w.canvas || "").trim() || (w.tension || "").trim() || (w.challenge || "").trim());
+        const score = rubricState[g]?.total || 0;
+        grid.innerHTML += `
+          <button onclick="previewGroup(${g})" class="text-left p-3 rounded-xl border ${done ? "bg-emerald-950/30 border-emerald-500/50" : "bg-slate-900/80 border-slate-800"} hover:border-indigo-400 transition">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white text-sm">กลุ่มที่ ${g}</span>
+              <span class="text-[11px] px-2 py-0.5 rounded ${done ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-800 text-slate-400"}">${done ? "ส่งงานแล้ว" : "รอดำเนินการ"}</span>
+            </div>
+            <div class="text-xs text-amber-300 font-semibold mt-1.5">Rubric: ${score} / 20</div>
+          </button>
+        `;
+      }
+    }
+
+    function previewGroup(g) {
+      const w = groupWorkState[g] || {};
+      const box = document.getElementById("l2-preview-box");
+      box.classList.remove("hidden");
+      box.innerHTML = `
+        <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
+          <strong class="text-sm text-amber-300">คำตอบของกลุ่มที่ ${g}</strong>
+          <button onclick="document.getElementById('l2-preview-box').classList.add('hidden')" class="text-slate-400 hover:text-white">ปิด</button>
+        </div>
+        <div><span class="text-sky-300 font-semibold">Canvas:</span> ${w.canvas || "-"}</div>
+        <div><span class="text-amber-300 font-semibold">Tension:</span> ${w.tension || "-"}</div>
+        <div><span class="text-emerald-300 font-semibold">Challenge:</span> ${w.challenge || "-"}</div>
+      `;
+    }
+
+    function renderRubricTable() {
+      const tbody = document.getElementById("lab2-tbody");
+      tbody.innerHTML = "";
+      for (let g = 1; g <= 10; g++) {
+        const item = rubricState[g];
+        let inputs = "";
+        for (let idx = 0; idx < 7; idx++) {
+          inputs += `
+            <td class="p-1.5 text-center">
+              <input type="number" step="0.5" min="0" max="${MAX_DIMS[idx]}" value="${item.d[idx]}"
+                oninput="updateDim(${g}, ${idx}, this.value)"
+                class="w-14 px-1.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-center text-white font-semibold focus:border-indigo-400 focus:outline-none" />
+            </td>
+          `;
+        }
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-900/80">
+            <td class="p-2.5 font-bold text-amber-300">กลุ่มที่ ${g}</td>
+            ${inputs}
+            <td class="p-2 text-center bg-emerald-950/30">
+              <span id="l2-total-${g}" class="text-base font-bold text-emerald-300">${item.total}</span>
+            </td>
+            <td class="p-2">
+              <textarea rows="2" placeholder="Feedback กลุ่มที่ ${g}..."
+                oninput="updateFeedback(${g}, this.value)"
+                class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:border-indigo-400 focus:outline-none">${item.feedback || ""}</textarea>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function updateDim(g, dimIdx, rawVal) {
+      let val = parseFloat(rawVal);
+      if (isNaN(val) || val < 0) val = 0;
+      if (val > MAX_DIMS[dimIdx]) val = MAX_DIMS[dimIdx];
+      rubricState[g].d[dimIdx] = val;
+      rubricState[g].total = +rubricState[g].d.reduce((a, b) => a + b, 0).toFixed(2);
+      document.getElementById(`l2-total-${g}`).textContent = rubricState[g].total;
+      renderProgressGrid();
+      persistGroupScore(g);
+    }
+
+    function updateFeedback(g, text) {
+      rubricState[g].feedback = text;
+      persistGroupScore(g);
+    }
+
+    let saveTimers = {};
+    function persistGroupScore(g) {
+      const badge = document.getElementById("save-badge");
+      badge.textContent = "⏳ กำลังบันทึก...";
+      badge.className = "px-3 py-1.5 rounded-lg bg-amber-950/70 border border-amber-500/40 text-xs text-amber-300";
+
+      localStorage.setItem("ethics_rubric_lab2", JSON.stringify(rubricState));
+
+      clearTimeout(saveTimers[g]);
+      saveTimers[g] = setTimeout(async () => {
+        if (sb) {
+          try {
+            const item = rubricState[g];
+            await sb.from("lab_rubric_scores").upsert({
+              lab_no: 2,
+              lab_code: "lab2",
+              group_no: g,
+              criteria_scores: item.d,
+              total_score: item.total,
+              feedback: item.feedback,
+              updated_at: new Date().toISOString()
+            }, { onConflict: "lab_no,group_no" });
+          } catch (e) { console.warn("Upsert lab2:", e); }
+        }
+        badge.textContent = "✓ บันทึกอัตโนมัติ & ส่งรวมหน้า index.html แล้ว";
+        badge.className = "px-3 py-1.5 rounded-lg bg-emerald-950/70 border border-emerald-500/40 text-xs text-emerald-300";
+      }, 300);
+    }
+
+    async function initData() {
+      populateGroupSelects();
+      studentsList = generateFallbackStudents();
+
+      if (sb) {
+        try {
+          const { data: stus } = await sb.from("students_180433").select("*").order("seq", { ascending: true });
+          const { data: grps } = await sb.from("lab_groups").select("*");
+          if (stus && stus.length > 0) {
+            const grpMap = {};
+            (grps || []).forEach(g => { grpMap[g.student_id] = g.group_no; });
+            studentsList = stus.map((s, idx) => ({
+              seq: s.seq || idx + 1,
+              student_id: s.student_id,
+              full_name: s.full_name,
+              group_no: grpMap[s.student_id] || s.group_no || Math.ceil((idx + 1) / 9)
+            }));
+          }
+
+          const { data: rows } = await sb.from("lab_rubric_scores").select("*").eq("lab_no", 2);
+          if (rows && rows.length > 0) {
+            rows.forEach(r => {
+              const g = r.group_no;
+              if (g >= 1 && g <= 10) {
+                const dims = Array.isArray(r.criteria_scores) && r.criteria_scores.length === 7
+                  ? r.criteria_scores.map(Number)
+                  : [r.c1||0, r.c2||0, r.c3||0, r.c4||0, r.c5||0, r.c6||0, r.c7||0].map(Number);
+                const tot = r.total_score ?? dims.reduce((a, b) => a + b, 0);
+                rubricState[g] = { d: dims, total: Number(tot), feedback: r.feedback || "" };
+              }
+            });
+            localStorage.setItem("ethics_rubric_lab2", JSON.stringify(rubricState));
+          }
+
+          const { data: gWorks } = await sb.from("lab2_group_responses").select("*");
+          if (gWorks) {
+            gWorks.forEach(w => {
+              if (w.group_no >= 1 && w.group_no <= 10) groupWorkState[w.group_no] = w;
+            });
+          }
+
+          const { data: iVotes } = await sb.from("lab2_individual_responses").select("*");
+          if (iVotes) {
+            iVotes.forEach(v => { individualVotes[v.student_id] = v; });
+          }
+        } catch (err) {
+          console.warn("Supabase sync notice:", err);
+        }
+      }
+
+      loadGroupWorkspaceToForm();
+      renderProgressGrid();
+      renderRubricTable();
+    }
+
+    function exportLab2Excel() {
+      // Sheet 1: รายบุคคล_90คน (ผลโหวต S1/S2 Before-After + Reflection + คะแนนกลุ่ม)
+      const sheet1 = studentsList.map(s => {
+        const v = individualVotes[s.student_id] || {};
+        const gScore = rubricState[s.group_no]?.total ?? 0;
+        return {
+          "ลำดับ": s.seq,
+          "รหัสนิสิต": s.student_id,
+          "ชื่อ-นามสกุล": s.full_name,
+          "กลุ่มที่": s.group_no,
+          "S1 (Before)": v.s1_before || "",
+          "S1 (After)": v.s1_after || "",
+          "S2 (Before)": v.s2_before || "",
+          "S2 (After)": v.s2_after || "",
+          "Reflection รายบุคคล": v.reflection || "",
+          "คะแนน Rubric กลุ่ม (20)": gScore
+        };
+      });
+
+      // Sheet 2: รายกลุ่ม_และ_Rubric (คำตอบ Canvas/Tension/Challenge + คะแนน Rubric 7 มิติ + Feedback)
+      const sheet2 = [];
+      for (let g = 1; g <= 10; g++) {
+        const w = groupWorkState[g] || {};
+        const r = rubricState[g] || { d: [0,0,0,0,0,0,0], total: 0, feedback: "" };
+        sheet2.push({
+          "กลุ่มที่": `กลุ่มที่ ${g}`,
+          "Canvas": w.canvas || "",
+          "Tension": w.tension || "",
+          "Challenge": w.challenge || "",
+          "มิติ 1 (3)": r.d[0],
+          "มิติ 2 (3)": r.d[1],
+          "มิติ 3 (3)": r.d[2],
+          "มิติ 4 (3)": r.d[3],
+          "มิติ 5 (3)": r.d[4],
+          "มิติ 6 (3)": r.d[5],
+          "มิติ 7 (2)": r.d[6],
+          "คะแนนรวม Rubric (20)": r.total,
+          "Feedback รายกลุ่ม": r.feedback || ""
+        });
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet1), "รายบุคคล_90คน");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet2), "รายกลุ่ม_และ_Rubric");
+      XLSX.writeFile(wb, "Lab2_180433_Everyday_Ethical_Decision_Making.xlsx");
+    }
+
+    initData();
+  </script>
+</body>
+</html>
