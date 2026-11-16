@@ -79,7 +79,7 @@
           class="px-3.5 py-2 rounded-xl bg-slate-950 border border-sky-500/40 text-white text-sm font-bold focus:outline-none">
           <option value="1">Lab 1: Foundations of Ethical Thinking (พื้นฐานการคิดเชิงจริยธรรม)</option>
           <option value="2">Lab 2: Everyday Ethical Decision Making (การคิดและตัดสินใจทางจริยธรรมในชีวิตประจำวัน)</option>
-          <option value="3">Lab 3: Ethical Decision-Making Process (กระบวนการตัดสินใจเชิงจริยธรรม)</option>
+          <option value="3">Lab 3: Professional Character &amp; Virtues (คุณธรรมและจริยธรรมของผู้ประกอบวิชาชีพ)</option>
           <option value="4">Lab 4: Autonomy & Informed Consent (การเคารพการตัดสินใจและความยินยอม)</option>
           <option value="5">Lab 5: Beneficence & Non-maleficence (การทำประโยชน์และไม่ก่ออันตราย)</option>
           <option value="6">Lab 6: Justice & Resource Allocation (ความยุติธรรมและการจัดสรรทรัพยากร)</option>
@@ -342,6 +342,8 @@
       if (hint) {
         if (currentLab === 2) {
           hint.innerHTML = `<strong>C1</strong> ระบุปัญหาจริยธรรม (4) • <strong>C2</strong> Stakeholders/ผลกระทบ (4) • <strong>C3</strong> คุณค่าที่ขัดแย้ง &amp; เหตุผลตัดสินใจ (4) • <strong>C4</strong> เสนอ/เปรียบเทียบทางเลือก (3) • <strong>C5</strong> ปรับเหตุผลเมื่อข้อมูลเปลี่ยน Ch1–2 (3) • <strong>C6</strong> การมีส่วนร่วม/รับฟัง (2)`;
+        } else if (currentLab === 3) {
+          hint.innerHTML = `<strong>C1</strong> อธิบายคุณธรรมได้ชัดเจน (3) • <strong>C2</strong> แปลงเป็นพฤติกรรมที่สังเกตได้ (4) • <strong>C3</strong> วิเคราะห์ความสำคัญ/ผลกระทบ (3) • <strong>C4</strong> วิเคราะห์ความขัดแย้งระหว่างคุณธรรม (3) • <strong>C5</strong> ทางเลือก/เหตุผล &amp; ตอบสนอง Challenge (5) • <strong>C6</strong> การอภิปรายและรับฟัง (2) • <em>รวม 20 คะแนน</em>`;
         } else {
           hint.innerHTML = `<strong>C1</strong> ระบุปัญหาจริยธรรม (4) • <strong>C2</strong> ผู้เกี่ยวข้อง/ผลกระทบ (4) • <strong>C3</strong> เหตุผลเชื่อมหลักจริยธรรม (4) • <strong>C4</strong> ทางเลือกหลากหลาย (3) • <strong>C5</strong> ตอบสนองข้อมูลใหม่ (3) • <strong>C6</strong> การฟัง/มีส่วนร่วม (2)`;
         }
@@ -629,6 +631,71 @@
             <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
               <p class="font-bold text-emerald-400">Page 17 — Decision Framework Sequence:</p>
               <p class="text-slate-200 font-mono">${r.text_val || (r.selected_items || []).join(' → ')}</p>
+            </div>`;
+        }
+        // Lab 3 Group Steps
+        if (r.step_key === 'p6_group_virtue') {
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs flex justify-between items-center">
+              <span class="font-bold text-emerald-400">Page 6 — คุณธรรมที่กลุ่มเลือก:</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-200 font-bold">${r.decision_val || '-'}</span>
+            </div>`;
+        }
+        if (r.step_key === 'p7_define_virtue') {
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
+              <p class="font-bold text-sky-400">Page 7 — นิยามความหมายคุณธรรม:</p>
+              <p class="text-slate-200">${r.text_val || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p8_why_matters') {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
+              <p class="font-bold text-rose-400">Page 8 — Why It Matters:</p>
+              <p class="text-amber-300 text-[11px]">ผลกระทบ: ${(j.impacts || []).map(x => x.split(' (')[0]).join(', ')} | เกี่ยวข้อง: ${(j.stakeholders || []).join(', ')}</p>
+              <p class="text-slate-200">${r.text_val || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p9_evidence') {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
+              <p class="font-bold text-emerald-400">Page 9 — Observable Evidence (3 พฤติกรรม):</p>
+              <p class="text-slate-200 text-[11px]">1) ${j.b1 || '-'} • 2) ${j.b2 || '-'} • 3) ${j.b3 || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p10_strongest_evidence') {
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
+              <p class="font-bold text-amber-400">Page 10 — Strongest Evidence (${r.decision_val || '-'}):</p>
+              <p class="text-slate-200">${r.text_val || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p11_fake_virtue') {
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
+              <p class="font-bold text-purple-400">Page 11 — Virtue &ne; Virtue (ความเข้าใจผิด):</p>
+              <p class="text-slate-200">${r.text_val || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p19_virtue_map') {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-xs space-y-1">
+              <div class="flex justify-between items-center">
+                <p class="font-bold text-emerald-400">Page 19 — Professional Virtue Map:</p>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-200 font-bold">${j.virtue || r.decision_val || '-'}</span>
+              </div>
+              <p class="text-[11px] text-slate-300"><strong>สำคัญ:</strong> ${j.why || '-'} | <strong>พฤติกรรม:</strong> ${j.behavior || '-'}</p>
+              <p class="text-[11px] text-slate-300"><strong>ขัดแย้ง:</strong> ${j.conflict || '-'} | <strong>รับมือ:</strong> ${j.respond || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p20_peer_challenge') {
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
+              <p class="font-bold text-sky-400">Page 20 — Peer Challenge:</p>
+              <p class="text-slate-200">${r.text_val || '-'}</p>
             </div>`;
         }
         // Generic fallback for Labs 3-12

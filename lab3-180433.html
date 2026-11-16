@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab 3: Professional Character &amp; Virtues | 180433</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #0b1120; color: #f8fafc; }
+    .glass { background: rgba(30, 41, 59, 0.78); backdrop-filter: blur(12px); border: 1px solid rgba(148, 163, 184, 0.16); }
+    .card-pill { transition: all 0.15s ease; }
+    .card-pill:hover { transform: translateY(-1px); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- TOP NAVBAR -->
+  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur border-b border-slate-800 px-4 py-3">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1 transition">
+          <span>&larr;</span> <span>หน้าเช็กชื่อ</span>
+        </a>
+        <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-extrabold text-xs border border-emerald-500/30">180433 • LAB 3</span>
+        <div>
+          <h1 class="text-base md:text-lg font-bold text-white leading-tight">Professional Character &amp; Virtues</h1>
+          <p class="text-xs text-slate-400">คุณธรรมและจริยธรรมของผู้ประกอบวิชาชีพ • กลุ่มเรียน 1 (2/2569)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="openStudentLoginModal()" id="btn-student-badge" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-amber-400" id="login-dot"></span>
+          <span id="student-badge-text">ระบุรหัสนิสิต / กลุ่ม</span>
+        </button>
+
+        <button onclick="switchRole('student')" id="btn-role-student" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow">นิสิต</button>
+        <button onclick="promptInstructor()" id="btn-role-admin" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">อาจารย์</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- INSTRUCTOR CONTROL BAR (VISIBLE ONLY IN ADMIN MODE) -->
+  <div id="admin-control-bar" class="hidden bg-slate-900 border-b border-amber-500/30 px-4 py-2.5">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">ควบคุมห้องเรียน:</span>
+        <button onclick="changeInstructorPage(-1)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold border border-slate-700">◀ ก่อนหน้า</button>
+        <select id="admin-page-select" onchange="setInstructorPage(parseInt(this.value))" class="px-3 py-1 rounded bg-slate-950 border border-amber-500/40 text-amber-300 text-xs font-bold max-w-[260px] md:max-w-none">
+          <option value="1">PAGE 1: Welcome (คำถามเปิดประเด็น Lab 3)</option>
+          <option value="2">PAGE 2: Connect (Lab 1 &rarr; Lab 2 &rarr; Lab 3)</option>
+          <option value="3">PAGE 3: Choose Your Professional (เลือกสูงสุด 5 คุณลักษณะ)</option>
+          <option value="4">PAGE 4: See the Room (Top 10 คุณลักษณะที่ห้องเลือก)</option>
+          <option value="5">PAGE 5: Top 3 Virtues (โหวตคัดเหลือ 3 คุณธรรมสำคัญที่สุด)</option>
+          <option value="6">PAGE 6: Group Virtue (เลือก 1 คุณธรรมของกลุ่ม)</option>
+          <option value="7">PAGE 7: Define It (นิยามความหมายคุณธรรม 50–100 คำ)</option>
+          <option value="8">PAGE 8: Why It Matters (ผลกระทบหากขาดคุณธรรม &amp; ผู้เกี่ยวข้อง)</option>
+          <option value="9">PAGE 9: Observable Evidence (พฤติกรรมที่สังเกตได้ 3 ข้อ)</option>
+          <option value="10">PAGE 10: Strongest Evidence (หลักฐานเชิงพฤติกรรมที่ชัดที่สุด)</option>
+          <option value="11">PAGE 11: Virtue &ne; Virtue? (สิ่งที่ดูเหมือนคุณธรรมแต่ไม่ใช่)</option>
+          <option value="12">PAGE 12: Virtue Conflict Vote (คุณธรรมที่ดีขัดแย้งกันได้หรือไม่)</option>
+          <option value="13">PAGE 13: Ethical Tension Map (คู่คุณธรรมขัดแย้ง A &harr; B)</option>
+          <option value="14">PAGE 14: Professional Dilemma (Case: เพื่อนร่วมงานทำงานผิดพลาด)</option>
+          <option value="15">PAGE 15: Reasoning (คุณธรรม/หลักคิดที่สนับสนุนคำตอบ)</option>
+          <option value="16">PAGE 16: Challenge 1 — Severity (ยังไม่กระทบผู้ป่วย)</option>
+          <option value="17">PAGE 17: Challenge 2 — Repeat (ผิดพลาดซ้ำครั้งที่ 3)</option>
+          <option value="18">PAGE 18: Challenge 3 — Harm Done (ผู้ป่วยได้รับอันตรายแล้ว)</option>
+          <option value="19">PAGE 19: My Professional Virtue Map (สังเคราะห์แผนผังกลุ่ม)</option>
+          <option value="20">PAGE 20: Peer Challenge / Gallery (แลกเปลี่ยนมุมมองต่างกลุ่ม)</option>
+          <option value="21">PAGE 21: Professional Identity (ฉันอยากเป็นเภสัชกรที่...)</option>
+        </select>
+        <button onclick="changeInstructorPage(1)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold border border-slate-700">ถัดไป ▶</button>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer bg-slate-800 px-2.5 py-1 rounded border border-slate-700">
+          <input type="checkbox" id="chk-sync-lock" onchange="toggleSyncLock(this.checked)" checked class="accent-amber-500">
+          <span>ล็อกหน้าจอนิสิตตามอาจารย์</span>
+        </label>
+        <a href="grading-180433.html?lab=3" class="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-sm">ประเมินผล (เดี่ยว + กลุ่ม)</a>
+        <button onclick="openAdminDrawer('qr')" class="px-2.5 py-1 rounded bg-sky-600/80 hover:bg-sky-600 text-white text-xs font-bold">QR เข้า Lab 3</button>
+        <button onclick="exportLab3Excel()" class="px-2.5 py-1 rounded bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold">Export Excel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP PROGRESS BAR & FREE NAVIGATION -->
+  <div class="bg-slate-900/50 border-b border-slate-800/80 px-4 py-2">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      <div class="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar" id="step-pills-container"></div>
+      <span id="sync-status-pill" class="shrink-0 text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+        ● Sync ตามหน้าจออาจารย์
+      </span>
+    </div>
+  </div>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 w-full max-w-6xl mx-auto p-4 md:p-6">
+    <div id="page-container"></div>
+  </main>
+
+  <!-- ==================== STUDENT LOGIN / GROUP MODAL ==================== -->
+  <div id="student-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-md glass rounded-2xl p-6 shadow-2xl border border-slate-700 space-y-4">
+      <div class="text-center">
+        <h3 class="text-lg font-bold text-white">ข้อมูลผู้เข้าร่วมปฏิบัติการที่ 3</h3>
+        <p class="text-xs text-slate-400 mt-1">กรอกรหัสนิสิต 8 หลัก ระบบจะดึงชื่อและกลุ่มคงที่ (1–10) อัตโนมัติ</p>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1">รหัสนิสิต (8 หลัก)</label>
+        <input type="text" id="modal-sid" maxlength="8" inputmode="numeric" placeholder="เช่น 66210052"
+          class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-lg tracking-widest focus:outline-none focus:border-emerald-500" />
+        <p id="modal-std-preview" class="text-xs mt-1.5 text-slate-400">กรอกรหัสนิสิตเพื่อตรวจสอบรายชื่อ</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">กลุ่มคงที่ (1–10)</label>
+          <select id="modal-group" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm">
+            <option value="">-- เลือกกลุ่ม --</option>
+            <option value="1">กลุ่มที่ 1</option>
+            <option value="2">กลุ่มที่ 2</option>
+            <option value="3">กลุ่มที่ 3</option>
+            <option value="4">กลุ่มที่ 4</option>
+            <option value="5">กลุ่มที่ 5</option>
+            <option value="6">กลุ่มที่ 6</option>
+            <option value="7">กลุ่มที่ 7</option>
+            <option value="8">กลุ่มที่ 8</option>
+            <option value="9">กลุ่มที่ 9</option>
+            <option value="10">กลุ่มที่ 10</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">บทบาทใน Lab 3 (หมุนเวียน)</label>
+          <select id="modal-role" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm">
+            <option value="Facilitator">Facilitator (ชวนคุย)</option>
+            <option value="Recorder">Recorder (บันทึกผล)</option>
+            <option value="Skeptic">Skeptic (ท้าทายเหตุผล)</option>
+            <option value="Member" selected>Member (ร่วมวิเคราะห์)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeStudentLoginModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold">ปิด</button>
+        <button onclick="saveStudentProfile()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow">บันทึกข้อมูล</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== INSTRUCTOR PIN MODAL ==================== -->
+  <div id="pin-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-sm glass rounded-2xl p-6 shadow-2xl border border-slate-700">
+      <h3 class="text-lg font-bold text-white text-center">เข้าสู่โหมดอาจารย์ผู้สอน</h3>
+      <p class="text-xs text-slate-400 text-center mt-1 mb-4">กรอกรหัสผ่านผู้สอน (6 หลัก)</p>
+      <form id="pin-form" class="space-y-4">
+        <input type="password" id="input-pin" inputmode="numeric" placeholder="••••••" required
+          class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-center text-2xl tracking-[0.4em] focus:outline-none focus:border-emerald-500" />
+        <p id="pin-error" class="hidden text-xs text-rose-400 text-center font-semibold">รหัสผ่านไม่ถูกต้อง</p>
+        <div class="flex gap-2">
+          <button type="button" onclick="document.getElementById('pin-modal').classList.add('hidden')" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-sm font-semibold">ยกเลิก</button>
+          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold">ยืนยัน</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== ADMIN DRAWER MODAL (QR) ==================== -->
+  <div id="admin-drawer" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-md glass rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+        <h3 id="drawer-title" class="text-lg font-bold text-white">QR Code เข้า Lab 3</h3>
+        <button onclick="document.getElementById('admin-drawer').classList.add('hidden')" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-bold">✕ ปิด</button>
+      </div>
+      <div id="drawer-body" class="p-6"></div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // SUPABASE CONFIGURATION (โปรเจกต์ iproktvvetsbxxmpptuj • Schema: ethics)
+    // =========================================================================
+    const SUPABASE_URL = localStorage.getItem('sb_url') || 'https://iproktvvetsbxxmpptuj.supabase.co';
+    const SUPABASE_ANON_KEY = localStorage.getItem('sb_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwcm9rdHZ2ZXRzYnh4bXBwdHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyOTU3NDEsImV4cCI6MjEwMjg3MTc0MX0.Kc0USo30u4gvZNJ1bsOdD9k6nwEBcY7lNMAQxWEFzqw';
+    const INSTRUCTOR_PIN = '641023';
+    const LAB_NO = 3;
+
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      db: { schema: 'ethics' }
+    });
+
+    // Global State
+    let isAdmin = false;
+    let studentsList = [];
+    let groupAssignments = {};
+    let controlState = { current_page: 1, active_challenge: 1, is_locked: false };
+    let currentViewPage = 1;
+    let pollTimer = null;
+    let activeCharts = {};
+
+    let studentProfile = JSON.parse(localStorage.getItem('lab1_student_profile') || 'null');
+
+    const PAGE_TITLES = [
+      "1. Welcome", "2. Connect", "3. Choose Prof", "4. See Room", "5. Top 3",
+      "6. Grp Virtue", "7. Define It", "8. Why Matters", "9. Evidence", "10. Strongest",
+      "11. Fake Virtue", "12. Conflict?", "13. Tension", "14. Dilemma", "15. Reasoning",
+      "16. Chal 1", "17. Chal 2", "18. Chal 3", "19. Virtue Map", "20. Peer Chal",
+      "21. Identity"
+    ];
+
+    const VIRTUES_LIST = [
+      "ซื่อสัตย์ (Honesty)",
+      "รับผิดชอบ (Responsibility)",
+      "มีเมตตา/เห็นอกเห็นใจ (Compassion)",
+      "ยุติธรรม (Fairness)",
+      "กล้าตัดสินใจ (Moral Courage)",
+      "รอบคอบ (Prudence)",
+      "เคารพผู้ป่วย (Respect for Patients)",
+      "มีความรู้/เชี่ยวชาญ (Competence)",
+      "มีวินัย (Discipline)",
+      "กล้ายอมรับความผิด (Accountability)",
+      "รักษาความลับ (Confidentiality)",
+      "เสียสละ (Altruism)",
+      "เคารพกฎหมาย (Lawfulness)",
+      "เป็นมืออาชีพ (Professionalism)",
+      "อื่น ๆ (Other)"
+    ];
+
+    const DEFAULT_TOP5 = [
+      "รับผิดชอบ (Responsibility)",
+      "ซื่อสัตย์ (Honesty)",
+      "มีเมตตา/เห็นอกเห็นใจ (Compassion)",
+      "มีความรู้/เชี่ยวชาญ (Competence)",
+      "ยุติธรรม (Fairness)"
+    ];
+
+    // =========================================================================
+    // INITIALIZATION & REALTIME SYNC
+    // =========================================================================
+    async function init() {
+      const [stdRes, grpRes, ctrlRes] = await Promise.all([
+        db.from('students_180433').select('*').order('seq', { ascending: true }),
+        db.from('lab_groups').select('*'),
+        db.from('lab_control').select('*').eq('lab_no', LAB_NO).maybeSingle()
+      ]);
+
+      if (stdRes.data) studentsList = stdRes.data;
+      if (grpRes.data) {
+        grpRes.data.forEach(g => groupAssignments[g.student_id] = g);
+      }
+      if (ctrlRes.data) {
+        controlState = ctrlRes.data;
+        currentViewPage = controlState.current_page;
+      } else {
+        await db.from('lab_control').upsert({ lab_no: LAB_NO, current_page: 1, active_challenge: 1, is_locked: false }, { onConflict: 'lab_no' });
+      }
+
+      syncStudentProfileWithDB();
+      updateStudentBadgeUI();
+      renderStepPills();
+      await renderCurrentPage();
+
+      pollTimer = setInterval(syncLoop, 3500);
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') === 'grading' || params.get('tab') === 'rubric') {
+        window.location.href = 'grading-180433.html?lab=3';
+        return;
+      }
+    }
+
+    async function syncLoop() {
+      const { data: ctrl } = await db.from('lab_control').select('*').eq('lab_no', LAB_NO).maybeSingle();
+      if (ctrl) {
+        const pageChanged = ctrl.current_page !== controlState.current_page;
+        const lockChanged = ctrl.is_locked !== controlState.is_locked;
+        controlState = ctrl;
+
+        if (!isAdmin && controlState.is_locked && currentViewPage !== controlState.current_page) {
+          currentViewPage = controlState.current_page;
+          renderStepPills();
+          await renderCurrentPage();
+          return;
+        }
+        if (lockChanged || pageChanged) {
+          renderStepPills();
+        }
+      }
+
+      if ([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].includes(currentViewPage)) {
+        await refreshLiveSection(currentViewPage);
+      }
+    }
+
+    // =========================================================================
+    // STUDENT PROFILE & GROUP MANAGEMENT
+    // =========================================================================
+    function syncStudentProfileWithDB() {
+      if (studentProfile && studentProfile.student_id) {
+        const dbGrp = groupAssignments[studentProfile.student_id];
+        if (dbGrp) {
+          studentProfile.group_no = dbGrp.group_no;
+          localStorage.setItem('lab1_student_profile', JSON.stringify(studentProfile));
+        }
+      }
+    }
+
+    function updateStudentBadgeUI() {
+      const badgeText = document.getElementById('student-badge-text');
+      const dot = document.getElementById('login-dot');
+      if (studentProfile && studentProfile.student_id) {
+        const grpLabel = studentProfile.group_no ? `กลุ่ม ${studentProfile.group_no}` : 'ยังไม่ระบุกลุ่ม';
+        badgeText.textContent = `${studentProfile.student_id} (${grpLabel})`;
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+      } else {
+        badgeText.textContent = 'ระบุรหัสนิสิต / กลุ่ม';
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
+      }
+    }
+
+    function openStudentLoginModal() {
+      document.getElementById('student-modal').classList.remove('hidden');
+      if (studentProfile) {
+        document.getElementById('modal-sid').value = studentProfile.student_id || '';
+        document.getElementById('modal-group').value = studentProfile.group_no || '';
+        document.getElementById('modal-role').value = studentProfile.role || 'Member';
+        previewModalStudent(studentProfile.student_id);
+      }
+    }
+
+    function closeStudentLoginModal() {
+      document.getElementById('student-modal').classList.add('hidden');
+    }
+
+    document.getElementById('modal-sid').addEventListener('input', (e) => {
+      previewModalStudent(e.target.value.trim());
+    });
+
+    function previewModalStudent(sid) {
+      const prev = document.getElementById('modal-std-preview');
+      if (sid && sid.length === 8) {
+        const found = studentsList.find(s => s.student_id === sid);
+        if (found) {
+          const dbGrp = groupAssignments[sid];
+          if (dbGrp && !document.getElementById('modal-group').value) {
+            document.getElementById('modal-group').value = dbGrp.group_no;
+          }
+          prev.innerHTML = `<span class="text-emerald-400 font-semibold">✓ ${found.full_name} (ลำดับที่ ${found.seq})</span>`;
+          return;
+        }
+        prev.innerHTML = `<span class="text-rose-400">✕ ไม่พบรหัสนิสิตนี้ในรายวิชา 180433</span>`;
+      } else {
+        prev.textContent = 'กรอกรหัสนิสิต 8 หลักเพื่อตรวจสอบรายชื่อ';
+      }
+    }
+
+    async function saveStudentProfile() {
+      const sid = document.getElementById('modal-sid').value.trim();
+      const grp = parseInt(document.getElementById('modal-group').value);
+      const role = document.getElementById('modal-role').value;
+
+      const found = studentsList.find(s => s.student_id === sid);
+      if (!found) return alert('กรุณากรอกรหัสนิสิต 8 หลักให้ถูกต้อง');
+      if (!grp) return alert('กรุณาเลือกกลุ่มคงที่ 1–10');
+
+      studentProfile = { student_id: sid, full_name: found.full_name, group_no: grp, role: role };
+      localStorage.setItem('lab1_student_profile', JSON.stringify(studentProfile));
+
+      await db.from('lab_groups').upsert({
+        student_id: sid,
+        group_no: grp,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'student_id' });
+
+      groupAssignments[sid] = { student_id: sid, group_no: grp };
+      updateStudentBadgeUI();
+      closeStudentLoginModal();
+      renderCurrentPage();
+    }
+
+    function requireStudent() {
+      if (!studentProfile || !studentProfile.student_id) {
+        openStudentLoginModal();
+        return false;
+      }
+      return true;
+    }
+
+    function requireGroup() {
+      if (!requireStudent()) return false;
+      if (!studentProfile.group_no) {
+        openStudentLoginModal();
+        return false;
+      }
+      return true;
+    }
+
+    // =========================================================================
+    // ROLE SWITCHING & INSTRUCTOR CONTROLS
+    // =========================================================================
+    function promptInstructor() {
+      if (isAdmin) { switchRole('admin'); return; }
+      document.getElementById('pin-error').classList.add('hidden');
+      document.getElementById('input-pin').value = '';
+      document.getElementById('pin-modal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('input-pin').focus(), 50);
+    }
+
+    document.getElementById('pin-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (document.getElementById('input-pin').value === INSTRUCTOR_PIN) {
+        document.getElementById('pin-modal').classList.add('hidden');
+        switchRole('admin');
+      } else {
+        document.getElementById('pin-error').classList.remove('hidden');
+      }
+    });
+
+    function switchRole(role) {
+      isAdmin = (role === 'admin');
+      document.getElementById('admin-control-bar').classList.toggle('hidden', !isAdmin);
+      document.getElementById('btn-role-admin').className = isAdmin
+        ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white shadow'
+        : 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700';
+      document.getElementById('btn-role-student').className = !isAdmin
+        ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow'
+        : 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700';
+
+      if (isAdmin) {
+        document.getElementById('admin-page-select').value = currentViewPage;
+        document.getElementById('chk-sync-lock').checked = controlState.is_locked;
+      }
+      renderStepPills();
+      renderCurrentPage();
+    }
+
+    async function setInstructorPage(pageNo) {
+      if (pageNo < 1 || pageNo > 21) return;
+      currentViewPage = pageNo;
+      controlState.current_page = pageNo;
+      if (isAdmin) {
+        document.getElementById('admin-page-select').value = pageNo;
+        await db.from('lab_control').upsert({
+          lab_no: LAB_NO,
+          current_page: pageNo,
+          active_challenge: controlState.active_challenge || 1,
+          is_locked: controlState.is_locked,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'lab_no' });
+      }
+      renderStepPills();
+      await renderCurrentPage();
+    }
+
+    function changeInstructorPage(delta) {
+      setInstructorPage(currentViewPage + delta);
+    }
+
+    async function toggleSyncLock(locked) {
+      controlState.is_locked = locked;
+      await db.from('lab_control').upsert({
+        lab_no: LAB_NO,
+        current_page: currentViewPage,
+        active_challenge: controlState.active_challenge || 1,
+        is_locked: locked,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no' });
+      renderStepPills();
+    }
+
+    function navigateToPage(p) {
+      if (!isAdmin && controlState.is_locked && p !== controlState.current_page) {
+        return;
+      }
+      if (isAdmin) {
+        setInstructorPage(p);
+      } else {
+        currentViewPage = p;
+        renderStepPills();
+        renderCurrentPage();
+      }
+    }
+
+    function renderStepPills() {
+      const container = document.getElementById('step-pills-container');
+      const syncPill = document.getElementById('sync-status-pill');
+      syncPill.innerHTML = controlState.is_locked
+        ? `🔒 ควบคุมหน้าจอตามอาจารย์ (Page ${controlState.current_page})`
+        : `🔓 เปิดอิสระ (อาจารย์อยู่ Page ${controlState.current_page})`;
+
+      container.innerHTML = PAGE_TITLES.map((title, idx) => {
+        const p = idx + 1;
+        const active = p === currentViewPage;
+        const disabled = !isAdmin && controlState.is_locked && p !== controlState.current_page;
+        let cls = 'px-2 py-1 rounded-md text-[11px] font-bold whitespace-nowrap transition ';
+        if (active) cls += 'bg-emerald-600 text-white shadow';
+        else if (disabled) cls += 'bg-slate-900/40 text-slate-600 cursor-not-allowed';
+        else cls += 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 cursor-pointer';
+        return `<button onclick="navigateToPage(${p})" ${disabled ? 'disabled' : ''} class="${cls}">${title}</button>`;
+      }).join('');
+    }
+
+    // Helper: Get Top N virtues from p3_choose_prof
+    async function fetchTopVirtues(limit = 10) {
+      const { data } = await db.from('lab_individual_responses').select('reason_tags').eq('lab_no', LAB_NO).eq('step_key', 'p3_choose_prof');
+      const counts = {};
+      (data || []).forEach(r => (r.reason_tags || []).forEach(v => {
+        counts[v] = (counts[v] || 0) + 1;
+      }));
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      if (sorted.length === 0) return VIRTUES_LIST.slice(0, limit).map(v => ({ name: v, count: 0 }));
+      return sorted.slice(0, limit).map(([name, count]) => ({ name, count }));
+    }
+
+    async function fetchTop5FromVote() {
+      const { data } = await db.from('lab_individual_responses').select('reason_tags').eq('lab_no', LAB_NO).eq('step_key', 'p5_top3_vote');
+      const counts = {};
+      (data || []).forEach(r => (r.reason_tags || []).forEach(v => {
+        counts[v] = (counts[v] || 0) + 1;
+      }));
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      if (sorted.length >= 5) return sorted.slice(0, 5).map(([name, count]) => ({ name, count }));
+      const top10 = await fetchTopVirtues(10);
+      const merged = [...sorted.map(([name, count]) => ({ name, count }))];
+      top10.forEach(item => {
+        if (merged.length < 5 && !merged.some(m => m.name === item.name)) merged.push(item);
+      });
+      return merged.length >= 5 ? merged : DEFAULT_TOP5.map(name => ({ name, count: 0 }));
+    }
+
+    // =========================================================================
+    // PAGE RENDERERS (PAGES 1 TO 21 — LAB 3 SPECIFICATION)
+    // =========================================================================
+    async function renderCurrentPage() {
+      Object.values(activeCharts).forEach(c => { try { c.destroy(); } catch(e){} });
+      activeCharts = {};
+
+      const container = document.getElementById('page-container');
+      const p = currentViewPage;
+
+      // PAGE 1 — Welcome
+      if (p === 1) {
+        container.innerHTML = `
+          <div class="glass rounded-3xl p-8 md:p-12 text-center space-y-6 max-w-4xl mx-auto">
+            <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">ปฏิบัติการที่ 3 (110 นาที) • 180433 Professional Ethics</span>
+            <h2 class="text-3xl md:text-5xl font-extrabold text-white leading-tight">
+              คุณธรรมและจริยธรรมของ<span class="text-amber-400">ผู้ประกอบวิชาชีพ</span>
+            </h2>
+            <p class="text-base md:text-lg text-slate-300 max-w-2xl mx-auto">
+              What Kind of Professional Should I Become? — “วันนี้เราไม่ได้มาค้น Google ว่าคุณธรรมมีอะไรบ้าง แต่เราจะถามว่า ถ้าเราบอกว่าคนหนึ่งมีคุณธรรม เรารู้ได้อย่างไร และคุณธรรมนั้นปรากฏออกมาเป็นการกระทำอย่างไร”
+            </p>
+            <div class="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 max-w-2xl mx-auto">
+              <p class="text-amber-300 text-lg md:text-xl font-bold">“ผู้ประกอบวิชาชีพที่ดีควรเป็นคนแบบไหน?”</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-left max-w-3xl mx-auto pt-2">
+              <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800">
+                <span class="text-xs font-extrabold text-sky-400">หลักฐานที่ 1</span>
+                <p class="text-sm font-bold text-white mt-1">Virtue Definition</p>
+                <p class="text-xs text-slate-400 mt-0.5">นิยามคุณธรรมเชิงปฏิบัติการและแยกแยะความเข้าใจผิด</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800">
+                <span class="text-xs font-extrabold text-emerald-400">หลักฐานที่ 2</span>
+                <p class="text-sm font-bold text-white mt-1">Behavioral Evidence</p>
+                <p class="text-xs text-slate-400 mt-0.5">แปลงนามธรรมเป็นพฤติกรรมที่สังเกตได้จริงในร้านยา/รพ.</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800">
+                <span class="text-xs font-extrabold text-amber-400">หลักฐานที่ 3</span>
+                <p class="text-sm font-bold text-white mt-1">Virtue Conflict Analysis</p>
+                <p class="text-xs text-slate-400 mt-0.5">ชั่งน้ำหนักเมื่อคุณธรรมที่ดี 2 อย่างขัดแย้งกัน</p>
+              </div>
+            </div>
+            <div class="pt-2">
+              <button onclick="navigateToPage(2)" class="px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base shadow-lg transition">
+                เริ่มต้นปฏิบัติการที่ 3 (START) &rarr;
+              </button>
+            </div>
+          </div>`;
+      }
+
+      // PAGE 2 — Connect
+      else if (p === 2) {
+        container.innerHTML = `
+          <div class="glass rounded-3xl p-6 md:p-10 space-y-6 max-w-4xl mx-auto">
+            <div class="text-center space-y-2">
+              <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">PAGE 2 • FROM ETHICAL DECISION &rarr; PROFESSIONAL CHARACTER</span>
+              <h2 class="text-2xl md:text-3xl font-extrabold text-white">ความเชื่อมโยงของปฏิบัติการที่ 1 &rarr; 2 &rarr; 3</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+              <div class="p-6 rounded-2xl bg-slate-900/90 border border-sky-500/30 space-y-2">
+                <span class="px-2.5 py-1 rounded bg-sky-500/20 text-sky-300 text-xs font-bold">Lab 1 • พื้นฐานการคิด</span>
+                <h3 class="text-lg font-bold text-white">เราตัดสินว่าอะไรถูก/ผิดอย่างไร?</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">แยกแยะ กฎหมาย / จริยธรรม / ผลกระทบ และใช้เหตุผลเชิงจริยธรรมในการตัดสินใจ</p>
+              </div>
+              <div class="p-6 rounded-2xl bg-slate-900/90 border border-indigo-500/30 space-y-2">
+                <span class="px-2.5 py-1 rounded bg-indigo-500/20 text-indigo-300 text-xs font-bold">Lab 2 • การชั่งน้ำหนักคุณค่า</span>
+                <h3 class="text-lg font-bold text-white">เราตัดสินใจอย่างไรเมื่อคุณค่าขัดแย้งกัน?</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">วิเคราะห์ Stakeholders &rarr; Ethical Tension &rarr; Options &rarr; Consequences &rarr; ปรับเมื่อข้อมูลเปลี่ยน</p>
+              </div>
+              <div class="p-6 rounded-2xl bg-emerald-950/50 border-2 border-emerald-500/50 space-y-2 shadow-lg">
+                <span class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 text-xs font-bold">Lab 3 (วันนี้) • ตัวตนวิชาชีพ</span>
+                <h3 class="text-lg font-bold text-emerald-300">คนที่ตัดสินใจอย่างมีจริยธรรมควรมีคุณธรรมอะไร?</h3>
+                <p class="text-xs text-slate-300 leading-relaxed">แปลง “คุณธรรม” ให้เห็นเป็น “พฤติกรรมที่สังเกตได้” และรับมือเมื่อคุณธรรมวิชาชีพปะทะกัน</p>
+              </div>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-center text-xs text-slate-300">
+              ต่อยอดสู่ <strong>Lab 4</strong>: “เมื่อคนในวิชาชีพต้องเผชิญสถานการณ์จริงที่ยาก เราจะรักษาหลักการและคุณธรรมนั้นได้หรือไม่?”
+            </div>
+          </div>`;
+      }
+
+      // PAGE 3 — Choose Your Professional (Individual: up to 5)
+      else if (p === 3) {
+        container.innerHTML = `
+          <div class="max-w-4xl mx-auto space-y-5">
+            <div class="glass rounded-3xl p-6 md:p-8 space-y-5">
+              <div class="flex flex-wrap justify-between items-center gap-2">
+                <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">PAGE 3 • กิจกรรมเดี่ยว (8–18 นาที)</span>
+                <span class="text-xs text-slate-400">ส่งแล้ว: <strong id="p3-count" class="text-white">0</strong> คน</span>
+              </div>
+              <div>
+                <h2 class="text-2xl font-extrabold text-white">“ถ้าคุณต้องเลือกเภสัชกรหนึ่งคนให้ดูแลคนในครอบครัว คุณจะเลือกคนแบบไหน?”</h2>
+                <p class="text-sm text-slate-300 mt-1">เลือกคุณลักษณะที่สำคัญที่สุด <strong class="text-amber-300">สูงสุด 5 ข้อ</strong> (เลือกแล้ว <span id="p3-sel-cnt" class="font-bold text-emerald-400">0</span>/5)</p>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5" id="p3-options">
+                ${VIRTUES_LIST.map(v => `
+                  <label class="flex items-center gap-2.5 p-3 rounded-xl bg-slate-900 border border-slate-700 hover:border-emerald-500/50 cursor-pointer text-xs text-slate-200 transition">
+                    <input type="checkbox" value="${v}" class="p3-chk accent-emerald-500 w-4 h-4 shrink-0" onchange="limitCheckboxes('.p3-chk', 5, 'p3-sel-cnt')">
+                    <span class="font-semibold">${v}</span>
+                  </label>
+                `).join('')}
+              </div>
+              <input type="text" id="p3-other-txt" placeholder="หากเลือก 'อื่น ๆ' ระบุคุณลักษณะเพิ่มเติม..."
+                class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-emerald-500" />
+              <div class="flex items-center justify-between gap-3">
+                <span id="p3-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage3()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow">ส่งคุณลักษณะที่เลือก (สูงสุด 5 ข้อ)</button>
+              </div>
+            </div>
+          </div>`;
+        await refreshLiveSection(3);
+      }
+
+      // PAGE 4 — See the Room (Top 10 Ranking / Bar Chart)
+      else if (p === 4) {
+        container.innerHTML = `
+          <div class="max-w-5xl mx-auto space-y-5">
+            <div class="glass rounded-3xl p-6 md:p-8 space-y-5">
+              <div class="flex flex-wrap justify-between items-center gap-2">
+                <div>
+                  <span class="text-xs font-bold text-sky-400 uppercase">PAGE 4 • SEE THE ROOM</span>
+                  <h2 class="text-2xl font-extrabold text-white">ห้องนี้ให้ความสำคัญกับคุณลักษณะใดมากที่สุด? (Top 10)</h2>
+                </div>
+                <span class="text-xs text-slate-400">ผู้ร่วมโหวตทั้งหมด: <strong id="p4-count" class="text-white">0</strong> คน</span>
+              </div>
+              <div class="h-72 bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+                <canvas id="chart-p4"></canvas>
+              </div>
+              <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-sm text-amber-200">
+                <strong>คำถามชวนคิด:</strong> “มีคุณธรรมใดที่คุณคิดว่าสำคัญมากสำหรับเภสัชกร แต่ไม่ได้ติดอยู่ใน Top 10 นี้? เพราะเหตุใด?”
+              </div>
+            </div>
+          </div>`;
+        await refreshLiveSection(4);
+      }
+
+      // PAGE 5 — Top 3 Virtues Vote (From Top 10 -> Select 3 -> Show Top 5)
+      else if (p === 5) {
+        const top10 = await fetchTopVirtues(10);
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
+              <span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold">PAGE 5 • VIRTUE VOTE (18–30 นาที)</span>
+              <h2 class="text-xl font-extrabold text-white">“ถ้าเลือกได้เพียง 3 คุณธรรมที่สำคัญที่สุดสำหรับผู้ประกอบวิชาชีพ คุณจะเลือกอะไร?”</h2>
+              <p class="text-xs text-slate-300">คัดเลือกจาก Top 10 ของห้องนี้ — เลือก <strong class="text-emerald-400">3 ข้อเท่านั้น</strong> (เลือกแล้ว <span id="p5-sel-cnt" class="font-bold text-amber-300">0</span>/3)</p>
+              <div class="space-y-2" id="p5-options">
+                ${top10.map((item, i) => `
+                  <label class="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-500/50 cursor-pointer text-xs text-slate-200">
+                    <span class="flex items-center gap-2.5">
+                      <input type="checkbox" value="${item.name}" class="p5-chk accent-amber-500 w-4 h-4" onchange="limitCheckboxes('.p5-chk', 3, 'p5-sel-cnt')">
+                      <span class="font-bold text-slate-400">#${i+1}</span>
+                      <span class="font-semibold text-white">${item.name}</span>
+                    </span>
+                    <span class="text-[11px] text-slate-500">${item.count} โหวตรอบแรก</span>
+                  </label>
+                `).join('')}
+              </div>
+              <div class="flex items-center justify-between">
+                <span id="p5-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage5()" class="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm shadow">ยืนยันโหวต 3 คุณธรรม</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 glass rounded-3xl p-6 flex flex-col justify-between space-y-4">
+              <div>
+                <div class="flex justify-between items-center mb-2">
+                  <h3 class="text-lg font-extrabold text-white">🏆 Top 5 คุณธรรมหลักของห้อง</h3>
+                  <span class="text-xs text-slate-400">โหวตแล้ว <strong id="p5-count" class="text-white">0</strong> คน</span>
+                </div>
+                <p class="text-xs text-slate-400 mb-3">กลุ่มจะเลือก 1 คุณธรรมจาก Top 5 นี้ไปวิเคราะห์เชิงลึกในขั้นถัดไป</p>
+                <div class="h-64 bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                  <canvas id="chart-p5"></canvas>
+                </div>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300">
+                💬 <strong>อาจารย์ชวนอภิปราย:</strong> “ทำไมคุณธรรมใน Top 5 เหล่านี้จึงขาดไม่ได้ในวิชาชีพเภสัชกรรม?”
+              </div>
+            </div>
+          </div>`;
+        await refreshLiveSection(5);
+      }
+
+      // PAGE 6 — Group Virtue Selection (1 from Top 5)
+      else if (p === 6) {
+        const top5 = await fetchTop5FromVote();
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">PAGE 6 • งานกลุ่ม (กลุ่ม ${studentProfile?.group_no || '?'})</span>
+                <span class="text-xs text-slate-400">30–45 นาที</span>
+              </div>
+              <h2 class="text-xl font-extrabold text-white">กลุ่มของคุณเลือกวิเคราะห์คุณธรรมอะไร?</h2>
+              <p class="text-xs text-slate-300">เลือก 1 คุณธรรมจาก Top 5 ของห้อง (หรือระบุคุณธรรมอื่นที่กลุ่มเห็นพ้อง)</p>
+              <div class="space-y-2">
+                ${top5.map((item, idx) => `
+                  <label class="flex items-center justify-between p-3.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-emerald-500/60 cursor-pointer text-sm text-white">
+                    <span class="flex items-center gap-3">
+                      <input type="radio" name="p6_virtue" value="${item.name}" class="accent-emerald-500 w-4 h-4">
+                      <span class="font-bold">Top ${idx+1}: ${item.name}</span>
+                    </span>
+                    <span class="text-xs text-emerald-400 font-bold">${item.count} เสียง</span>
+                  </label>
+                `).join('')}
+                <label class="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer text-sm text-white">
+                  <input type="radio" name="p6_virtue" value="OTHER" class="accent-emerald-500 w-4 h-4">
+                  <input type="text" id="p6-custom" placeholder="หรือระบุคุณธรรมอื่นของกลุ่ม..." class="flex-1 bg-transparent border-b border-slate-600 text-xs text-white focus:outline-none">
+                </label>
+              </div>
+              <div class="flex justify-between items-center pt-1">
+                <span id="p6-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage6Group()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow">บันทึกคุณธรรมของกลุ่ม</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-3">
+              <h3 class="text-lg font-extrabold text-white">📋 คุณธรรมที่แต่ละกลุ่มเลือก (<span id="p6-grp-count">0</span>/10 กลุ่ม)</h3>
+              <div id="p6-results-list" class="space-y-2 max-h-[420px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(6);
+      }
+
+      // PAGE 7 — Define It (50-100 words operational definition)
+      else if (p === 7) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
+              <span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold">PAGE 7 • DEFINE IT (กลุ่ม ${studentProfile?.group_no || '?'})</span>
+              <h2 class="text-xl font-extrabold text-white">คุณธรรมนี้หมายถึงอะไรในบริบทวิชาชีพเภสัชกรรม?</h2>
+              <p class="text-xs text-slate-300">เขียนนิยามเชิงปฏิบัติการของกลุ่ม (แนะนำ 50–100 คำ — หลีกเลี่ยงคำนิยามลอย ๆ แบบพจนานุกรม)</p>
+              <textarea id="p7-def" rows="5" placeholder="สำหรับกลุ่มเรา คุณธรรมนี้หมายถึง..."
+                class="w-full p-3.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-sky-500"></textarea>
+              <div class="flex justify-between items-center">
+                <span id="p7-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage7Group()" class="px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm shadow">ส่งนิยามคุณธรรมของกลุ่ม</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-3">
+              <h3 class="text-lg font-extrabold text-white">📖 นิยามของแต่ละกลุ่ม (<span id="p7-grp-count">0</span>/10 กลุ่ม)</h3>
+              <div id="p7-results-list" class="space-y-2.5 max-h-[420px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(7);
+      }
+
+      // PAGE 8 — Why It Matters (Impacts + Stakeholders + Explanation)
+      else if (p === 8) {
+        const impacts = ["Patient harm (อันตรายต่อผู้ป่วย)", "Loss of trust (สูญเสียความไว้วางใจ)", "Professional misconduct (ผิดจรรยาบรรณ)", "Unfairness (ความไม่เป็นธรรม)", "Team problems (ปัญหาในทีมงาน)", "Social impact (ผลกระทบต่อสังคม)", "Other (อื่น ๆ)"];
+        const stakes = ["ผู้ป่วย", "ครอบครัวผู้ป่วย", "เพื่อนร่วมงาน/สหวิชาชีพ", "องค์กร/สถานพยาบาล", "วิชาชีพเภสัชกรรม", "สังคม"];
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
+              <span class="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 text-xs font-bold">PAGE 8 • WHY IT MATTERS (กลุ่ม ${studentProfile?.group_no || '?'})</span>
+              <h2 class="text-xl font-extrabold text-white">ถ้าเภสัชกรขาดคุณธรรมนี้ จะเกิดอะไรขึ้น และใครเกี่ยวข้องบ้าง?</h2>
+              <div>
+                <p class="text-xs font-bold text-amber-300 mb-1.5">1. ผลกระทบที่อาจเกิดขึ้น (เลือกได้หลายข้อ):</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  ${impacts.map(imp => `
+                    <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-200 cursor-pointer">
+                      <input type="checkbox" value="${imp}" class="p8-imp accent-rose-500">
+                      <span>${imp}</span>
+                    </label>
+                  `).join('')}
+                </div>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-sky-300 mb-1.5">2. ผู้เกี่ยวข้องที่ได้รับผลกระทบ (Stakeholders):</p>
+                <div class="flex flex-wrap gap-2">
+                  ${stakes.map(s => `
+                    <label class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-200 cursor-pointer">
+                      <input type="checkbox" value="${s}" class="p8-stk accent-sky-500">
+                      <span>${s}</span>
+                    </label>
+                  `).join('')}
+                </div>
+              </div>
+              <textarea id="p8-reason" rows="3" placeholder="3. อธิบายเหตุผลความสำคัญต่อผู้ป่วย / วิชาชีพ / สังคม..."
+                class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-rose-500"></textarea>
+              <div class="flex justify-between items-center">
+                <span id="p8-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage8Group()" class="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow">ส่งผลวิเคราะห์ความสำคัญ</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-3">
+              <h3 class="text-lg font-extrabold text-white">⚠️ ผลกระทบที่แต่ละกลุ่มวิเคราะห์ (<span id="p8-grp-count">0</span>/10 กลุ่ม)</h3>
+              <div id="p8-results-list" class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(8);
+      }
+
+      // PAGE 9 — Observable Evidence (At least 3 observable behaviors)
+      else if (p === 9) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
+              <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">PAGE 9 • EVIDENCE &rarr; BEHAVIOR (45–60 นาที)</span>
+              <h2 class="text-xl font-extrabold text-white">เราจะรู้ได้อย่างไรว่า “เขามีคุณธรรมนี้”?</h2>
+              <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-200">
+                “เราไม่สามารถมองเห็น ‘ความซื่อสัตย์’ ได้โดยตรง แต่เรามองเห็น <strong>พฤติกรรมที่สะท้อนคุณธรรมนั้น</strong> ได้” — หากเดินเข้าไปในร้านยา/โรงพยาบาล เราจะเห็นการกระทำอะไร?
+              </div>
+              <div class="space-y-2.5">
+                <div>
+                  <label class="block text-xs font-bold text-slate-300 mb-1">พฤติกรรมที่สังเกตได้ ข้อที่ 1 *</label>
+                  <input type="text" id="p9-b1" placeholder="เช่น ตรวจสอบประวัติแพ้ยาและขนาดยาซ้ำก่อนส่งมอบทุกครั้ง" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-300 mb-1">พฤติกรรมที่สังเกตได้ ข้อที่ 2 *</label>
+                  <input type="text" id="p9-b2" placeholder="เช่น โทรติดตามอาการผู้ป่วยเมื่อพบความเสี่ยงเกิดอาการไม่พึงประสงค์" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-300 mb-1">พฤติกรรมที่สังเกตได้ ข้อที่ 3 *</label>
+                  <input type="text" id="p9-b3" placeholder="เช่น แจ้งเตือนและแก้ไขทันทีเมื่อพบความคลาดเคลื่อนทางยาโดยไม่ปกปิด" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span id="p9-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage9Group()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow">ส่งพฤติกรรมที่สังเกตได้ (3 ข้อ)</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-3">
+              <h3 class="text-lg font-extrabold text-white">🔍 Behavioral Evidence ของแต่ละกลุ่ม (<span id="p9-grp-count">0</span>/10 กลุ่ม)</h3>
+              <div id="p9-results-list" class="space-y-2.5 max-h-[450px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(9);
+      }
+
+      // PAGE 10 — Strongest Evidence
+      else if (p === 10) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
+              <span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold">PAGE 10 • STRONGEST EVIDENCE (กลุ่ม ${studentProfile?.group_no || '?'})</span>
+              <h2 class="text-xl font-extrabold text-white">พฤติกรรมใดเป็น “หลักฐานที่ชัด/แข็งแรงที่สุด”?</h2>
+              <p class="text-xs text-slate-300">เลือก 1 ข้อจากพฤติกรรมที่กลุ่มเสนอในหน้า 9 และให้เหตุผลว่าทำไมพฤติกรรมนี้พิสูจน์คุณธรรมได้ชัดที่สุด</p>
+              <select id="p10-choice" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-bold">
+                <option value="พฤติกรรมที่ 1">พฤติกรรมที่ 1</option>
+                <option value="พฤติกรรมที่ 2">พฤติกรรมที่ 2</option>
+                <option value="พฤติกรรมที่ 3">พฤติกรรมที่ 3</option>
+              </select>
+              <textarea id="p10-why" rows="4" placeholder="เพราะอะไรพฤติกรรมนี้จึงสะท้อนคุณธรรมได้ชัดเจนและพิสูจน์ได้มากกว่าข้ออื่น? (เช่น ทำได้ยาก/ต้องเสียสละผลประโยชน์ส่วนตัว)"
+                class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-500"></textarea>
+              <div class="flex justify-between items-center">
+                <span id="p10-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage10Group()" class="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm shadow">ส่งหลักฐานที่แข็งแรงที่สุด</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-3">
+              <h3 class="text-lg font-extrabold text-white">⭐ Strongest Evidence ของแต่ละกลุ่ม (<span id="p10-grp-count">0</span>/10 กลุ่ม)</h3>
+              <div id="p10-results-list" class="space-y-2.5 max-h-[430px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(10);
+      }
+
+      // PAGE 11 — Virtue != Virtue? (Misconception / Counterfeit Virtue)
+      else if (p === 11) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
+              <span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold">PAGE 11 • VIRTUE &ne; VIRTUE? (กลุ่ม ${studentProfile?.group_no || '?'})</span>
+              <h2 class="text-xl font-extrabold text-white">สิ่งใด “ดูเหมือน” เป็นคุณธรรมนี้ แต่จริง ๆ อาจไม่ใช่?</h2>
+              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-purple-500/30 text-xs text-slate-300 space-y-1">
+                <p class="font-bold text-purple-300">ตัวอย่างความเข้าใจผิด:</p>
+                <p>• <strong>ความรับผิดชอบ</strong> &ne; ทำทุกอย่างเองคนเดียวโดยไม่สื่อสารกับทีม</p>
+                <p>• <strong>ความซื่อสัตย์</strong> &ne; พูดตรงทุกอย่างโดยไม่คำนึงถึงจิตใจผู้ป่วย</p>
+                <p>• <strong>การเสียสละ/น้ำใจ</strong> &ne; ยอมปกปิดความผิดพลาดเพื่อช่วยเพื่อน</p>
+              </div>
+              <textarea id="p11-fake" rows="4" placeholder="ยกตัวอย่างพฤติกรรมที่ 'สวมรอย' หรือความเข้าใจผิดเกี่ยวกับคุณธรรมที่กลุ่มเลือก..."
+                class="w-full p-3.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-purple-500"></textarea>
+              <div class="flex justify-between items-center">
+                <span id="p11-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage11Group()" class="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm shadow">ส่งตัวอย่างความเข้าใจผิด</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-3">
+              <h3 class="text-lg font-extrabold text-white">⚠️ Virtue &ne; Virtue ของแต่ละกลุ่ม (<span id="p11-grp-count">0</span>/10 กลุ่ม)</h3>
+              <div id="p11-results-list" class="space-y-2.5 max-h-[430px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(11);
+      }
+
+      // PAGE 12 — Virtue Conflict Vote (Individual)
+      else if (p === 12) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-5xl mx-auto">
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
+              <span class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold">PAGE 12 • VIRTUE IN CONFLICT (60–72 นาที)</span>
+              <h2 class="text-2xl font-extrabold text-white">“คุณธรรมที่ดีสองอย่างสามารถขัดแย้งกันได้หรือไม่?”</h2>
+              <p class="text-xs text-slate-400">โหวตรายบุคคลเพื่อดูมุมมองของทั้งห้องก่อนวิเคราะห์คู่คุณธรรมที่ขัดแย้งกัน</p>
+              <div class="space-y-2.5">
+                ${[
+                  ['YES', 'YES — ขัดแย้งกันได้ในสถานการณ์จริง'],
+                  ['NO', 'NO — คุณธรรมที่แท้จริงไม่ขัดแย้งกัน'],
+                  ['NOT_SURE', 'NOT SURE — ไม่แน่ใจ / ขึ้นอยู่กับบริบท']
+                ].map(([code, label]) => `
+                  <label class="flex items-center gap-3 p-4 rounded-2xl bg-slate-900 border border-slate-700 hover:border-indigo-500 cursor-pointer text-sm text-white font-bold">
+                    <input type="radio" name="p12_vote" value="${code}" class="accent-indigo-500 w-4 h-4">
+                    <span>${label}</span>
+                  </label>
+                `).join('')}
+              </div>
+              <div class="flex justify-between items-center">
+                <span id="p12-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage12Vote()" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow">ส่งโหวต</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 glass rounded-3xl p-6 flex flex-col justify-between space-y-4">
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="text-lg font-extrabold text-white">📊 ผลโหวต Virtue Conflict</h3>
+                  <span class="text-xs text-slate-400">โหวตแล้ว <strong id="p12-count" class="text-white">0</strong> คน</span>
+                </div>
+                <div class="h-64 bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+                  <canvas id="chart-p12"></canvas>
+                </div>
+              </div>
+              <p class="text-xs text-slate-400">เมื่อคุณธรรมที่ดีปะทะกัน เราไม่ได้เลือกระหว่าง “ดีกับเลว” แต่กำลังเลือกระหว่าง “สิ่งที่ดีสองอย่าง”</p>
+            </div>
+          </div>`;
+        await refreshLiveSection(12);
+      }
+
+      // PAGE 13 — Ethical Tension Map (Group: Virtue A <-> Virtue B)
+      else if (p === 13) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
+              <span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold">PAGE 13 • ETHICAL TENSION MAP (กลุ่ม ${studentProfile?.group_no || '?'})</span>
+              <h2 class="text-xl font-extrabold text-white">เลือกคู่คุณธรรมที่ขัดแย้งกัน (Virtue A &larr;&rarr; Virtue B)</h2>
+              <select id="p13-pair" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-bold">
+                <option value="ความซื่อสัตย์ ↔ ความเมตตา">1. ความซื่อสัตย์ (Honesty) &harr; ความเมตตา (Compassion)</option>
+                <option value="ความยุติธรรม ↔ การให้โอกาส">2. ความยุติธรรม (Fairness) &harr; การให้โอกาส (Second Chance)</option>
+                <option value="ความรับผิดชอบ ↔ ความสัมพันธ์">3. ความรับผิดชอบ (Responsibility) &harr; ความสัมพันธ์เพื่อนร่วมงาน</option>
+                <option value="การเคารพผู้ป่วย ↔ ความปลอดภัย">4. การเคารพการตัดสินใจผู้ป่วย (Autonomy) &harr; ความปลอดภัย (Safety)</option>
+                <option value="ความเสียสละ ↔ การดูแลตนเอง">5. ความเสียสละ (Altruism) &harr; การดูแลตนเอง (Self-care)</option>
+                <option value="อื่น ๆ">6. คู่คุณธรรมอื่น ๆ</option>
+              </select>
+              <div>
+                <label class="block text-xs font-bold text-sky-400 mb-1">1. “ถ้าให้ความสำคัญกับคุณธรรม A มากขึ้น เราอาจเสียอะไร?”</label>
+                <textarea id="p13-lossA" rows="2" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-amber-300 mb-1">2. “ถ้าให้ความสำคัญกับคุณธรรม B มากขึ้น เราอาจเสียอะไร?”</label>
+                <textarea id="p13-lossB" rows="2" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+              </div>
+              <div class="flex justify-between items-center">
+                <span id="p13-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage13Group()" class="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm shadow">ส่ง Ethical Tension Map</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-3">
+              <h3 class="text-lg font-extrabold text-white">🗺️ Tension Map ของแต่ละกลุ่ม (<span id="p13-grp-count">0</span>/10 กลุ่ม)</h3>
+              <div id="p13-results-list" class="space-y-2.5 max-h-[430px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(13);
+      }
+
+      // PAGE 14 — Professional Dilemma (Case: Colleague dispensing error)
+      else if (p === 14) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
+              <span class="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 text-xs font-bold">PAGE 14 • PROFESSIONAL DILEMMA (72–84 นาที)</span>
+              <h2 class="text-xl font-extrabold text-white">ความรับผิดชอบ vs ความเห็นอกเห็นใจ</h2>
+              <div class="p-4 rounded-2xl bg-slate-900/95 border border-rose-500/30 text-xs md:text-sm text-slate-200 leading-relaxed space-y-2">
+                <p class="font-bold text-rose-300">Case: “เพื่อนร่วมงานทำงานผิดพลาด”</p>
+                <p>เภสัชกรคนหนึ่งพบว่าเพื่อนร่วมงานทำงานผิดพลาดหลายครั้ง ความผิดพลาดครั้งล่าสุด<strong>อาจส่งผลต่อความปลอดภัยของผู้ป่วย</strong> เพื่อนร่วมงานยอมรับว่าเกิดจากปัญหาส่วนตัวและขอร้องว่า:</p>
+                <p class="italic text-amber-300 font-semibold">“อย่าเพิ่งบอกหัวหน้าได้ไหม เรากำลังมีปัญหาครอบครัว”</p>
+              </div>
+              <p class="text-xs font-bold text-white">คุณจะตัดสินใจทำอย่างไร? (โหวตรายบุคคล)</p>
+              <div class="space-y-2">
+                ${[
+                  ['A', 'A. ไม่รายงาน (เห็นใจและให้โอกาสเพื่อนจัดการเอง)'],
+                  ['B', 'B. รายงานหัวหน้าทันทีตามระบบความเสี่ยง'],
+                  ['C', 'C. พูดคุยกับเพื่อนก่อนและช่วยกันแก้ไขเฉพาะหน้า'],
+                  ['D', 'D. ประเมินความเสี่ยงต่อผู้ป่วยและดำเนินการตามความเหมาะสม'],
+                  ['E', 'E. แนวทางอื่น ๆ']
+                ].map(([code, label]) => `
+                  <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-700 hover:border-rose-500 cursor-pointer text-xs text-slate-200">
+                    <input type="radio" name="p14_vote" value="${code}" class="accent-rose-500 w-4 h-4">
+                    <span class="font-semibold">${label}</span>
+                  </label>
+                `).join('')}
+              </div>
+              <div class="flex justify-between items-center">
+                <span id="p14-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage14Vote()" class="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow">ส่งการตัดสินใจ</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 glass rounded-3xl p-6 flex flex-col justify-between space-y-4">
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="text-lg font-extrabold text-white">📊 ผลโหวต Professional Dilemma</h3>
+                  <span class="text-xs text-slate-400">โหวตแล้ว <strong id="p14-count" class="text-white">0</strong> คน</span>
+                </div>
+                <div class="h-72 bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+                  <canvas id="chart-p14"></canvas>
+                </div>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300">
+                อภิปรายในกลุ่ม: คุณธรรมใดกำลังขัดแย้งกัน? ใครได้รับผลกระทบ? และมีทางเลือกใดบ้าง?
+              </div>
+            </div>
+          </div>`;
+        await refreshLiveSection(14);
+      }
+
+      // PAGE 15 — Reasoning (Individual virtues/principles behind decision)
+      else if (p === 15) {
+        const reasList = ["Patient safety (ความปลอดภัยของผู้ป่วย)", "Responsibility (ความรับผิดชอบ)", "Compassion (ความเห็นอกเห็นใจ)", "Honesty (ความซื่อสัตย์)", "Fairness (ความยุติธรรม)", "Professional duty (หน้าที่วิชาชีพ)", "Trust (ความไว้วางใจ)", "Other (อื่น ๆ)"];
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
+              <span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold">PAGE 15 • REASONING (เหตุผลเบื้องหลัง)</span>
+              <h2 class="text-xl font-extrabold text-white">คุณธรรมหรือหลักคิดใดที่สนับสนุนคำตอบของคุณ?</h2>
+              <p class="text-xs text-slate-300">เลือกได้หลายข้อ แล้วระบุเหตุผลที่สำคัญที่สุดของคุณ</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                ${reasList.map(r => `
+                  <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 cursor-pointer">
+                    <input type="checkbox" value="${r}" class="p15-chk accent-purple-500">
+                    <span>${r}</span>
+                  </label>
+                `).join('')}
+              </div>
+              <textarea id="p15-note" rows="3" placeholder="เหตุผลสำคัญที่สุดของคุณคืออะไร?..."
+                class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-purple-500"></textarea>
+              <div class="flex justify-between items-center">
+                <span id="p15-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage15Reasoning()" class="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm shadow">ส่งเหตุผลประกอบ</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 glass rounded-3xl p-6 flex flex-col justify-between space-y-4">
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="text-lg font-extrabold text-white">📊 คุณธรรม/หลักคิดที่นิสิตใช้อ้างอิง</h3>
+                  <span class="text-xs text-slate-400">ส่งแล้ว <strong id="p15-count" class="text-white">0</strong> คน</span>
+                </div>
+                <div class="h-72 bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+                  <canvas id="chart-p15"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        await refreshLiveSection(15);
+      }
+
+      // PAGE 16 — Challenge 1 (Severity: no harm yet & fixable immediately)
+      else if (p === 16) {
+        container.innerHTML = renderChallengePageHtml(
+          16,
+          "Challenge 1 — Severity (ความรุนแรงของผลกระทบ)",
+          "“ความผิดพลาดยังไม่ส่งผลต่อผู้ป่วย และสามารถแก้ไขได้ทันทีก่อนส่งมอบยา”",
+          "การตัดสินใจของคุณเปลี่ยนหรือไม่?",
+          "ชั่งน้ำหนักระหว่างการปกป้องชื่อเสียง/ความรู้สึกเพื่อน กับการบันทึกความคลาดเคลื่อนเชิงระบบ (Near-miss reporting)"
+        );
+        await refreshLiveSection(16);
+      }
+
+      // PAGE 17 — Challenge 2 (Repeat: 3rd time)
+      else if (p === 17) {
+        container.innerHTML = renderChallengePageHtml(
+          17,
+          "Challenge 2 — Repeat (ความผิดพลาดเกิดซ้ำ)",
+          "“ความผิดพลาดลักษณะนี้เกิดขึ้นซ้ำเป็นครั้งที่ 3 แล้ว”",
+          "การตัดสินใจของคุณเปลี่ยนหรือไม่?",
+          "เมื่อปัญหาไม่ใช่เหตุสุดวิสัยครั้งเดียว แต่กลายเป็นรูปแบบความเสี่ยงที่อาจกระทบผู้ป่วยในอนาคต"
+        );
+        await refreshLiveSection(17);
+      }
+
+      // PAGE 18 — Challenge 3 (Harm Done: patient already harmed -> top virtue)
+      else if (p === 18) {
+        const topOpts = ["Patient safety (ความปลอดภัยของผู้ป่วย)", "Responsibility (ความรับผิดชอบ)", "Compassion (ความเห็นอกเห็นใจ)", "Honesty (ความซื่อสัตย์)", "Fairness (ความยุติธรรม)", "Professional duty (หน้าที่วิชาชีพ)", "Other (อื่น ๆ)"];
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
+              <span class="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 text-xs font-bold">PAGE 18 • CHALLENGE 3 — HARM DONE</span>
+              <div class="p-4 rounded-2xl bg-rose-950/60 border border-rose-500/50 text-sm md:text-base font-bold text-rose-200">
+                ⚡ สถานการณ์เปลี่ยน: “ผู้ป่วยได้รับอันตรายจากความผิดพลาดนั้นแล้ว”
+              </div>
+              <h2 class="text-xl font-extrabold text-white">ตอนนี้คุณธรรมใดควรได้รับน้ำหนักมากที่สุด? (เลือก 1 ข้อ)</h2>
+              <div class="space-y-2">
+                ${topOpts.map(opt => `
+                  <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-700 hover:border-rose-500 cursor-pointer text-xs text-slate-200">
+                    <input type="radio" name="p18_topv" value="${opt}" class="accent-rose-500 w-4 h-4">
+                    <span class="font-semibold">${opt}</span>
+                  </label>
+                `).join('')}
+              </div>
+              <textarea id="p18-why" rows="2" placeholder="อธิบายสั้น ๆ ว่าทำไมคุณธรรมนี้จึงสำคัญที่สุดเมื่อเกิดอันตรายแล้ว..."
+                class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+              <div class="flex justify-between items-center">
+                <span id="p18-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage18Challenge3()" class="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow">ส่งคำตอบ Challenge 3</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 glass rounded-3xl p-6 flex flex-col justify-between space-y-4">
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="text-lg font-extrabold text-white">📊 คุณธรรมที่ได้รับน้ำหนักสูงสุดเมื่อเกิดอันตราย</h3>
+                  <span class="text-xs text-slate-400">ส่งแล้ว <strong id="p18-count" class="text-white">0</strong> คน</span>
+                </div>
+                <div class="h-72 bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+                  <canvas id="chart-p18"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        await refreshLiveSection(18);
+      }
+
+      // PAGE 19 — My Professional Virtue Map (Group Synthesis Output)
+      else if (p === 19) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">PAGE 19 • GROUP SYNTHESIS (94–101 นาที)</span>
+                <span class="text-xs text-slate-400">กลุ่ม ${studentProfile?.group_no || '?'}</span>
+              </div>
+              <h2 class="text-xl font-extrabold text-white">🗺️ MY PROFESSIONAL VIRTUE MAP</h2>
+              <p class="text-xs text-slate-300">สังเคราะห์แผนผังคุณธรรมทางวิชาชีพของกลุ่ม (Output หลักสำหรับ CLO &amp; Gallery)</p>
+              <div class="space-y-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-emerald-300 mb-0.5">1. OUR VIRTUE (คุณธรรมหลักของกลุ่ม)</label>
+                  <input type="text" id="p19-virtue" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-sky-300 mb-0.5">2. WHY IT MATTERS (ทำไมสำคัญ &amp; ใครได้รับประโยชน์)</label>
+                  <textarea id="p19-why" rows="2" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-amber-300 mb-0.5">3. OBSERVABLE BEHAVIOR (พฤติกรรมที่เห็นได้ชัดเจน)</label>
+                  <textarea id="p19-beh" rows="2" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-rose-300 mb-0.5">4. POSSIBLE CONFLICT (ความขัดแย้งกับคุณธรรมอื่นที่อาจพบ)</label>
+                  <input type="text" id="p19-conf" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-indigo-300 mb-0.5">5. HOW WE RESPOND &amp; DEVELOP (แนวทางรับมือและพัฒนาตนเอง)</label>
+                  <textarea id="p19-resp" rows="2" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+                </div>
+              </div>
+              <div class="flex justify-between items-center pt-1">
+                <span id="p19-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage19VirtueMap()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow">บันทึก Virtue Map ของกลุ่ม</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-3">
+              <h3 class="text-lg font-extrabold text-white">📌 Gallery: Virtue Map ทุกกลุ่ม (<span id="p19-grp-count">0</span>/10 กลุ่ม)</h3>
+              <div id="p19-results-list" class="space-y-3 max-h-[520px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>`;
+        await refreshLiveSection(19);
+      }
+
+      // PAGE 20 — Peer Challenge / Gallery Review
+      else if (p === 20) {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            <div class="lg:col-span-5 glass rounded-3xl p-6 space-y-4">
+              <span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold">PAGE 20 • GALLERY / PEER CHALLENGE (101–106 นาที)</span>
+              <h2 class="text-xl font-extrabold text-white">แลกเปลี่ยนมุมมองกับกลุ่มอื่น</h2>
+              <p class="text-xs text-slate-300">ดู Virtue Map ของกลุ่มอื่นทางด้านขวา แล้วเลือก 1 กลุ่มที่กลุ่มของคุณสนใจ</p>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">เลือกกลุ่มเป้าหมายที่ต้องการสะท้อนมุมมอง:</label>
+                <select id="p20-target" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-bold">
+                  ${[1,2,3,4,5,6,7,8,9,10].map(g => `<option value="กลุ่มที่ ${g}">กลุ่มที่ ${g}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-sky-300 mb-1">1. “อะไรในคำตอบของกลุ่มนี้ที่ทำให้คุณคิดต่างหรือคิดเพิ่ม?”</label>
+                <textarea id="p20-diff" rows="3" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-amber-300 mb-1">2. “คุณมีคำถามหรือข้อท้าทายอะไรกับกลุ่มนี้?”</label>
+                <textarea id="p20-quest" rows="2" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+              </div>
+              <div class="flex justify-between items-center">
+                <span id="p20-status" class="text-xs text-emerald-400 font-semibold"></span>
+                <button onclick="submitPage20PeerChallenge()" class="px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm shadow">ส่ง Peer Challenge</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-7 glass rounded-3xl p-6 space-y-4">
+              <div>
+                <h3 class="text-base font-extrabold text-white mb-2">🗺️ Virtue Map ของทุกกลุ่ม (สำหรับอ่านประกอบ)</h3>
+                <div id="p20-maps-gallery" class="space-y-2 max-h-[220px] overflow-y-auto pr-1"></div>
+              </div>
+              <div class="border-t border-slate-800 pt-3">
+                <h3 class="text-base font-extrabold text-amber-300 mb-2">💬 ข้อคิดเห็น &amp; คำถามระหว่างกลุ่ม (<span id="p20-count">0</span> รายการ)</h3>
+                <div id="p20-results-list" class="space-y-2 max-h-[220px] overflow-y-auto pr-1"></div>
+              </div>
+            </div>
+          </div>`;
+        await refreshLiveSection(20);
+      }
+
+      // PAGE 21 — Professional Identity Reflection (Exit Ticket)
+      else if (p === 21) {
+        container.innerHTML = `
+          <div class="max-w-3xl mx-auto glass rounded-3xl p-6 md:p-8 space-y-5">
+            <div class="flex flex-wrap justify-between items-center gap-2">
+              <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">PAGE 21 • EXIT REFLECTION (106–110 นาที)</span>
+              <span class="text-xs text-slate-400">ส่งแล้ว: <strong id="p21-count" class="text-white">0</strong> / ${studentsList.length || 90} คน</span>
+            </div>
+            <h2 class="text-2xl font-extrabold text-white">🎯 Professional Identity: ฉันอยากเป็นเภสัชกรที่...</h2>
+            <div class="p-4 rounded-2xl bg-slate-900/90 border border-emerald-500/30 text-xs md:text-sm text-slate-300">
+              “ถ้าวันหนึ่งคุณเป็นเภสัชกร และคนไข้ / เพื่อนร่วมงาน / สังคมต้องอธิบายว่าคุณเป็นเภสัชกรแบบไหน คุณอยากให้เขาพูดถึงคุณว่าอย่างไร?”
+            </div>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-bold text-emerald-400 mb-1">1. “ฉันอยากเป็นเภสัชกรที่...” *</label>
+                <textarea id="p21-statement" rows="2" placeholder="เช่น กล้ารับผิดชอบต่อความปลอดภัยของผู้ป่วยแม้ในสถานการณ์ที่กดดัน..."
+                  class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-amber-300 mb-1">2. “คุณธรรมหนึ่งอย่างที่ฉันต้องพัฒนาต่อคือ...” *</label>
+                <input type="text" id="p21-virtue" placeholder="เช่น ความกล้าหาญทางจริยธรรม (Moral Courage) / การสื่อสารอย่างตรงไปตรงมา..."
+                  class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-sky-400 mb-1">3. “เพราะอะไร และฉันจะเริ่มฝึกจากเรื่องใด?” *</label>
+                <textarea id="p21-reason" rows="2" placeholder="ระบุเหตุผลและก้าวแรกที่จะฝึกฝนในระหว่างเรียน..."
+                  class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"></textarea>
+              </div>
+            </div>
+            <div class="flex justify-between items-center pt-2">
+              <span id="p21-status" class="text-xs text-emerald-400 font-semibold"></span>
+              <button onclick="submitPage21Identity()" class="px-8 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg">ส่ง Exit Reflection (SUBMIT)</button>
+            </div>
+          </div>`;
+        await refreshLiveSection(21);
+      }
+    }
+
+    function renderChallengePageHtml(pageNo, badgeText, quoteText, questionText, hintText) {
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
+          <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
+            <span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold">PAGE ${pageNo} • ${badgeText}</span>
+            <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-sm md:text-base font-bold text-amber-200">
+              ⚡ ข้อมูลใหม่: ${quoteText}
+            </div>
+            <h2 class="text-xl font-extrabold text-white">${questionText}</h2>
+            <p class="text-xs text-slate-400">${hintText}</p>
+            <div class="space-y-2">
+              ${[
+                ['YES', 'YES — เปลี่ยนการตัดสินใจ'],
+                ['NO', 'NO — ยืนยันการตัดสินใจเดิม'],
+                ['NOT_SURE', 'NOT SURE — ไม่แน่ใจ / ต้องดูรายละเอียดเพิ่ม']
+              ].map(([code, label]) => `
+                <label class="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-500 cursor-pointer text-xs text-white font-bold">
+                  <input type="radio" name="p${pageNo}_ans" value="${code}" class="accent-amber-500 w-4 h-4">
+                  <span>${label}</span>
+                </label>
+              `).join('')}
+            </div>
+            <textarea id="p${pageNo}-why" rows="3" placeholder="เพราะอะไร? อธิบายเหตุผลประกอบ..."
+              class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"></textarea>
+            <div class="flex justify-between items-center">
+              <span id="p${pageNo}-status" class="text-xs text-emerald-400 font-semibold"></span>
+              <button onclick="submitChallengeIndividual(${pageNo})" class="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm shadow">ส่งผล Challenge</button>
+            </div>
+          </div>
+
+          <div class="lg:col-span-6 glass rounded-3xl p-6 flex flex-col justify-between space-y-4">
+            <div>
+              <div class="flex justify-between items-center mb-3">
+                <h3 class="text-lg font-extrabold text-white">📊 ผลตอบสนองต่อข้อมูลใหม่</h3>
+                <span class="text-xs text-slate-400">ส่งแล้ว <strong id="p${pageNo}-count" class="text-white">0</strong> คน</span>
+              </div>
+              <div class="h-56 bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+                <canvas id="chart-p${pageNo}"></canvas>
+              </div>
+            </div>
+            <div id="p${pageNo}-notes-list" class="space-y-2 max-h-[180px] overflow-y-auto pr-1"></div>
+          </div>
+        </div>`;
+    }
+
+    function limitCheckboxes(selector, maxAllowed, counterId) {
+      const checked = Array.from(document.querySelectorAll(`${selector}:checked`));
+      if (checked.length > maxAllowed) {
+        checked[checked.length - 1].checked = false;
+        alert(`เลือกได้สูงสุด ${maxAllowed} ข้อเท่านั้น`);
+      }
+      const cntEl = document.getElementById(counterId);
+      if (cntEl) cntEl.textContent = document.querySelectorAll(`${selector}:checked`).length;
+    }
+
+    // =========================================================================
+    // SUBMIT HANDLERS (INDIVIDUAL & GROUP)
+    // =========================================================================
+    async function submitPage3() {
+      if (!requireStudent()) return;
+      const tags = Array.from(document.querySelectorAll('.p3-chk:checked')).map(c => c.value);
+      const otherTxt = document.getElementById('p3-other-txt').value.trim();
+      if (tags.length === 0 || tags.length > 5) return alert('กรุณาเลือกคุณลักษณะ 1 ถึง 5 ข้อ');
+      if (tags.includes('อื่น ๆ (Other)') && otherTxt) {
+        const idx = tags.indexOf('อื่น ๆ (Other)');
+        tags[idx] = `อื่น ๆ: ${otherTxt}`;
+      }
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO, student_id: studentProfile.student_id, group_no: studentProfile.group_no,
+        step_key: 'p3_choose_prof', reason_tags: tags, text_val: otherTxt, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,student_id,step_key' });
+      document.getElementById('p3-status').textContent = '✓ บันทึกคุณลักษณะที่เลือกเรียบร้อยแล้ว';
+      await refreshLiveSection(3);
+    }
+
+    async function submitPage5() {
+      if (!requireStudent()) return;
+      const tags = Array.from(document.querySelectorAll('.p5-chk:checked')).map(c => c.value);
+      if (tags.length !== 3) return alert('กรุณาเลือกคุณธรรมที่สำคัญที่สุดให้ครบ 3 ข้อ');
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO, student_id: studentProfile.student_id, group_no: studentProfile.group_no,
+        step_key: 'p5_top3_vote', reason_tags: tags, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,student_id,step_key' });
+      document.getElementById('p5-status').textContent = '✓ บันทึกโหวต 3 คุณธรรมเรียบร้อยแล้ว';
+      await refreshLiveSection(5);
+    }
+
+    async function submitPage6Group() {
+      if (!requireGroup()) return;
+      const sel = document.querySelector('input[name="p6_virtue"]:checked');
+      if (!sel) return alert('กรุณาเลือกคุณธรรมของกลุ่ม');
+      let val = sel.value;
+      if (val === 'OTHER') {
+        val = document.getElementById('p6-custom').value.trim();
+        if (!val) return alert('กรุณาระบุชื่อคุณธรรมอื่นของกลุ่ม');
+      }
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: 'p6_group_virtue',
+        decision_val: val, text_val: val, submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,group_no,step_key' });
+      document.getElementById('p6-status').textContent = `✓ บันทึกคุณธรรมของกลุ่มที่ ${studentProfile.group_no} แล้ว`;
+      await refreshLiveSection(6);
+    }
+
+    async function submitPage7Group() {
+      if (!requireGroup()) return;
+      const def = document.getElementById('p7-def').value.trim();
+      if (!def) return alert('กรุณากรอกนิยามความหมายคุณธรรมของกลุ่ม');
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: 'p7_define_virtue',
+        text_val: def, submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,group_no,step_key' });
+      document.getElementById('p7-status').textContent = `✓ บันทึกนิยามของกลุ่มที่ ${studentProfile.group_no} แล้ว`;
+      await refreshLiveSection(7);
+    }
+
+    async function submitPage8Group() {
+      if (!requireGroup()) return;
+      const imps = Array.from(document.querySelectorAll('.p8-imp:checked')).map(c => c.value);
+      const stks = Array.from(document.querySelectorAll('.p8-stk:checked')).map(c => c.value);
+      const reason = document.getElementById('p8-reason').value.trim();
+      if (imps.length === 0 || !reason) return alert('กรุณาเลือกผลกระทบและอธิบายเหตุผล');
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: 'p8_why_matters',
+        selected_items: imps, text_val: reason,
+        json_val: { impacts: imps, stakeholders: stks, reason: reason },
+        submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,group_no,step_key' });
+      document.getElementById('p8-status').textContent = `✓ บันทึกผลวิเคราะห์ความสำคัญของกลุ่มที่ ${studentProfile.group_no} แล้ว`;
+      await refreshLiveSection(8);
+    }
+
+    async function submitPage9Group() {
+      if (!requireGroup()) return;
+      const b1 = document.getElementById('p9-b1').value.trim();
+      const b2 = document.getElementById('p9-b2').value.trim();
+      const b3 = document.getElementById('p9-b3').value.trim();
+      if (!b1 || !b2 || !b3) return alert('กรุณากรอกพฤติกรรมที่สังเกตได้ให้ครบทั้ง 3 ข้อ');
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: 'p9_evidence',
+        selected_items: [b1, b2, b3], text_val: `1) ${b1} | 2) ${b2} | 3) ${b3}`,
+        json_val: { b1, b2, b3 }, submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,group_no,step_key' });
+      document.getElementById('p9-status').textContent = `✓ บันทึกพฤติกรรมที่สังเกตได้ของกลุ่มที่ ${studentProfile.group_no} แล้ว`;
+      await refreshLiveSection(9);
+    }
+
+    async function submitPage10Group() {
+      if (!requireGroup()) return;
+      const choice = document.getElementById('p10-choice').value;
+      const why = document.getElementById('p10-why').value.trim();
+      if (!why) return alert('กรุณาอธิบายเหตุผลว่าทำไมพฤติกรรมนี้เป็นหลักฐานที่แข็งแรงที่สุด');
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: 'p10_strongest_evidence',
+        decision_val: choice, text_val: why, submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,group_no,step_key' });
+      document.getElementById('p10-status').textContent = `✓ บันทึกหลักฐานที่แข็งแรงที่สุดของกลุ่มที่ ${studentProfile.group_no} แล้ว`;
+      await refreshLiveSection(10);
+    }
+
+    async function submitPage11Group() {
+      if (!requireGroup()) return;
+      const fake = document.getElementById('p11-fake').value.trim();
+      if (!fake) return alert('กรุณากรอกตัวอย่างความเข้าใจผิดหรือพฤติกรรมที่สวมรอย');
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: 'p11_fake_virtue',
+        text_val: fake, submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,group_no,step_key' });
+      document.getElementById('p11-status').textContent = `✓ บันทึกตัวอย่างความเข้าใจผิดของกลุ่มที่ ${studentProfile.group_no} แล้ว`;
+      await refreshLiveSection(11);
+    }
+
+    async function submitPage12Vote() {
+      if (!requireStudent()) return;
+      const sel = document.querySelector('input[name="p12_vote"]:checked');
+      if (!sel) return alert('กรุณาเลือกคำตอบโหวต');
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO, student_id: studentProfile.student_id, group_no: studentProfile.group_no,
+        step_key: 'p12_conflict_vote', choice_val: sel.value, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,student_id,step_key' });
+      document.getElementById('p12-status').textContent = '✓ บันทึกโหวตเรียบร้อยแล้ว';
+      await refreshLiveSection(12);
+    }
+
+    async function submitPage13Group() {
+      if (!requireGroup()) return;
+      const pair = document.getElementById('p13-pair').value;
+      const lossA = document.getElementById('p13-lossA').value.trim();
+      const lossB = document.getElementById('p13-lossB').value.trim();
+      if (!lossA || !lossB) return alert('กรุณาวิเคราะห์สิ่งที่อาจเสียไปทั้งฝั่ง A และฝั่ง B');
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: 'p13_tension_map',
+        decision_val: pair, text_val: `เน้น A เสีย: ${lossA} | เน้น B เสีย: ${lossB}`,
+        json_val: { pair, lossA, lossB }, submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,group_no,step_key' });
+      document.getElementById('p13-status').textContent = `✓ บันทึก Tension Map ของกลุ่มที่ ${studentProfile.group_no} แล้ว`;
+      await refreshLiveSection(13);
+    }
+
+    async function submitPage14Vote() {
+      if (!requireStudent()) return;
+      const sel = document.querySelector('input[name="p14_vote"]:checked');
+      if (!sel) return alert('กรุณาเลือกทางเลือกการตัดสินใจ');
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO, student_id: studentProfile.student_id, group_no: studentProfile.group_no,
+        step_key: 'p14_dilemma_vote', choice_val: sel.value, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,student_id,step_key' });
+      document.getElementById('p14-status').textContent = '✓ บันทึกการตัดสินใจเรียบร้อยแล้ว';
+      await refreshLiveSection(14);
+    }
+
+    async function submitPage15Reasoning() {
+      if (!requireStudent()) return;
+      const tags = Array.from(document.querySelectorAll('.p15-chk:checked')).map(c => c.value);
+      const note = document.getElementById('p15-note').value.trim();
+      if (tags.length === 0) return alert('กรุณาเลือกคุณธรรม/หลักคิดอย่างน้อย 1 ข้อ');
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO, student_id: studentProfile.student_id, group_no: studentProfile.group_no,
+        step_key: 'p15_reasoning', reason_tags: tags, text_val: note, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,student_id,step_key' });
+      document.getElementById('p15-status').textContent = '✓ บันทึกเหตุผลประกอบเรียบร้อยแล้ว';
+      await refreshLiveSection(15);
+    }
+
+    async function submitChallengeIndividual(pageNo) {
+      if (!requireStudent()) return;
+      const sel = document.querySelector(`input[name="p${pageNo}_ans"]:checked`);
+      const why = document.getElementById(`p${pageNo}-why`).value.trim();
+      if (!sel || !why) return alert('กรุณาเลือกคำตอบและระบุเหตุผลประกอบ');
+      const stepKey = pageNo === 16 ? 'p16_challenge1' : 'p17_challenge2';
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO, student_id: studentProfile.student_id, group_no: studentProfile.group_no,
+        step_key: stepKey, choice_val: sel.value, text_val: why, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,student_id,step_key' });
+      document.getElementById(`p${pageNo}-status`).textContent = '✓ บันทึกผล Challenge เรียบร้อยแล้ว';
+      await refreshLiveSection(pageNo);
+    }
+
+    async function submitPage18Challenge3() {
+      if (!requireStudent()) return;
+      const sel = document.querySelector('input[name="p18_topv"]:checked');
+      const why = document.getElementById('p18-why').value.trim();
+      if (!sel) return alert('กรุณาเลือกคุณธรรมหลักที่ได้รับน้ำหนักมากที่สุด');
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO, student_id: studentProfile.student_id, group_no: studentProfile.group_no,
+        step_key: 'p18_challenge3', choice_val: sel.value, text_val: why, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,student_id,step_key' });
+      document.getElementById('p18-status').textContent = '✓ บันทึกคำตอบ Challenge 3 เรียบร้อยแล้ว';
+      await refreshLiveSection(18);
+    }
+
+    async function submitPage19VirtueMap() {
+      if (!requireGroup()) return;
+      const v = document.getElementById('p19-virtue').value.trim();
+      const why = document.getElementById('p19-why').value.trim();
+      const beh = document.getElementById('p19-beh').value.trim();
+      const conf = document.getElementById('p19-conf').value.trim();
+      const resp = document.getElementById('p19-resp').value.trim();
+      if (!v || !why || !beh) return alert('กรุณากรอกข้อมูลในแผนผัง Virtue Map ให้ครบถ้วน');
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: 'p19_virtue_map',
+        decision_val: v, text_val: `คุณธรรม: ${v} | พฤติกรรม: ${beh} | รับมือ: ${resp}`,
+        json_val: { virtue: v, why, behavior: beh, conflict: conf, respond: resp },
+        submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,group_no,step_key' });
+      document.getElementById('p19-status').textContent = `✓ บันทึก Virtue Map ของกลุ่มที่ ${studentProfile.group_no} แล้ว`;
+      await refreshLiveSection(19);
+    }
+
+    async function submitPage20PeerChallenge() {
+      if (!requireGroup()) return;
+      const target = document.getElementById('p20-target').value;
+      const diff = document.getElementById('p20-diff').value.trim();
+      const quest = document.getElementById('p20-quest').value.trim();
+      if (!diff || !quest) return alert('กรุณากรอกข้อคิดเห็นเพิ่มเติมและคำถามถึงกลุ่มเป้าหมาย');
+      await db.from('lab_group_responses').upsert({
+        lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: 'p20_peer_challenge',
+        decision_val: target, text_val: `ถึง ${target}: คิดเพิ่ม=${diff} | คำถาม=${quest}`,
+        json_val: { target, diff, quest }, submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,group_no,step_key' });
+      document.getElementById('p20-status').textContent = `✓ ส่ง Peer Challenge จากกลุ่มที่ ${studentProfile.group_no} แล้ว`;
+      await refreshLiveSection(20);
+    }
+
+    async function submitPage21Identity() {
+      if (!requireStudent()) return;
+      const stmt = document.getElementById('p21-statement').value.trim();
+      const virt = document.getElementById('p21-virtue').value.trim();
+      const reas = document.getElementById('p21-reason').value.trim();
+      if (!stmt || !virt || !reas) return alert('กรุณากรอก Exit Reflection ให้ครบทั้ง 3 ช่อง');
+      await db.from('lab_individual_responses').upsert({
+        lab_no: LAB_NO, student_id: studentProfile.student_id, group_no: studentProfile.group_no,
+        step_key: 'p21_identity',
+        text_val: `อยากเป็น: ${stmt} | พัฒนาต่อ: ${virt} (${reas})`,
+        json_val: { statement: stmt, virtue: virt, reason: reas },
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'lab_no,student_id,step_key' });
+      document.getElementById('p21-status').textContent = '✓ บันทึก Exit Reflection เรียบร้อยแล้ว ขอบคุณครับ!';
+      await refreshLiveSection(21);
+    }
+
+    // =========================================================================
+    // LIVE CHART & RESULT REFRESHERS
+    // =========================================================================
+    async function refreshLiveSection(pageNo) {
+      if (pageNo === 3 || pageNo === 4) {
+        const { data } = await db.from('lab_individual_responses').select('reason_tags').eq('lab_no', LAB_NO).eq('step_key', 'p3_choose_prof');
+        const rows = data || [];
+        const c3 = document.getElementById('p3-count');
+        const c4 = document.getElementById('p4-count');
+        if (c3) c3.textContent = rows.length;
+        if (c4) c4.textContent = rows.length;
+
+        if (pageNo === 4) {
+          const counts = {};
+          rows.forEach(r => (r.reason_tags || []).forEach(v => {
+            const label = v.split(' (')[0];
+            counts[label] = (counts[label] || 0) + 1;
+          }));
+          const top10 = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+          renderDynamicBarChart('chart-p4', top10.map(x => x[0]), top10.map(x => x[1]), '#10b981');
+        }
+      }
+
+      else if (pageNo === 5) {
+        const { data } = await db.from('lab_individual_responses').select('reason_tags').eq('lab_no', LAB_NO).eq('step_key', 'p5_top3_vote');
+        const rows = data || [];
+        const cntEl = document.getElementById('p5-count');
+        if (cntEl) cntEl.textContent = rows.length;
+        const counts = {};
+        rows.forEach(r => (r.reason_tags || []).forEach(v => {
+          const label = v.split(' (')[0];
+          counts[label] = (counts[label] || 0) + 1;
+        }));
+        const top5 = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        renderDynamicBarChart('chart-p5', top5.map(x => x[0]), top5.map(x => x[1]), '#f59e0b');
+      }
+
+      else if (pageNo === 6) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p6_group_virtue').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p6-grp-count');
+        const listEl = document.getElementById('p6-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => `
+          <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex justify-between items-center text-xs">
+            <span class="font-extrabold text-emerald-400">กลุ่มที่ ${r.group_no}</span>
+            <span class="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-200 font-bold">${r.decision_val || ''}</span>
+          </div>
+        `).join('') || `<p class="text-xs text-slate-500">รอแต่ละกลุ่มเลือกคุณธรรม...</p>`;
+      }
+
+      else if (pageNo === 7) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p7_define_virtue').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p7-grp-count');
+        const listEl = document.getElementById('p7-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => `
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs space-y-1">
+            <span class="font-extrabold text-sky-400">กลุ่มที่ ${r.group_no}:</span>
+            <p class="text-slate-200 leading-relaxed">${r.text_val || ''}</p>
+          </div>
+        `).join('') || `<p class="text-xs text-slate-500">รอนิยามจากแต่ละกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 8) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p8_why_matters').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p8-grp-count');
+        const listEl = document.getElementById('p8-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs space-y-1">
+              <div class="flex justify-between items-center">
+                <span class="font-extrabold text-rose-400">กลุ่มที่ ${r.group_no}</span>
+                <span class="text-[11px] text-sky-300">เกี่ยวข้อง: ${(j.stakeholders || []).join(', ')}</span>
+              </div>
+              <p class="text-amber-300 font-semibold">ผลกระทบ: ${(j.impacts || []).map(x => x.split(' (')[0]).join(', ')}</p>
+              <p class="text-slate-200">${r.text_val || ''}</p>
+            </div>
+          `;
+        }).join('') || `<p class="text-xs text-slate-500">รอผลวิเคราะห์จากแต่ละกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 9) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p9_evidence').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p9-grp-count');
+        const listEl = document.getElementById('p9-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs space-y-1">
+              <span class="font-extrabold text-emerald-400">กลุ่มที่ ${r.group_no}</span>
+              <p class="text-slate-200">1) ${j.b1 || '-'}</p>
+              <p class="text-slate-200">2) ${j.b2 || '-'}</p>
+              <p class="text-slate-200">3) ${j.b3 || '-'}</p>
+            </div>
+          `;
+        }).join('') || `<p class="text-xs text-slate-500">รอพฤติกรรมที่สังเกตได้จากแต่ละกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 10) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p10_strongest_evidence').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p10-grp-count');
+        const listEl = document.getElementById('p10-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => `
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs space-y-1">
+            <div class="flex justify-between">
+              <span class="font-extrabold text-amber-400">กลุ่มที่ ${r.group_no}</span>
+              <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-200 font-bold">${r.decision_val || ''}</span>
+            </div>
+            <p class="text-slate-200">${r.text_val || ''}</p>
+          </div>
+        `).join('') || `<p class="text-xs text-slate-500">รอผลจากแต่ละกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 11) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p11_fake_virtue').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p11-grp-count');
+        const listEl = document.getElementById('p11-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => `
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs space-y-1">
+            <span class="font-extrabold text-purple-400">กลุ่มที่ ${r.group_no}:</span>
+            <p class="text-slate-200">${r.text_val || ''}</p>
+          </div>
+        `).join('') || `<p class="text-xs text-slate-500">รอตัวอย่างจากแต่ละกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 12) {
+        const { data } = await db.from('lab_individual_responses').select('choice_val').eq('lab_no', LAB_NO).eq('step_key', 'p12_conflict_vote');
+        const rows = data || [];
+        const cntEl = document.getElementById('p12-count');
+        if (cntEl) cntEl.textContent = rows.length;
+        renderBarChart('chart-p12', ['YES', 'NO', 'NOT_SURE'], ['YES (ขัดแย้งได้)', 'NO (ไม่ขัดแย้ง)', 'NOT SURE (ไม่แน่ใจ)'], rows.map(r => r.choice_val), '#6366f1');
+      }
+
+      else if (pageNo === 13) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p13_tension_map').order('group_no');
+        const rows = data || [];
+        const cntEl = document.getElementById('p13-grp-count');
+        const listEl = document.getElementById('p13-results-list');
+        if (!listEl) return;
+        if (cntEl) cntEl.textContent = rows.length;
+        listEl.innerHTML = rows.map(r => {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs space-y-1">
+              <div class="flex justify-between items-center">
+                <span class="font-extrabold text-amber-400">กลุ่มที่ ${r.group_no}</span>
+                <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-200 font-bold">${j.pair || r.decision_val || ''}</span>
+              </div>
+              <p><strong class="text-sky-400">เน้น A เสีย:</strong> <span class="text-slate-200">${j.lossA || '-'}</span></p>
+              <p><strong class="text-amber-300">เน้น B เสีย:</strong> <span class="text-slate-200">${j.lossB || '-'}</span></p>
+            </div>
+          `;
+        }).join('') || `<p class="text-xs text-slate-500">รอคำตอบจากกลุ่ม...</p>`;
+      }
+
+      else if (pageNo === 14) {
+        const { data } = await db.from('lab_individual_responses').select('choice_val').eq('lab_no', LAB_NO).eq('step_key', 'p14_dilemma_vote');
+        const rows = data || [];
+        const cntEl = document.getElementById('p14-count');
+        if (cntEl) cntEl.textContent = rows.length;
+        renderBarChart('chart-p14', ['A', 'B', 'C', 'D', 'E'], ['A. ไม่รายงาน', 'B. รายงานทันที', 'C. คุยกับเพื่อนก่อน', 'D. ประเมินความเสี่ยง', 'E. อื่นๆ'], rows.map(r => r.choice_val), '#f43f5e');
+      }
+
+      else if (pageNo === 15) {
+        const { data } = await db.from('lab_individual_responses').select('reason_tags').eq('lab_no', LAB_NO).eq('step_key', 'p15_reasoning');
+        const rows = data || [];
+        const cntEl = document.getElementById('p15-count');
+        if (cntEl) cntEl.textContent = rows.length;
+        const counts = {};
+        rows.forEach(r => (r.reason_tags || []).forEach(t => {
+          const short = t.split(' (')[0];
+          counts[short] = (counts[short] || 0) + 1;
+        }));
+        renderDynamicBarChart('chart-p15', Object.keys(counts), Object.values(counts), '#a855f7');
+      }
+
+      else if (pageNo === 16 || pageNo === 17) {
+        const stepKey = pageNo === 16 ? 'p16_challenge1' : 'p17_challenge2';
+        const { data } = await db.from('lab_individual_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', stepKey).order('updated_at', { ascending: false });
+        const rows = data || [];
+        const cntEl = document.getElementById(`p${pageNo}-count`);
+        if (cntEl) cntEl.textContent = rows.length;
+        renderBarChart(`chart-p${pageNo}`, ['YES', 'NO', 'NOT_SURE'], ['YES (เปลี่ยน)', 'NO (ไม่เปลี่ยน)', 'NOT SURE (ไม่แน่ใจ)'], rows.map(r => r.choice_val), '#f59e0b');
+        const notesEl = document.getElementById(`p${pageNo}-notes-list`);
+        if (notesEl) {
+          notesEl.innerHTML = rows.slice(0, 8).map(r => `
+            <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
+              <span class="font-bold text-amber-400">[${r.choice_val}]</span> <span class="text-slate-200">${r.text_val || ''}</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      else if (pageNo === 18) {
+        const { data } = await db.from('lab_individual_responses').select('choice_val').eq('lab_no', LAB_NO).eq('step_key', 'p18_challenge3');
+        const rows = data || [];
+        const cntEl = document.getElementById('p18-count');
+        if (cntEl) cntEl.textContent = rows.length;
+        const counts = {};
+        rows.forEach(r => {
+          if (r.choice_val) {
+            const short = r.choice_val.split(' (')[0];
+            counts[short] = (counts[short] || 0) + 1;
+          }
+        });
+        renderDynamicBarChart('chart-p18', Object.keys(counts), Object.values(counts), '#f43f5e');
+      }
+
+      else if (pageNo === 19 || pageNo === 20) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p19_virtue_map').order('group_no');
+        const maps = data || [];
+        const cntEl = document.getElementById('p19-grp-count');
+        if (cntEl) cntEl.textContent = maps.length;
+        const mapHtml = maps.map(r => {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-emerald-500/30 text-xs space-y-1">
+              <div class="flex justify-between items-center">
+                <span class="font-extrabold text-emerald-400">กลุ่มที่ ${r.group_no}</span>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-200 font-bold">${j.virtue || r.decision_val || ''}</span>
+              </div>
+              <p><strong class="text-sky-300">สำคัญ:</strong> ${j.why || '-'}</p>
+              <p><strong class="text-amber-300">พฤติกรรม:</strong> ${j.behavior || '-'}</p>
+              <p><strong class="text-rose-300">ขัดแย้ง:</strong> ${j.conflict || '-'} | <strong class="text-indigo-300">รับมือ:</strong> ${j.respond || '-'}</p>
+            </div>
+          `;
+        }).join('') || `<p class="text-xs text-slate-500">รอแต่ละกลุ่มสร้าง Virtue Map...</p>`;
+
+        const list19 = document.getElementById('p19-results-list');
+        if (list19) list19.innerHTML = mapHtml;
+        const gal20 = document.getElementById('p20-maps-gallery');
+        if (gal20) gal20.innerHTML = mapHtml;
+
+        if (pageNo === 20) {
+          const pcRes = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p20_peer_challenge').order('updated_at', { ascending: false });
+          const pcRows = pcRes.data || [];
+          const pcCnt = document.getElementById('p20-count');
+          const pcList = document.getElementById('p20-results-list');
+          if (pcCnt) pcCnt.textContent = pcRows.length;
+          if (pcList) {
+            pcList.innerHTML = pcRows.map(r => {
+              const j = r.json_val || {};
+              return `
+                <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs space-y-1">
+                  <div class="flex justify-between">
+                    <span class="font-extrabold text-sky-400">กลุ่มที่ ${r.group_no} &rarr; ${j.target || r.decision_val || ''}</span>
+                  </div>
+                  <p class="text-slate-200"><strong>คิดเพิ่ม:</strong> ${j.diff || '-'}</p>
+                  <p class="text-amber-300"><strong>คำถาม:</strong> ${j.quest || '-'}</p>
+                </div>
+              `;
+            }).join('') || `<p class="text-xs text-slate-500">ยังไม่มี Peer Challenge...</p>`;
+          }
+        }
+      }
+
+      else if (pageNo === 21) {
+        const { data } = await db.from('lab_individual_responses').select('student_id').eq('lab_no', LAB_NO).eq('step_key', 'p21_identity');
+        const cntEl = document.getElementById('p21-count');
+        if (cntEl) cntEl.textContent = (data || []).length;
+      }
+    }
+
+    function renderBarChart(canvasId, codes, labels, values, color) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const counts = codes.map(c => values.filter(v => v === c).length);
+      if (activeCharts[canvasId]) {
+        activeCharts[canvasId].data.datasets[0].data = counts;
+        activeCharts[canvasId].update('none');
+        return;
+      }
+      activeCharts[canvasId] = new Chart(canvas, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'จำนวนเสียงโหวต', data: counts, backgroundColor: color, borderRadius: 8 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#cbd5e1', font: { size: 11 } }, grid: { display: false } },
+            y: { ticks: { color: '#cbd5e1', precision: 0 }, grid: { color: '#1e293b' } }
+          }
+        }
+      });
+    }
+
+    function renderDynamicBarChart(canvasId, labels, vals, color) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      if (activeCharts[canvasId]) {
+        activeCharts[canvasId].data.labels = labels;
+        activeCharts[canvasId].data.datasets[0].data = vals;
+        activeCharts[canvasId].update('none');
+        return;
+      }
+      activeCharts[canvasId] = new Chart(canvas, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'จำนวนผู้เลือก', data: vals, backgroundColor: color, borderRadius: 8 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#cbd5e1', font: { size: 10 } }, grid: { display: false } },
+            y: { ticks: { color: '#cbd5e1', precision: 0 }, grid: { color: '#1e293b' } }
+          }
+        }
+      });
+    }
+
+    // =========================================================================
+    // ADMIN DRAWER (QR) & EXCEL EXPORT
+    // =========================================================================
+    function openAdminDrawer(type) {
+      const drawer = document.getElementById('admin-drawer');
+      const body = document.getElementById('drawer-body');
+      drawer.classList.remove('hidden');
+      const url = window.location.href.split('?')[0];
+      body.innerHTML = `
+        <div class="flex flex-col items-center justify-center p-6 bg-white rounded-2xl text-slate-900">
+          <div id="drawer-qr-box"></div>
+          <p class="font-extrabold text-base mt-3">180433 • Lab 3 Dashboard</p>
+          <p class="text-xs text-slate-500 font-mono mt-1 break-all text-center">${url}</p>
+        </div>`;
+      new QRCode(document.getElementById('drawer-qr-box'), { text: url, width: 220, height: 220 });
+    }
+
+    async function exportLab3Excel() {
+      const [indivRes, grpRes, rubricRes] = await Promise.all([
+        db.from('lab_individual_responses').select('*').eq('lab_no', LAB_NO),
+        db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO),
+        db.from('lab_rubric_scores').select('*').eq('lab_no', LAB_NO).order('group_no')
+      ]);
+
+      const indiv = indivRes.data || [];
+      const grp = grpRes.data || [];
+      const rubric = rubricRes.data || [];
+
+      const stdRows = studentsList.map(std => {
+        const findStep = (k) => indiv.find(r => r.student_id === std.student_id && r.step_key === k);
+        const p3 = findStep('p3_choose_prof');
+        const p5 = findStep('p5_top3_vote');
+        const p12 = findStep('p12_conflict_vote');
+        const p14 = findStep('p14_dilemma_vote');
+        const p15 = findStep('p15_reasoning');
+        const p16 = findStep('p16_challenge1');
+        const p17 = findStep('p17_challenge2');
+        const p18 = findStep('p18_challenge3');
+        const p21 = findStep('p21_identity')?.json_val || {};
+        return {
+          'ลำดับ': std.seq,
+          'รหัสนิสิต': std.student_id,
+          'ชื่อ-สกุล': std.full_name,
+          'กลุ่ม': groupAssignments[std.student_id]?.group_no || '',
+          'P3_Top5Virtues': (p3?.reason_tags || []).join(', '),
+          'P5_Top3Vote': (p5?.reason_tags || []).join(', '),
+          'P12_ConflictVote': p12?.choice_val || '',
+          'P14_DilemmaVote': p14?.choice_val || '',
+          'P15_ReasoningTags': (p15?.reason_tags || []).join(', '),
+          'P15_Note': p15?.text_val || '',
+          'P16_Challenge1': `${p16?.choice_val || ''} | ${p16?.text_val || ''}`,
+          'P17_Challenge2': `${p17?.choice_val || ''} | ${p17?.text_val || ''}`,
+          'P18_Challenge3_TopVirtue': p18?.choice_val || '',
+          'P21_อยากเป็นเภสัชกรที่': p21.statement || '',
+          'P21_คุณธรรมที่ต้องพัฒนาต่อ': p21.virtue || '',
+          'P21_เหตุผลและแนวทางฝึก': p21.reason || ''
+        };
+      });
+
+      const grpRows = [];
+      for (let g = 1; g <= 10; g++) {
+        const gv = grp.find(r => r.group_no === g && r.step_key === 'p6_group_virtue');
+        const df = grp.find(r => r.group_no === g && r.step_key === 'p7_define_virtue');
+        const wm = grp.find(r => r.group_no === g && r.step_key === 'p8_why_matters');
+        const ev = grp.find(r => r.group_no === g && r.step_key === 'p9_evidence');
+        const st = grp.find(r => r.group_no === g && r.step_key === 'p10_strongest_evidence');
+        const fk = grp.find(r => r.group_no === g && r.step_key === 'p11_fake_virtue');
+        const tm = grp.find(r => r.group_no === g && r.step_key === 'p13_tension_map');
+        const vm = grp.find(r => r.group_no === g && r.step_key === 'p19_virtue_map')?.json_val || {};
+        const pc = grp.find(r => r.group_no === g && r.step_key === 'p20_peer_challenge');
+        const sc = rubric.find(r => r.group_no === g) || {};
+        const total = sc.total_score ?? ((sc.c1_issue||0) + (sc.c2_stakeholder||0) + (sc.c3_reasoning||0) + (sc.c4_alternatives||0) + (sc.c5_new_info||0) + (sc.c6_listening||0) + (sc.c7_extra||0));
+
+        grpRows.push({
+          'กลุ่มที่': g,
+          'P6_Virtue': gv?.decision_val || '',
+          'P7_Definition': df?.text_val || '',
+          'P8_WhyMatters': wm?.text_val || '',
+          'P9_ObservableEvidence': ev?.text_val || '',
+          'P10_StrongestEvidence': `${st?.decision_val || ''} | ${st?.text_val || ''}`,
+          'P11_VirtueMisconception': fk?.text_val || '',
+          'P13_TensionMap': `${tm?.decision_val || ''} | ${tm?.text_val || ''}`,
+          'P19_VirtueMap_Virtue': vm.virtue || '',
+          'P19_VirtueMap_Behavior': vm.behavior || '',
+          'P19_VirtueMap_Respond': vm.respond || '',
+          'P20_PeerChallenge': pc?.text_val || '',
+          'คะแนนรวม(20)': total,
+          'Feedback': sc.feedback || ''
+        });
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stdRows), 'รายบุคคล_90คน');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(grpRows), 'รายกลุ่ม_และ_Rubric');
+      XLSX.writeFile(wb, 'ผลปฏิบัติการที่3_180433_2-2569.xlsx');
+    }
+
+    init();
+  </script>
+</body>
+</html>
