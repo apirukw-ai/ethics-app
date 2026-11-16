@@ -3,488 +3,794 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>เช็กชื่อ & เข้าสู่ห้องปฏิบัติการ | 180433 Professional Ethics</title>
+  <title>ระบบเช็กชื่อ & ศูนย์รวมคะแนนทุกแล็บ | 180433</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Pridi:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Sarabun', sans-serif; background-color: #0b1120; color: #f8fafc; }
-    .glass { background: rgba(30, 41, 59, 0.78); backdrop-filter: blur(12px); border: 1px solid rgba(148, 163, 184, 0.16); }
+    body { font-family: 'Sarabun', sans-serif; background-color: #090d16; color: #e2e8f0; }
+    h1, h2, h3, .font-display { font-family: 'Pridi', serif; }
+    .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.7); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
-
-  <!-- TOP NAVBAR -->
-  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur border-b border-slate-800 px-4 py-3">
-    <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3">
+  <!-- Top Navbar -->
+  <header class="glass sticky top-0 z-40 px-4 py-3 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <span class="px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-400 font-extrabold text-xs border border-sky-500/30">180433</span>
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center font-bold text-white shadow-lg">180433</div>
         <div>
-          <h1 class="text-base md:text-lg font-bold text-white leading-tight">Professional Ethics & Law in Pharmacy</h1>
-          <p class="text-xs text-slate-400">ระบบลงเวลาเข้าเรียน & ทางเข้าห้องปฏิบัติการ (Lab 1–11)</p>
+          <h1 class="text-lg md:text-xl font-bold text-white leading-tight">ระบบเช็กชื่อและปฏิบัติการ (Active Learning)</h1>
+          <p class="text-xs text-slate-400">รายวิชา 180433 จรรยาบรรณทางเภสัชศาสตร์ • คณะเภสัชศาสตร์ มหาวิทยาลัยนเรศวร</p>
         </div>
       </div>
 
       <div class="flex items-center gap-2">
-        <button onclick="switchMode('student')" id="btn-mode-student" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-600 text-white shadow">นิสิต</button>
-        <button onclick="promptInstructor()" id="btn-mode-admin" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">อาจารย์</button>
+        <button id="btn-config" onclick="openConfigModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-300 flex items-center gap-1.5">
+          <span>⚙️</span> <span id="conn-status">ตั้งค่า Supabase</span>
+        </button>
+        <div class="bg-slate-900 p-1 rounded-xl border border-slate-800 flex text-xs font-medium">
+          <button id="tab-student" onclick="switchRole('student')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white transition">โหมดนิสิต</button>
+          <button id="tab-teacher" onclick="switchRole('teacher')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition">โหมดอาจารย์</button>
+        </div>
       </div>
     </div>
   </header>
 
-  <!-- MAIN CONTENT -->
-  <main class="flex-1 w-full max-w-5xl mx-auto p-4 md:p-6 space-y-6">
-
-    <!-- ==================== STUDENT VIEW ==================== -->
-    <div id="view-student" class="space-y-6">
-
-      <!-- STEP 1: CHECK-IN CARD -->
-      <div class="glass rounded-3xl p-6 md:p-8 max-w-2xl mx-auto space-y-5 shadow-xl">
-        <div class="flex justify-between items-start gap-2">
-          <div>
-            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-bold">ขั้นตอนที่ 1 • ลงเวลาเข้าเรียน</span>
-            <h2 class="text-2xl font-extrabold text-white mt-2">เช็กชื่อเข้าห้องปฏิบัติการ</h2>
-            <p class="text-xs text-slate-400 mt-0.5" id="session-subtitle">กำลังโหลดรอบการเช็กชื่อ...</p>
-          </div>
-          <span id="checkin-date-badge" class="text-xs font-mono text-slate-400 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800"></span>
-        </div>
-
-        <div class="space-y-4">
-          <div>
-            <label class="block text-xs font-bold text-slate-300 mb-1">รหัสนิสิต (8 หลัก)</label>
-            <input type="text" id="std-id-input" maxlength="8" inputmode="numeric" placeholder="เช่น 66210052"
-              class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-xl font-bold tracking-widest focus:outline-none focus:border-sky-500" />
-            <div id="std-name-preview" class="mt-2 text-xs text-slate-400 min-h-[20px]">กรอกรหัสนิสิต 8 หลักเพื่อตรวจสอบรายชื่อ</div>
-          </div>
-
-          <div id="session-pin-wrapper" class="hidden">
-            <label class="block text-xs font-bold text-amber-300 mb-1">รหัสเข้าเรียนประจำคาบ (4 หลัก)</label>
-            <input type="text" id="std-session-pin" maxlength="6" inputmode="numeric" placeholder="กรอกรหัสที่แสดงบนหน้าจอ"
-              class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-amber-500/40 text-amber-300 text-lg font-bold tracking-widest focus:outline-none focus:border-amber-400" />
-          </div>
-
-          <button onclick="submitCheckin()" id="btn-submit-checkin"
-            class="w-full py-3.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-extrabold text-base shadow-lg transition">
-            ✓ ยืนยันเช็กชื่อเข้าเรียน
-          </button>
-        </div>
-
-        <!-- SUCCESS BANNER + PRIMARY LAB BUTTON -->
-        <div id="checkin-success-panel" class="hidden p-5 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 space-y-4">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-emerald-300 font-extrabold text-lg">✓</div>
-            <div>
-              <p class="text-sm font-extrabold text-emerald-300" id="success-std-title">บันทึกการเข้าเรียนสำเร็จ!</p>
-              <p class="text-xs text-slate-300" id="success-std-sub">ระบบจำรหัสนิสิตและกลุ่มของคุณสำหรับเข้าห้องปฏิบัติการแล้ว</p>
-            </div>
-          </div>
-
-          <!-- Primary CTA Button to Active Lab -->
-          <a id="primary-lab-cta" href="lab1-180433.html"
-            class="block w-full py-4 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-center text-base md:text-lg shadow-xl transition transform hover:-translate-y-0.5">
-            🚀 เข้าสู่ห้องปฏิบัติการ Lab 1 →
-          </a>
+  <!-- Active Daily Lab Banner -->
+  <div id="daily-lab-banner" class="hidden bg-gradient-to-r from-indigo-950 via-blue-950 to-slate-900 border-b border-indigo-500/40 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="px-2.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 text-xs font-semibold animate-pulse">● ปฏิบัติการประจำวันเปิดอยู่</span>
+        <div>
+          <div id="banner-lab-title" class="text-sm md:text-base font-semibold text-white">Lab 2: Everyday Ethical Decision Making</div>
+          <div id="banner-lab-desc" class="text-xs text-indigo-200/80">คลิกปุ่มด้านขวาเพื่อเข้าสู่ห้องปฏิบัติการและบันทึกข้อมูลกลุ่ม</div>
         </div>
       </div>
-
-      <!-- STEP 2: ALL LABS DIRECTORY (LAB 1 - LAB 11) -->
-      <div class="glass rounded-3xl p-6 md:p-8 max-w-4xl mx-auto space-y-4">
-        <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-800 pb-3">
-          <div>
-            <span class="text-xs font-bold text-sky-400 uppercase tracking-wider">ขั้นตอนที่ 2 • ห้องปฏิบัติการ (Lab 1–11)</span>
-            <h3 class="text-lg font-extrabold text-white">เลือกเข้าสู่ห้องปฏิบัติการประจำสัปดาห์</h3>
-          </div>
-          <span id="active-lab-indicator" class="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
-            ปฏิบัติการปัจจุบัน: Lab 1
-          </span>
-        </div>
-
-        <div id="labs-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
-      </div>
+      <a id="banner-lab-link" href="lab2-180433.html" class="px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-semibold text-sm shadow-lg shadow-indigo-950/50 transition flex items-center gap-2">
+        <span>เข้าเรียนทันที</span> <span>&rarr;</span>
+      </a>
     </div>
+  </div>
 
-    <!-- ==================== INSTRUCTOR VIEW ==================== -->
-    <div id="view-admin" class="hidden space-y-6">
-      <div class="glass rounded-2xl p-6 space-y-5">
-        <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-4">
-          <div>
-            <h2 class="text-xl font-extrabold text-white">แผงควบคุมอาจารย์ผู้สอน (เช็กชื่อ & ตั้งค่า Lab ประจำวัน)</h2>
-            <p class="text-xs text-slate-400">เลือกปฏิบัติการที่สอนวันนี้ เพื่อให้ปุ่ม “เข้าสู่ห้องปฏิบัติการ Lab ...” เด้งขึ้นทันทีหลังนิสิตเช็กชื่อ</p>
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+    <!-- STUDENT VIEW -->
+    <section id="view-student" class="space-y-6">
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Check-in Card -->
+        <div class="glass rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold text-white">เช็กชื่อเข้าเรียนประจำสัปดาห์</h2>
+            <span id="student-session-badge" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs">พร้อมรับการเช็กชื่อ</span>
           </div>
-          <button onclick="openQrModal()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow">
-            📱 แสดง QR Code เช็กชื่อ
+          <p class="text-sm text-slate-400">กรอกรหัสนิสิต 8 หลัก และรหัส OTP 4 หลักที่อาจารย์แสดงบนหน้าจอ</p>
+
+          <form id="checkin-form" onsubmit="handleCheckin(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">รหัสนิสิต (Student ID)</label>
+              <input type="text" id="stu-id" required maxlength="10" placeholder="เช่น 66310001"
+                class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white focus:border-emerald-500 focus:outline-none text-base tracking-wider" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">รหัส OTP ประจำคาบ</label>
+              <input type="text" id="stu-otp" required maxlength="6" placeholder="เช่น 4829"
+                class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white focus:border-emerald-500 focus:outline-none text-center text-xl font-bold tracking-widest" />
+            </div>
+            <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg shadow-emerald-950/50 transition">
+              ยืนยันการเช็กชื่อเข้าเรียน
+            </button>
+          </form>
+          <div id="checkin-feedback" class="hidden p-3 rounded-xl text-sm"></div>
+        </div>
+
+        <!-- Dynamic Lab Directory Card -->
+        <div class="glass rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 id="student-lab-heading" class="text-xl font-bold text-white">รายการปฏิบัติการ</h2>
+            <span class="text-xs text-slate-400">10 กลุ่มคงที่ (90 คน)</span>
+          </div>
+          <div id="student-lab-list" class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEACHER VIEW -->
+    <section id="view-teacher" class="hidden space-y-6">
+      <!-- Teacher Top Action Bar -->
+      <div class="glass rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="switchTeacherSubTab('attendance')" id="subtab-attendance" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold transition">
+            📋 เช็กชื่อ &amp; จัดการรายการปฏิบัติการ
+          </button>
+          <button onclick="switchTeacherSubTab('scores')" id="subtab-scores" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-semibold transition flex items-center gap-2">
+            <span>📊</span> <span id="btn-all-scores-label">คะแนนรวมทุกแล็บ</span>
           </button>
         </div>
+        <div class="text-xs text-slate-400">Schema: <code class="text-emerald-400">ethics.*</code> • Project: <code class="text-sky-400">iproktvvetsbxxmpptuj</code></div>
+      </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-            <label class="block text-xs font-bold text-emerald-400">ปฏิบัติการที่เปิดใช้งานวันนี้ (Lab 1–11)</label>
-            <select id="admin-active-lab" onchange="updateActiveLabSetting(parseInt(this.value))"
-              class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-emerald-500/40 text-white text-sm font-bold">
-            </select>
-            <p class="text-[11px] text-slate-400">ปุ่มหลักหลังสแกนเช็กชื่อจะพาไปที่ไฟล์ <code class="text-sky-300">labX-180433.html</code> อัตโนมัติ</p>
-          </div>
-
-          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-            <label class="block text-xs font-bold text-amber-400">รหัสผ่านเข้าเรียนวันนี้ (เว้นว่าง = ไม่ใช้รหัส)</label>
-            <div class="flex gap-2">
-              <input type="text" id="admin-session-pin" maxlength="6" placeholder="เช่น 2569"
-                class="flex-1 px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm font-mono" />
-              <button onclick="saveSessionPin()" class="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold">บันทึก</button>
-            </div>
-            <p class="text-[11px] text-slate-400">ป้องกันนิสิตที่ไม่ได้เข้าห้องเรียนกดเช็กชื่อจากภายนอก</p>
-          </div>
-
-          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+      <!-- SUBTAB 1: ATTENDANCE & DYNAMIC LAB MANAGER -->
+      <div id="teacher-panel-attendance" class="grid lg:grid-cols-3 gap-6">
+        <!-- Left: Attendance Session Control -->
+        <div class="glass rounded-2xl p-5 space-y-4">
+          <h2 class="text-lg font-bold text-white border-b border-slate-800 pb-2">เปิดรอบเช็กชื่อ (OTP)</h2>
+          <div class="grid grid-cols-2 gap-3">
             <div>
-              <span class="text-xs font-bold text-sky-400">สรุปการเช็กชื่อวันนี้ (<span id="today-date-label"></span>)</span>
-              <p class="text-3xl font-extrabold text-white mt-1"><span id="checkin-count">0</span> <span class="text-sm font-normal text-slate-400">/ 90 คน</span></p>
+              <label class="block text-xs text-slate-400 mb-1">สัปดาห์ที่ (Week)</label>
+              <input type="number" id="t-week" value="2" min="1" max="16" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm" />
             </div>
-            <button onclick="loadTodayAttendance()" class="text-xs text-sky-400 hover:underline text-left mt-2">↻ รีเฟรชรายชื่อ</button>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">รหัส OTP</label>
+              <div class="flex gap-1">
+                <input type="text" id="t-otp" value="4829" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-emerald-400 font-bold text-center text-sm" />
+                <button type="button" onclick="genOtp()" class="px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">สุ่ม</button>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">ตรงเวลาภายใน (นาที)</label>
+              <input type="number" id="t-ontime" value="15" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">ปิดรับเช็กชื่อ (นาที)</label>
+              <input type="number" id="t-expire" value="50" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm" />
+            </div>
+          </div>
+          <button onclick="createAttendanceSession()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition">
+            เปิดรอบเช็กชื่อทันที
+          </button>
+
+          <div class="pt-2 border-t border-slate-800">
+            <div class="flex justify-between text-xs text-slate-400 mb-2">
+              <span>สถานะการเช็กชื่อล่าสุด</span>
+              <span id="att-count" class="text-emerald-400 font-semibold">0 / 90 คน</span>
+            </div>
+            <div id="att-live-list" class="max-h-56 overflow-y-auto space-y-1.5 text-xs"></div>
           </div>
         </div>
 
-        <!-- Attendance Table -->
-        <div class="overflow-x-auto rounded-xl border border-slate-800 max-h-[420px]">
-          <table class="w-full text-xs text-left">
-            <thead class="bg-slate-900 text-slate-300 sticky top-0">
-              <tr>
-                <th class="p-3">ลำดับ</th>
-                <th class="p-3">รหัสนิสิต</th>
-                <th class="p-3">ชื่อ-สกุล</th>
-                <th class="p-3">กลุ่ม</th>
-                <th class="p-3">สถานะวันนี้</th>
-                <th class="p-3">เวลาเช็กชื่อ</th>
-              </tr>
-            </thead>
-            <tbody id="attendance-tbody" class="divide-y divide-slate-800"></tbody>
+        <!-- Right: Dynamic Lab Manager (Add / Edit / Delete / Set Daily Lab) -->
+        <div class="lg:col-span-2 glass rounded-2xl p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h2 id="teacher-lab-heading" class="text-lg font-bold text-white">รายการปฏิบัติการ (เพิ่ม / แก้ไข / ลบได้เอง)</h2>
+              <p class="text-xs text-slate-400">จัดการรายการแล็บ เปิด-ปิดการเข้าถึง และตั้งเป็นปฏิบัติการประจำวัน (อัปเดตไปที่ตารางคะแนนรวมอัตโนมัติ)</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="openLabModal()" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow transition flex items-center gap-1">
+                <span>＋</span> <span>เพิ่มปฏิบัติการ</span>
+              </button>
+              <button onclick="setDailyLab(null)" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300">
+                ปิดปฏิบัติการประจำวัน
+              </button>
+            </div>
+          </div>
+
+          <div id="teacher-lab-list" class="grid sm:grid-cols-2 gap-3"></div>
+        </div>
+      </div>
+
+      <!-- SUBTAB 2: ALL LABS SCORE AGGREGATOR (DYNAMIC LABS, 90 STUDENTS) -->
+      <div id="teacher-panel-scores" class="hidden glass rounded-2xl p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div>
+            <h2 id="scores-panel-title" class="text-xl font-bold text-white">📊 ศูนย์รวมคะแนนทุกแล็บ — รายบุคคลครบทั้ง 90 คน</h2>
+            <p class="text-xs text-slate-400">ดึงคะแนน Rubric (เต็ม 20 คะแนน/แล็บ) ของแต่ละกลุ่มจากตาราง <code class="text-amber-300">ethics.lab_rubric_scores</code> มาคำนวณและแสดงเป็นคะแนนรายบุคคลอัตโนมัติ</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <input type="text" id="score-search" oninput="renderAllScoresTable()" placeholder="ค้นหารหัส / ชื่อ / กลุ่ม..."
+              class="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+            <button onclick="loadAllLabScores()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sm text-slate-200">
+              🔄 รีเฟรชคะแนน
+            </button>
+            <button onclick="exportAllLabsExcel()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg transition flex items-center gap-1.5">
+              <span>⬇</span> <span>Export Excel รวมทุกแล็บ</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
+            <div class="text-xs text-slate-400">จำนวนนิสิตทั้งหมด</div>
+            <div id="stat-total-students" class="text-xl font-bold text-white mt-0.5">90 คน</div>
+          </div>
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
+            <div class="text-xs text-slate-400">จำนวนปฏิบัติการที่ตั้งค่า</div>
+            <div id="stat-lab-count" class="text-xl font-bold text-sky-400 mt-0.5">-</div>
+          </div>
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
+            <div class="text-xs text-slate-400">เฉลี่ยต่อแล็บที่ประเมิน (เต็ม 20)</div>
+            <div id="stat-avg-per-lab" class="text-xl font-bold text-indigo-400 mt-0.5">-</div>
+          </div>
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
+            <div id="stat-max-total-label" class="text-xs text-slate-400">คะแนนรวมเฉลี่ย</div>
+            <div id="stat-avg-total" class="text-xl font-bold text-emerald-400 mt-0.5">-</div>
+          </div>
+        </div>
+
+        <!-- Score Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-800 max-h-[540px]">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead id="all-scores-thead" class="bg-slate-900 text-slate-200 sticky top-0 z-10"></thead>
+            <tbody id="all-scores-tbody" class="divide-y divide-slate-800/80 bg-slate-950/50"></tbody>
           </table>
         </div>
       </div>
-    </div>
+    </section>
   </main>
 
-  <!-- PIN MODAL -->
-  <div id="pin-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="w-full max-w-sm glass rounded-2xl p-6 shadow-2xl border border-slate-700">
-      <h3 class="text-lg font-bold text-white text-center">เข้าสู่โหมดอาจารย์ผู้สอน</h3>
-      <p class="text-xs text-slate-400 text-center mt-1 mb-4">กรอกรหัสผ่านผู้สอน (6 หลัก)</p>
-      <form id="pin-form" class="space-y-4">
-        <input type="password" id="input-pin" inputmode="numeric" placeholder="••••••" required
-          class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-center text-2xl tracking-[0.4em] focus:outline-none focus:border-sky-500" />
-        <p id="pin-error" class="hidden text-xs text-rose-400 text-center font-semibold">รหัสผ่านไม่ถูกต้อง</p>
-        <div class="flex gap-2">
-          <button type="button" onclick="document.getElementById('pin-modal').classList.add('hidden')" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-sm font-semibold">ยกเลิก</button>
-          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-sky-600 text-white text-sm font-bold">ยืนยัน</button>
+  <!-- Add/Edit Lab Modal -->
+  <div id="lab-modal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+    <div class="glass rounded-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 id="lab-modal-title" class="text-lg font-bold text-white">เพิ่มปฏิบัติการใหม่</h3>
+        <button onclick="closeLabModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+      </div>
+      <form id="lab-form" onsubmit="saveLabItem(event)" class="space-y-3">
+        <input type="hidden" id="edit-lab-orig-no" value="" />
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">ลำดับ Lab ที่</label>
+            <input type="number" id="inp-lab-no" required min="1" max="50" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm text-white" />
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs text-slate-300 mb-1">ชื่อไฟล์ HTML</label>
+            <input type="text" id="inp-lab-file" required placeholder="เช่น lab3-180433.html" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm text-sky-300 font-mono" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">ชื่อปฏิบัติการ (Title)</label>
+          <input type="text" id="inp-lab-title" required placeholder="เช่น Lab 3: Patient Autonomy & Informed Consent" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm text-white" />
+        </div>
+        <div class="flex items-center gap-2 pt-1">
+          <input type="checkbox" id="inp-lab-active" class="w-4 h-4 rounded accent-emerald-500" />
+          <label for="inp-lab-active" class="text-xs text-slate-300">เปิดให้นิสิตคลิกเข้าเรียนได้ตลอด (ไม่ใช่แค่ช่วงประจำวัน)</label>
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeLabModal()" class="px-4 py-2 rounded-lg bg-slate-800 text-xs text-slate-300">ยกเลิก</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs text-white font-semibold">บันทึกรายการ</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- QR MODAL -->
-  <div id="qr-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="w-full max-w-sm bg-white text-slate-900 rounded-2xl p-6 shadow-2xl text-center space-y-3">
-      <h3 class="text-lg font-extrabold">สแกนเพื่อเช็กชื่อ & เข้า Lab</h3>
-      <div id="qr-container" class="flex justify-center py-2"></div>
-      <p id="qr-url-text" class="text-[11px] text-slate-500 font-mono break-all"></p>
-      <button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-2.5 rounded-xl bg-slate-900 text-white text-sm font-bold">ปิดหน้าต่าง</button>
+  <!-- Config Modal -->
+  <div id="config-modal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+    <div class="glass rounded-2xl max-w-md w-full p-6 space-y-4">
+      <h3 class="text-lg font-bold text-white">การเชื่อมต่อฐานข้อมูล Supabase</h3>
+      <p class="text-xs text-slate-400">โปรเจกต์ <code class="text-sky-400">iproktvvetsbxxmpptuj</code> • Schema <code class="text-emerald-400">ethics</code> (บันทึกค่าลง LocalStorage อัตโนมัติ)</p>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Supabase URL</label>
+          <input type="text" id="cfg-url" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+        </div>
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Supabase Anon Key</label>
+          <input type="password" id="cfg-key" placeholder="วาง eyJhbGciOiJIUzI1NiIs..." class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeConfigModal()" class="px-4 py-2 rounded-lg bg-slate-800 text-xs text-slate-300">ปิด</button>
+        <button onclick="saveConfig()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs text-white font-semibold">บันทึกและเชื่อมต่อ</button>
+      </div>
     </div>
   </div>
 
   <script>
-    // =========================================================================
-    // SUPABASE CONFIGURATION (iproktvvetsbxxmpptuj • Schema: ethics)
-    // =========================================================================
-    const SUPABASE_URL = 'https://iproktvvetsbxxmpptuj.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwcm9rdHZ2ZXRzYnh4bXBwdHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyOTU3NDEsImV4cCI6MjEwMjg3MTc0MX0.Kc0USo30u4gvZNJ1bsOdD9k6nwEBcY7lNMAQxWEFzqw';
-    const INSTRUCTOR_PIN = '641023';
+    const DEFAULT_URL = "https://iproktvvetsbxxmpptuj.supabase.co";
+    const DEFAULT_KEY = "";
+    let sb = null;
 
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      db: { schema: 'ethics' }
-    });
-
-    // รายชื่อปฏิบัติการทั้งหมด 11 ครั้ง (ปรับชื่อหัวข้อได้ตามประมวลรายวิชา)
-    const LABS_CATALOG = [
-      { no: 1, title: 'Foundations of Ethical Thinking', th: 'พื้นฐานการคิดเชิงจริยธรรม', file: 'lab1-180433.html', ready: true },
-      { no: 2, title: 'Ethical Principles & Moral Theories', th: 'หลักจริยธรรมและทฤษฎีทางศีลธรรม', file: 'lab2-180433.html', ready: false },
-      { no: 3, title: 'Patient Autonomy & Informed Consent', th: 'เอกสิทธิ์ของผู้ป่วยและการให้ความยินยอม', file: 'lab3-180433.html', ready: false },
-      { no: 4, title: 'Confidentiality & Privacy', th: 'การรักษาความลับและข้อมูลส่วนบุคคล', file: 'lab4-180433.html', ready: false },
-      { no: 5, title: 'Truth-Telling & Disclosure', th: 'การบอกความจริงและการเปิดเผยข้อมูล', file: 'lab5-180433.html', ready: false },
-      { no: 6, title: 'Case Study I: Community Pharmacy', th: 'กรณีศึกษาเภสัชกรรมชุมชน', file: 'lab6-180433.html', ready: false },
-      { no: 7, title: 'Case Study II: Hospital & Clinical', th: 'กรณีศึกษาเภสัชกรรมโรงพยาบาล', file: 'lab7-180433.html', ready: false },
-      { no: 8, title: 'Case Study III: Industry & Marketing', th: 'กรณีศึกษาการตลาดและอุตสาหกรรมยา', file: 'lab8-180433.html', ready: false },
-      { no: 9, title: 'Interprofessional Conflict', th: 'ความขัดแย้งทางจริยธรรมระหว่างวิชาชีพ', file: 'lab9-180433.html', ready: false },
-      { no: 10, title: 'Resource Allocation & Justice', th: 'การจัดสรรทรัพยากรและความเป็นธรรม', file: 'lab10-180433.html', ready: false },
-      { no: 11, title: 'Capstone Ethical Synthesis', th: 'สังเคราะห์กรอบการตัดสินใจทางจริยธรรม', file: 'lab11-180433.html', ready: false }
+    const DEFAULT_LABS_CATALOG = [
+      { no: 1, code: "lab1", title: "Lab 1: Professional Identity & Code of Ethics", file: "lab1-180433.html", active: true },
+      { no: 2, code: "lab2", title: "Lab 2: Everyday Ethical Decision Making", file: "lab2-180433.html", active: true }
     ];
 
-    let studentsList = [];
-    let groupAssignments = {};
-    let activeLabNo = 1;
-    let sessionPin = '';
-    const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
-
-    async function init() {
-      document.getElementById('checkin-date-badge').textContent = todayStr;
-      document.getElementById('today-date-label').textContent = todayStr;
-
-      // Populate Admin Lab Selector
-      const adminSel = document.getElementById('admin-active-lab');
-      adminSel.innerHTML = LABS_CATALOG.map(l => `<option value="${l.no}">Lab ${l.no}: ${l.th}</option>`).join('');
-
-      // Load Students, Groups, and Active Lab Setting (stored in lab_control lab_no=0 as global config)
-      const [stdRes, grpRes, cfgRes] = await Promise.all([
-        db.from('students_180433').select('*').order('seq', { ascending: true }),
-        db.from('lab_groups').select('*'),
-        db.from('lab_control').select('*').eq('lab_no', 0).maybeSingle()
-      ]);
-
-      if (stdRes.data) studentsList = stdRes.data;
-      if (grpRes.data) grpRes.data.forEach(g => groupAssignments[g.student_id] = g);
-
-      if (cfgRes.data) {
-        activeLabNo = cfgRes.data.current_page || 1;
-        sessionPin = cfgRes.data.active_challenge ? String(cfgRes.data.active_challenge) : '';
-        if (sessionPin === '0') sessionPin = '';
-      }
-
-      adminSel.value = activeLabNo;
-      document.getElementById('admin-session-pin').value = sessionPin;
-
-      if (sessionPin) {
-        document.getElementById('session-pin-wrapper').classList.remove('hidden');
-        document.getElementById('session-subtitle').textContent = 'กรุณากรอกรหัสนิสิตและรหัสเข้าเรียนประจำคาบ';
-      } else {
-        document.getElementById('session-subtitle').textContent = 'กรอกรหัสนิสิต 8 หลักเพื่อลงเวลาเข้าเรียนและเข้าสู่ห้องปฏิบัติการ';
-      }
-
-      // Restore saved student profile if previously logged in
-      const savedProfile = JSON.parse(localStorage.getItem('lab1_student_profile') || 'null');
-      if (savedProfile && savedProfile.student_id) {
-        document.getElementById('std-id-input').value = savedProfile.student_id;
-        previewStudent(savedProfile.student_id);
-      }
-
-      renderLabsGrid();
+    function loadLabsCatalog() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("ethics_labs_catalog"));
+        if (Array.isArray(saved) && saved.length > 0) return saved;
+      } catch (e) {}
+      return [...DEFAULT_LABS_CATALOG];
     }
 
-    document.getElementById('std-id-input').addEventListener('input', (e) => {
-      previewStudent(e.target.value.trim());
-    });
+    let LABS_CATALOG = loadLabsCatalog();
 
-    function previewStudent(sid) {
-      const prev = document.getElementById('std-name-preview');
-      if (sid.length === 8) {
-        const found = studentsList.find(s => s.student_id === sid);
-        if (found) {
-          const grp = groupAssignments[sid]?.group_no;
-          const grpText = grp ? ` • กลุ่มที่ ${grp}` : '';
-          prev.innerHTML = `<span class="text-emerald-400 font-bold">✓ ${found.full_name} (ลำดับที่ ${found.seq}${grpText})</span>`;
-          return found;
+    async function persistLabsCatalog() {
+      LABS_CATALOG.sort((a, b) => a.no - b.no);
+      localStorage.setItem("ethics_labs_catalog", JSON.stringify(LABS_CATALOG));
+      if (sb) {
+        try {
+          await sb.from("lab_control").upsert({
+            id: 1,
+            active_lab_no: dailyLabNo,
+            active_lab_file: dailyLabNo ? (LABS_CATALOG.find(l => l.no === dailyLabNo)?.file || `lab${dailyLabNo}-180433.html`) : null,
+            labs_catalog: LABS_CATALOG,
+            updated_at: new Date().toISOString()
+          });
+        } catch (e) {
+          console.warn("Sync labs_catalog to lab_control:", e);
         }
-        prev.innerHTML = `<span class="text-rose-400 font-semibold">✕ ไม่พบรหัสนิสิตนี้ในรายวิชา 180433</span>`;
-      } else {
-        prev.textContent = 'กรอกรหัสนิสิต 8 หลักเพื่อตรวจสอบรายชื่อ';
       }
-      return null;
+      renderDailyBanner();
+      renderLabLists();
+      renderAllScoresTable();
     }
 
-    async function submitCheckin() {
-      const sid = document.getElementById('std-id-input').value.trim();
-      const found = previewStudent(sid);
-      if (!found) {
-        alert('กรุณากรอกรหัสนิสิต 8 หลักให้ถูกต้อง');
+    function generateFallbackStudents() {
+      const list = [];
+      for (let i = 1; i <= 90; i++) {
+        const groupNo = Math.ceil(i / 9);
+        const sid = "6631" + String(i).padStart(4, "0");
+        list.push({
+          seq: i,
+          student_id: sid,
+          full_name: `นิสิตเภสัชศาสตร์ ลำดับที่ ${i}`,
+          section: i <= 45 ? "1" : "2",
+          group_no: groupNo
+        });
+      }
+      return list;
+    }
+
+    let studentsList = generateFallbackStudents();
+    let groupScoreMap = {};
+    let dailyLabNo = localStorage.getItem("ethics_daily_lab") !== null
+      ? (localStorage.getItem("ethics_daily_lab") === "" ? null : Number(localStorage.getItem("ethics_daily_lab")))
+      : 2;
+
+    function initSupabase() {
+      const url = localStorage.getItem("sb_url") || DEFAULT_URL;
+      const key = localStorage.getItem("sb_key") || DEFAULT_KEY;
+      document.getElementById("cfg-url").value = url;
+      document.getElementById("cfg-key").value = key;
+      if (url && key && window.supabase) {
+        sb = window.supabase.createClient(url, key, { db: { schema: "ethics" } });
+        document.getElementById("conn-status").textContent = "เชื่อมต่อ Cloud แล้ว";
+        document.getElementById("conn-status").classList.add("text-emerald-400");
+      } else {
+        document.getElementById("conn-status").textContent = "โหมดแคช / ตั้งค่า Key";
+      }
+    }
+
+    function openConfigModal() { document.getElementById("config-modal").classList.remove("hidden"); }
+    function closeConfigModal() { document.getElementById("config-modal").classList.add("hidden"); }
+    function saveConfig() {
+      localStorage.setItem("sb_url", document.getElementById("cfg-url").value.trim());
+      localStorage.setItem("sb_key", document.getElementById("cfg-key").value.trim());
+      closeConfigModal();
+      initSupabase();
+      bootstrapData();
+    }
+
+    function switchRole(role) {
+      const isTeacher = role === "teacher";
+      document.getElementById("view-student").classList.toggle("hidden", isTeacher);
+      document.getElementById("view-teacher").classList.toggle("hidden", !isTeacher);
+      document.getElementById("tab-student").className = isTeacher
+        ? "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition"
+        : "px-3 py-1.5 rounded-lg bg-emerald-600 text-white transition";
+      document.getElementById("tab-teacher").className = isTeacher
+        ? "px-3 py-1.5 rounded-lg bg-emerald-600 text-white transition"
+        : "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition";
+      if (isTeacher) loadAllLabScores();
+    }
+
+    function switchTeacherSubTab(tab) {
+      const isScores = tab === "scores";
+      document.getElementById("teacher-panel-attendance").classList.toggle("hidden", isScores);
+      document.getElementById("teacher-panel-scores").classList.toggle("hidden", !isScores);
+      document.getElementById("subtab-attendance").className = isScores
+        ? "px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-semibold transition"
+        : "px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold transition";
+      document.getElementById("subtab-scores").className = isScores
+        ? "px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold transition flex items-center gap-2"
+        : "px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-semibold transition flex items-center gap-2";
+      if (isScores) loadAllLabScores();
+    }
+
+    function renderDailyBanner() {
+      const banner = document.getElementById("daily-lab-banner");
+      const lab = LABS_CATALOG.find(l => l.no === dailyLabNo);
+      if (!lab) {
+        banner.classList.add("hidden");
+        return;
+      }
+      banner.classList.remove("hidden");
+      document.getElementById("banner-lab-title").textContent = lab.title;
+      document.getElementById("banner-lab-link").href = lab.file;
+    }
+
+    async function setDailyLab(labNo) {
+      dailyLabNo = labNo;
+      localStorage.setItem("ethics_daily_lab", labNo === null ? "" : String(labNo));
+      await persistLabsCatalog();
+    }
+
+    // --- ADD / EDIT / DELETE LAB FUNCTIONS ---
+    function openLabModal(editLabNo = null) {
+      const modal = document.getElementById("lab-modal");
+      modal.classList.remove("hidden");
+
+      if (editLabNo !== null) {
+        const lab = LABS_CATALOG.find(l => l.no === editLabNo);
+        if (!lab) return;
+        document.getElementById("lab-modal-title").textContent = `แก้ไขปฏิบัติการ (Lab ${lab.no})`;
+        document.getElementById("edit-lab-orig-no").value = String(lab.no);
+        document.getElementById("inp-lab-no").value = lab.no;
+        document.getElementById("inp-lab-title").value = lab.title;
+        document.getElementById("inp-lab-file").value = lab.file;
+        document.getElementById("inp-lab-active").checked = Boolean(lab.active);
+      } else {
+        const nextNo = LABS_CATALOG.length > 0 ? Math.max(...LABS_CATALOG.map(l => l.no)) + 1 : 1;
+        document.getElementById("lab-modal-title").textContent = "เพิ่มปฏิบัติการใหม่";
+        document.getElementById("edit-lab-orig-no").value = "";
+        document.getElementById("inp-lab-no").value = nextNo;
+        document.getElementById("inp-lab-title").value = `Lab ${nextNo}: `;
+        document.getElementById("inp-lab-file").value = `lab${nextNo}-180433.html`;
+        document.getElementById("inp-lab-active").checked = true;
+      }
+    }
+
+    function closeLabModal() {
+      document.getElementById("lab-modal").classList.add("hidden");
+    }
+
+    async function saveLabItem(e) {
+      e.preventDefault();
+      const origNoStr = document.getElementById("edit-lab-orig-no").value;
+      const newNo = Number(document.getElementById("inp-lab-no").value);
+      const title = document.getElementById("inp-lab-title").value.trim();
+      const file = document.getElementById("inp-lab-file").value.trim();
+      const active = document.getElementById("inp-lab-active").checked;
+
+      if (origNoStr !== "") {
+        const origNo = Number(origNoStr);
+        if (origNo !== newNo && LABS_CATALOG.some(l => l.no === newNo)) {
+          alert(`มีลำดับ Lab ${newNo} อยู่แล้ว กรุณาใช้หมายเลขอื่น`);
+          return;
+        }
+        LABS_CATALOG = LABS_CATALOG.map(l => l.no === origNo
+          ? { no: newNo, code: `lab${newNo}`, title, file, active }
+          : l
+        );
+        if (dailyLabNo === origNo) dailyLabNo = newNo;
+      } else {
+        if (LABS_CATALOG.some(l => l.no === newNo)) {
+          alert(`มีลำดับ Lab ${newNo} อยู่แล้ว กรุณาใช้หมายเลขอื่น`);
+          return;
+        }
+        LABS_CATALOG.push({ no: newNo, code: `lab${newNo}`, title, file, active });
+      }
+
+      closeLabModal();
+      await persistLabsCatalog();
+    }
+
+    async function deleteLabItem(labNo) {
+      const lab = LABS_CATALOG.find(l => l.no === labNo);
+      if (!lab) return;
+      if (!confirm(`ยืนยันการลบรายการ "${lab.title}" ออกจากรายการปฏิบัติการใช่หรือไม่?\n(ข้อมูลคะแนนในฐานข้อมูลจะไม่ถูกลบ)`)) return;
+
+      LABS_CATALOG = LABS_CATALOG.filter(l => l.no !== labNo);
+      if (dailyLabNo === labNo) {
+        dailyLabNo = null;
+        localStorage.setItem("ethics_daily_lab", "");
+      }
+      await persistLabsCatalog();
+    }
+
+    async function toggleLabActive(labNo) {
+      LABS_CATALOG = LABS_CATALOG.map(l => l.no === labNo ? { ...l, active: !l.active } : l);
+      await persistLabsCatalog();
+    }
+
+    function renderLabLists() {
+      const sContainer = document.getElementById("student-lab-list");
+      const tContainer = document.getElementById("teacher-lab-list");
+      sContainer.innerHTML = "";
+      tContainer.innerHTML = "";
+
+      const countText = LABS_CATALOG.length > 0 ? `(ทั้งหมด ${LABS_CATALOG.length} แล็บ)` : "(ยังไม่มีรายการ)";
+      document.getElementById("student-lab-heading").textContent = `รายการปฏิบัติการ ${countText}`;
+      document.getElementById("teacher-lab-heading").textContent = `รายการปฏิบัติการ ${countText}`;
+
+      if (LABS_CATALOG.length === 0) {
+        sContainer.innerHTML = `<div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 text-center">ยังไม่มีรายการปฏิบัติการที่เปิดใช้งาน</div>`;
+        tContainer.innerHTML = `<div class="col-span-2 p-6 rounded-xl bg-slate-900/60 border border-dashed border-slate-700 text-xs text-slate-400 text-center">ยังไม่มีรายการปฏิบัติการ กดปุ่ม <strong>"＋ เพิ่มปฏิบัติการ"</strong> ด้านบนเพื่อสร้างรายการใหม่</div>`;
         return;
       }
 
-      if (sessionPin) {
-        const enteredPin = document.getElementById('std-session-pin').value.trim();
-        if (enteredPin !== sessionPin) {
-          alert('รหัสเข้าเรียนประจำคาบไม่ถูกต้อง กรุณาดูรหัสที่หน้าจอโปรเจกเตอร์');
-          return;
+      LABS_CATALOG.forEach(lab => {
+        const isDaily = lab.no === dailyLabNo;
+        const canOpen = lab.active || isDaily;
+
+        // Student card
+        sContainer.innerHTML += `
+          <div class="p-3 rounded-xl border ${isDaily ? "bg-indigo-950/50 border-indigo-500/60" : "bg-slate-900/70 border-slate-800"} flex items-center justify-between gap-2">
+            <div>
+              <div class="text-sm font-semibold ${canOpen ? "text-white" : "text-slate-500"}">${lab.title}</div>
+              <div class="text-[11px] ${isDaily ? "text-indigo-300" : "text-slate-500"}">${isDaily ? "★ ปฏิบัติการประจำวันนี้" : (canOpen ? "เปิดใช้งานแล้ว" : "ยังไม่เปิดให้เข้าเรียน")}</div>
+            </div>
+            ${canOpen
+              ? `<a href="${lab.file}" class="px-3 py-1.5 rounded-lg ${isDaily ? "bg-indigo-600 hover:bg-indigo-500" : "bg-slate-800 hover:bg-slate-700"} text-white text-xs font-semibold whitespace-nowrap">เข้าเรียน</a>`
+              : `<span class="px-2.5 py-1 rounded-lg bg-slate-900 text-slate-600 text-xs">ล็อก</span>`}
+          </div>
+        `;
+
+        // Teacher card with Edit / Delete / Active Toggle / Daily Button
+        tContainer.innerHTML += `
+          <div class="p-3.5 rounded-xl border ${isDaily ? "bg-indigo-950/50 border-indigo-500" : "bg-slate-900/70 border-slate-800"} flex flex-col justify-between gap-2.5">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="text-xs font-bold text-white truncate" title="${lab.title}">${lab.title}</div>
+                <div class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2">
+                  <code>${lab.file}</code>
+                  <button onclick="toggleLabActive(${lab.no})" class="px-1.5 py-0.5 rounded text-[10px] ${lab.active ? "bg-emerald-950 text-emerald-300 border border-emerald-500/30" : "bg-slate-800 text-slate-400"}">
+                    ${lab.active ? "เปิดใช้งาน" : "ซ่อน/ล็อก"}
+                  </button>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button onclick="openLabModal(${lab.no})" title="แก้ไขรายการ" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs">✏️</button>
+                <button onclick="deleteLabItem(${lab.no})" title="ลบรายการ" class="p-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 text-xs">🗑️</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-1.5 pt-1 border-t border-slate-800/80">
+              <a href="${lab.file}" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-sky-300">เปิดหน้า</a>
+              <button onclick="setDailyLab(${lab.no})" class="px-2.5 py-1 rounded-lg ${isDaily ? "bg-emerald-600 text-white" : "bg-indigo-600/80 hover:bg-indigo-600 text-white"} text-xs font-semibold">
+                ${isDaily ? "✓ ประจำวัน" : "ตั้งเป็นประจำวัน"}
+              </button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function genOtp() {
+      document.getElementById("t-otp").value = String(Math.floor(1000 + Math.random() * 9000));
+    }
+
+    async function createAttendanceSession() {
+      const week = Number(document.getElementById("t-week").value);
+      const otp = document.getElementById("t-otp").value.trim();
+      const ontimeMin = Number(document.getElementById("t-ontime").value);
+      const expireMin = Number(document.getElementById("t-expire").value);
+      const now = new Date();
+      const payload = {
+        week_no: week,
+        session_date: now.toISOString().slice(0, 10),
+        otp_code: otp,
+        ontime_until: new Date(now.getTime() + ontimeMin * 60000).toISOString(),
+        expires_at: new Date(now.getTime() + expireMin * 60000).toISOString()
+      };
+      localStorage.setItem("ethics_active_session", JSON.stringify(payload));
+      if (sb) {
+        await sb.from("attendance_sessions_180433").insert(payload);
+      }
+      alert(`เปิดรอบเช็กชื่อสัปดาห์ที่ ${week} สำเร็จ (OTP: ${otp})`);
+    }
+
+    async function handleCheckin(e) {
+      e.preventDefault();
+      const sid = document.getElementById("stu-id").value.trim();
+      const otp = document.getElementById("stu-otp").value.trim();
+      const fb = document.getElementById("checkin-feedback");
+      fb.classList.remove("hidden");
+
+      const stu = studentsList.find(s => s.student_id === sid);
+      if (!stu) {
+        fb.className = "p-3 rounded-xl text-sm bg-rose-950/70 border border-rose-500/40 text-rose-200";
+        fb.textContent = `ไม่พบรหัสนิสิต ${sid} ในรายชื่อผู้ลงทะเบียน 90 คน`;
+        return;
+      }
+
+      if (sb) {
+        await sb.from("attendance_logs_180433").insert({
+          student_id: sid,
+          otp_code: otp,
+          status: "present",
+          device_info: navigator.userAgent.slice(0, 120)
+        });
+      }
+      fb.className = "p-3 rounded-xl text-sm bg-emerald-950/70 border border-emerald-500/40 text-emerald-200";
+      fb.innerHTML = `✅ เช็กชื่อสำเร็จ: <strong>${stu.full_name}</strong> (${sid}) • กลุ่มที่ <strong>${stu.group_no}</strong>`;
+    }
+
+    async function loadAllLabScores() {
+      groupScoreMap = {};
+      const labNos = new Set(LABS_CATALOG.map(l => l.no));
+      for (let i = 1; i <= 15; i++) labNos.add(i);
+
+      labNos.forEach(l => {
+        const cached = JSON.parse(localStorage.getItem(`ethics_rubric_lab${l}`) || "{}");
+        Object.entries(cached).forEach(([gNo, obj]) => {
+          if (obj && typeof obj.total === "number") {
+            groupScoreMap[`lab${l}_${gNo}`] = Number(obj.total);
+          }
+        });
+      });
+
+      if (sb) {
+        try {
+          const { data: stus } = await sb.from("students_180433").select("*").order("seq", { ascending: true });
+          const { data: grps } = await sb.from("lab_groups").select("*");
+          if (stus && stus.length > 0) {
+            const grpLookup = {};
+            (grps || []).forEach(g => { grpLookup[g.student_id] = g.group_no; });
+            studentsList = stus.map((s, idx) => ({
+              seq: s.seq || idx + 1,
+              student_id: s.student_id,
+              full_name: s.full_name,
+              section: s.section || "-",
+              group_no: grpLookup[s.student_id] || s.group_no || Math.ceil((idx + 1) / 9)
+            }));
+          }
+
+          const { data: scores } = await sb.from("lab_rubric_scores").select("*");
+          if (scores) {
+            scores.forEach(row => {
+              const lNo = row.lab_no || Number(String(row.lab_code || "").replace(/\D/g, ""));
+              const gNo = row.group_no;
+              const tot = row.total_score ?? row.score;
+              if (lNo && gNo && tot !== null && tot !== undefined) {
+                groupScoreMap[`lab${lNo}_${gNo}`] = Number(tot);
+              }
+            });
+          }
+        } catch (err) {
+          console.warn("Using local fallback scores:", err);
         }
       }
 
-      // Save student profile to localStorage so Lab 1–11 picks it up seamlessly without re-typing
-      const grpInfo = groupAssignments[sid] || {};
-      const profile = {
-        student_id: sid,
-        full_name: found.full_name,
-        group_no: grpInfo.group_no || '',
-        role: grpInfo.role_lab1 || 'Member'
-      };
-      localStorage.setItem('lab1_student_profile', JSON.stringify(profile));
-
-      // Upsert attendance record into attendance_180433 (or lab_individual_responses fallback)
-      const nowIso = new Date().toISOString();
-      const { error: attErr } = await db.from('attendance_180433').upsert({
-        session_date: todayStr,
-        student_id: sid,
-        status: 'present',
-        checked_in_at: nowIso
-      }, { onConflict: 'session_date,student_id' });
-
-      if (attErr) {
-        // Fallback record inside lab_individual_responses if attendance_180433 schema differs
-        await db.from('lab_individual_responses').upsert({
-          lab_no: activeLabNo,
-          step_key: `checkin_${todayStr}`,
-          student_id: sid,
-          choice_val: 'present',
-          updated_at: nowIso
-        }, { onConflict: 'lab_no,step_key,student_id' });
-      }
-
-      // Show Success Panel & Dynamic Button for the Active Lab
-      const activeLabObj = LABS_CATALOG.find(l => l.no === activeLabNo) || LABS_CATALOG[0];
-      const panel = document.getElementById('checkin-success-panel');
-      const primaryBtn = document.getElementById('primary-lab-cta');
-
-      document.getElementById('success-std-title').textContent = `เช็กชื่อสำเร็จ: ${found.full_name} (${sid})`;
-      document.getElementById('success-std-sub').textContent = grpInfo.group_no
-        ? `กลุ่มที่ ${grpInfo.group_no} • พร้อมเข้าสู่กิจกรรมปฏิบัติการแล้ว`
-        : `กดปุ่มด้านล่างเพื่อเข้าสู่ห้องปฏิบัติการและเลือกกลุ่มของคุณ`;
-
-      primaryBtn.href = activeLabObj.file;
-      primaryBtn.innerHTML = `🚀 เข้าสู่ห้องปฏิบัติการ Lab ${activeLabObj.no}: ${activeLabObj.th} →`;
-      panel.classList.remove('hidden');
+      renderAllScoresTable();
     }
 
-    function renderLabsGrid() {
-      const grid = document.getElementById('labs-grid');
-      const activeLabObj = LABS_CATALOG.find(l => l.no === activeLabNo) || LABS_CATALOG[0];
-      document.getElementById('active-lab-indicator').textContent = `ปฏิบัติการวันนี้: Lab ${activeLabObj.no} (${activeLabObj.th})`;
-
-      grid.innerHTML = LABS_CATALOG.map(lab => {
-        const isToday = lab.no === activeLabNo;
-        const borderCls = isToday
-          ? 'border-emerald-500 bg-emerald-950/30 ring-1 ring-emerald-500/40'
-          : 'border-slate-800 bg-slate-900/70 hover:border-slate-600';
-
-        const badge = isToday
-          ? `<span class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 text-[10px] font-extrabold">เปิดเรียนวันนี้</span>`
-          : lab.ready
-            ? `<span class="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 text-[10px] font-bold">พร้อมใช้งาน</span>`
-            : `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-semibold">เตรียมระบบ</span>`;
-
-        const btnHtml = (isToday || lab.ready)
-          ? `<a href="${lab.file}" class="mt-3 block w-full py-2 rounded-xl ${isToday ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-sky-600/80 hover:bg-sky-600 text-white'} text-xs font-bold text-center transition">
-              เข้าสู่ห้องปฏิบัติการ Lab ${lab.no} →
-            </a>`
-          : `<button onclick="alert('ห้องปฏิบัติการ Lab ${lab.no} (${lab.th}) จะเปิดใช้งานตามตารางสอนครับ')"
-              class="mt-3 block w-full py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-400 text-xs font-semibold text-center border border-slate-700/60">
-              เข้าสู่ห้องปฏิบัติการ Lab ${lab.no}
-            </button>`;
-
-        return `
-          <div class="p-4 rounded-2xl border ${borderCls} flex flex-col justify-between transition">
-            <div>
-              <div class="flex justify-between items-center gap-2 mb-1.5">
-                <span class="text-xs font-extrabold ${isToday ? 'text-emerald-400' : 'text-sky-400'}">LAB ${lab.no}</span>
-                ${badge}
-              </div>
-              <h4 class="text-sm font-bold text-white leading-snug">${lab.th}</h4>
-              <p class="text-[11px] text-slate-400 mt-0.5">${lab.title}</p>
-            </div>
-            ${btnHtml}
-          </div>
-        `;
-      }).join('');
+    function computeStudentScoreRow(stu) {
+      const labs = {};
+      let sum = 0;
+      let count = 0;
+      LABS_CATALOG.forEach(lab => {
+        const val = groupScoreMap[`lab${lab.no}_${stu.group_no}`];
+        if (typeof val === "number" && !isNaN(val)) {
+          labs[lab.no] = val;
+          sum += val;
+          count++;
+        } else {
+          labs[lab.no] = null;
+        }
+      });
+      const avg = count > 0 ? +(sum / count).toFixed(2) : 0;
+      return { ...stu, labs, sum: +sum.toFixed(2), count, avg };
     }
 
-    // =========================================================================
-    // INSTRUCTOR MODE
-    // =========================================================================
-    function promptInstructor() {
-      document.getElementById('pin-error').classList.add('hidden');
-      document.getElementById('input-pin').value = '';
-      document.getElementById('pin-modal').classList.remove('hidden');
-      setTimeout(() => document.getElementById('input-pin').focus(), 50);
-    }
+    function renderAllScoresTable() {
+      const q = (document.getElementById("score-search").value || "").trim().toLowerCase();
+      const thead = document.getElementById("all-scores-thead");
+      const tbody = document.getElementById("all-scores-tbody");
+      tbody.innerHTML = "";
 
-    document.getElementById('pin-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      if (document.getElementById('input-pin').value === INSTRUCTOR_PIN) {
-        document.getElementById('pin-modal').classList.add('hidden');
-        switchMode('admin');
-      } else {
-        document.getElementById('pin-error').classList.remove('hidden');
-      }
-    });
+      const maxPossible = LABS_CATALOG.length * 20;
+      const labRangeLabel = LABS_CATALOG.length > 0
+        ? `Lab ${LABS_CATALOG[0].no}–${LABS_CATALOG[LABS_CATALOG.length - 1].no}`
+        : "ไม่มีแล็บ";
 
-    function switchMode(mode) {
-      const isAdm = mode === 'admin';
-      document.getElementById('view-student').classList.toggle('hidden', isAdm);
-      document.getElementById('view-admin').classList.toggle('hidden', !isAdm);
-      document.getElementById('btn-mode-admin').className = isAdm
-        ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white shadow'
-        : 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700';
-      document.getElementById('btn-mode-student').className = !isAdm
-        ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-600 text-white shadow'
-        : 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700';
-      if (isAdm) loadTodayAttendance();
-    }
+      document.getElementById("btn-all-scores-label").textContent = `คะแนนรวมทุกแล็บ (${labRangeLabel})`;
+      document.getElementById("scores-panel-title").textContent = `📊 ศูนย์รวมคะแนนทุกแล็บ (${labRangeLabel}) — รายบุคคลครบทั้ง 90 คน`;
+      document.getElementById("stat-lab-count").textContent = `${LABS_CATALOG.length} ปฏิบัติการ`;
+      document.getElementById("stat-max-total-label").textContent = `คะแนนรวมเฉลี่ย (เต็ม ${maxPossible})`;
 
-    async function updateActiveLabSetting(labNo) {
-      activeLabNo = labNo;
-      await db.from('lab_control').upsert({
-        lab_no: 0,
-        current_page: labNo,
-        active_challenge: sessionPin ? parseInt(sessionPin) || 0 : 0,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'lab_no' });
-      renderLabsGrid();
-    }
+      let dynamicCols = "";
+      LABS_CATALOG.forEach((lab, idx) => {
+        const badgeColor = idx % 2 === 0 ? "bg-sky-950/40 text-sky-300" : "bg-indigo-950/40 text-indigo-300";
+        dynamicCols += `<th class="p-2.5 border-b border-slate-800 text-center ${badgeColor}" title="${lab.title}">Lab ${lab.no}<br>(20)</th>`;
+      });
 
-    async function saveSessionPin() {
-      const pinVal = document.getElementById('admin-session-pin').value.trim();
-      sessionPin = pinVal;
-      await db.from('lab_control').upsert({
-        lab_no: 0,
-        current_page: activeLabNo,
-        active_challenge: pinVal ? parseInt(pinVal) || 0 : 0,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'lab_no' });
-      alert(pinVal ? `ตั้งรหัสเข้าเรียนวันนี้เป็น "${pinVal}" เรียบร้อย` : 'ยกเลิกรหัสเข้าเรียนวันนี้แล้ว');
-    }
+      thead.innerHTML = `
+        <tr>
+          <th class="p-2.5 border-b border-slate-800">ที่</th>
+          <th class="p-2.5 border-b border-slate-800">รหัสนิสิต</th>
+          <th class="p-2.5 border-b border-slate-800 min-w-[160px]">ชื่อ - นามสกุล</th>
+          <th class="p-2.5 border-b border-slate-800 text-center">กลุ่ม</th>
+          ${dynamicCols}
+          <th class="p-2.5 border-b border-slate-800 text-center bg-emerald-950/50 text-emerald-300 font-bold">รวม<br>(${maxPossible})</th>
+          <th class="p-2.5 border-b border-slate-800 text-center bg-amber-950/40 text-amber-300 font-bold">เฉลี่ย<br>(20)</th>
+        </tr>
+      `;
 
-    async function loadTodayAttendance() {
-      const { data: attRows } = await db.from('attendance_180433').select('*').eq('session_date', todayStr);
-      const map = {};
-      (attRows || []).forEach(r => map[r.student_id] = r);
+      const rows = studentsList.map(computeStudentScoreRow);
+      const filtered = rows.filter(r =>
+        !q ||
+        r.student_id.toLowerCase().includes(q) ||
+        r.full_name.toLowerCase().includes(q) ||
+        String(r.group_no) === q ||
+        `กลุ่ม ${r.group_no}`.includes(q)
+      );
 
-      document.getElementById('checkin-count').textContent = Object.keys(map).length;
-      const tbody = document.getElementById('attendance-tbody');
-      tbody.innerHTML = studentsList.map(std => {
-        const rec = map[std.student_id];
-        const grp = groupAssignments[std.student_id]?.group_no || '-';
-        const timeStr = rec?.checked_in_at ? new Date(rec.checked_in_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '-';
-        return `
-          <tr class="hover:bg-slate-900/60">
-            <td class="p-2.5 text-slate-400">${std.seq}</td>
-            <td class="p-2.5 font-mono font-bold text-white">${std.student_id}</td>
-            <td class="p-2.5 text-slate-200">${std.full_name}</td>
-            <td class="p-2.5 text-sky-400 font-bold">${grp}</td>
-            <td class="p-2.5">${rec ? '<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">เข้าเรียน</span>' : '<span class="text-slate-600">ยังไม่เช็กชื่อ</span>'}</td>
-            <td class="p-2.5 text-slate-400 font-mono">${timeStr}</td>
+      document.getElementById("stat-total-students").textContent = `${rows.length} คน`;
+      const assessedRows = rows.filter(r => r.count > 0);
+      document.getElementById("stat-avg-per-lab").textContent = assessedRows.length
+        ? (assessedRows.reduce((a, b) => a + b.avg, 0) / assessedRows.length).toFixed(2)
+        : "-";
+      document.getElementById("stat-avg-total").textContent = assessedRows.length
+        ? (assessedRows.reduce((a, b) => a + b.sum, 0) / assessedRows.length).toFixed(2)
+        : "-";
+
+      filtered.forEach(r => {
+        let labCells = "";
+        LABS_CATALOG.forEach((lab, idx) => {
+          const v = r.labs[lab.no];
+          const hl = idx % 2 === 0 ? "bg-sky-950/20" : "bg-indigo-950/20";
+          labCells += `<td class="p-2 text-center ${hl} ${v !== null ? "text-slate-100 font-medium" : "text-slate-600"}">${v !== null ? v : "-"}</td>`;
+        });
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-900/90">
+            <td class="p-2 text-slate-400">${r.seq}</td>
+            <td class="p-2 font-mono text-slate-200">${r.student_id}</td>
+            <td class="p-2 text-white">${r.full_name}</td>
+            <td class="p-2 text-center"><span class="px-2 py-0.5 rounded bg-slate-800 text-amber-300 font-semibold">G${r.group_no}</span></td>
+            ${labCells}
+            <td class="p-2 text-center bg-emerald-950/30 text-emerald-300 font-bold">${r.sum}</td>
+            <td class="p-2 text-center bg-amber-950/20 text-amber-300 font-bold">${r.avg}</td>
           </tr>
         `;
-      }).join('');
+      });
     }
 
-    function openQrModal() {
-      const modal = document.getElementById('qr-modal');
-      const box = document.getElementById('qr-container');
-      const urlText = document.getElementById('qr-url-text');
-      const url = window.location.href.split('?')[0];
-      box.innerHTML = '';
-      urlText.textContent = url;
-      modal.classList.remove('hidden');
-      new QRCode(box, { text: url, width: 220, height: 220 });
+    function exportAllLabsExcel() {
+      const rows = studentsList.map(computeStudentScoreRow);
+      const sheetData = rows.map(r => {
+        const obj = {
+          "ลำดับ": r.seq,
+          "รหัสนิสิต": r.student_id,
+          "ชื่อ-นามสกุล": r.full_name,
+          "กลุ่มที่": r.group_no
+        };
+        LABS_CATALOG.forEach(lab => {
+          obj[`Lab ${lab.no} (20)`] = r.labs[lab.no] !== null ? r.labs[lab.no] : "";
+        });
+        obj["รวมคะแนนทุกแล็บ"] = r.sum;
+        obj["เฉลี่ยต่อแล็บที่ประเมิน (20)"] = r.avg;
+        return obj;
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(sheetData);
+      XLSX.utils.book_append_sheet(wb, ws, "คะแนนรวมทุกแล็บ_90คน");
+      XLSX.writeFile(wb, "180433_All_Labs_Scores_90Students.xlsx");
     }
 
-    init();
+    async function bootstrapData() {
+      if (sb) {
+        try {
+          const { data } = await sb.from("lab_control").select("*").eq("id", 1).maybeSingle();
+          if (data) {
+            if (Array.isArray(data.labs_catalog) && data.labs_catalog.length > 0) {
+              LABS_CATALOG = data.labs_catalog;
+              localStorage.setItem("ethics_labs_catalog", JSON.stringify(LABS_CATALOG));
+            }
+            if (data.active_lab_no !== undefined) {
+              dailyLabNo = data.active_lab_no;
+            }
+          }
+        } catch (e) {}
+      }
+      renderDailyBanner();
+      renderLabLists();
+      await loadAllLabScores();
+    }
+
+    initSupabase();
+    bootstrapData();
   </script>
 </body>
 </html>
