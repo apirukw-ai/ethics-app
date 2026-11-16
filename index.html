@@ -297,36 +297,30 @@
       { no: 2, code: "lab2", title: "Lab 2: Everyday Ethical Decision Making", file: "lab2-180433.html", active: true }
     ];
 
-    function loadLabsCatalog() {
-      try {
-        const saved = JSON.parse(localStorage.getItem("ethics_labs_catalog"));
-        if (Array.isArray(saved) && saved.length > 0) return saved;
-      } catch (e) {}
-      return [...DEFAULT_LABS_CATALOG];
-    }
-
-    let LABS_CATALOG = loadLabsCatalog();
+    let LABS_CATALOG = [];
 
     async function persistLabsCatalog() {
-      LABS_CATALOG.sort((a, b) => a.no - b.no);
-      localStorage.setItem("ethics_labs_catalog", JSON.stringify(LABS_CATALOG));
-      if (sb) {
-        try {
-          await sb.from("lab_control").upsert({
-            id: 1,
-            active_lab_no: dailyLabNo,
-            active_lab_file: dailyLabNo ? (LABS_CATALOG.find(l => l.no === dailyLabNo)?.file || `lab${dailyLabNo}-180433.html`) : null,
-            labs_catalog: LABS_CATALOG,
-            updated_at: new Date().toISOString()
-          });
-        } catch (e) {
-          console.warn("Sync labs_catalog to lab_control:", e);
-        }
-      }
-      renderDailyBanner();
-      renderLabLists();
-      renderAllScoresTable();
-    }
+	  LABS_CATALOG.sort((a, b) => a.no - b.no);
+	  if (!sb) {
+		alert("❌ ไม่สามารถบันทึกได้: ยังไม่ได้เชื่อมต่อฐานข้อมูล Supabase");
+		return;
+	  }
+	  const { error } = await sb.from("lab_control").upsert({
+		id: 1,
+		active_lab_no: dailyLabNo,
+		active_lab_file: dailyLabNo ? (LABS_CATALOG.find(l => l.no === dailyLabNo)?.file || `lab${dailyLabNo}-180433.html`) : null,
+		labs_catalog: LABS_CATALOG,
+		updated_at: new Date().toISOString()
+	  });
+
+	  if (error) {
+		alert("❌ บันทึกลง Cloud ไม่สำเร็จ: " + error.message);
+		return;
+	  }
+	  renderDailyBanner();
+	  renderLabLists();
+	  renderAllScoresTable();
+	}
 
     function generateFallbackStudents() {
       const list = [];
@@ -793,24 +787,25 @@
     }
 
     async function bootstrapData() {
-      if (sb) {
-        try {
-          const { data } = await sb.from("lab_control").select("*").eq("id", 1).maybeSingle();
-          if (data) {
-            if (Array.isArray(data.labs_catalog) && data.labs_catalog.length > 0) {
-              LABS_CATALOG = data.labs_catalog;
-              localStorage.setItem("ethics_labs_catalog", JSON.stringify(LABS_CATALOG));
-            }
-            if (data.active_lab_no !== undefined) {
-              dailyLabNo = data.active_lab_no;
-            }
-          }
-        } catch (e) {}
-      }
-      renderDailyBanner();
-      renderLabLists();
-      await loadAllLabScores();
-    }
+	  if (!sb) {
+		alert("กรุณาใส่ Supabase Anon Key ในโค้ดก่อนใช้งาน");
+		return;
+	  }
+	  const { data, error } = await sb.from("lab_control").select("*").eq("id", 1).maybeSingle();
+	  if (error) {
+		console.error("โหลดข้อมูลล้มเหลว:", error);
+	  }
+	  if (data && Array.isArray(data.labs_catalog)) {
+		LABS_CATALOG = data.labs_catalog;
+		dailyLabNo = data.active_lab_no ?? null;
+	  } else {
+		LABS_CATALOG = [...DEFAULT_LABS_CATALOG];
+		dailyLabNo = 2;
+	  }
+	  renderDailyBanner();
+	  renderLabLists();
+	  await loadAllLabScores();
+	}
 
     initSupabase();
     bootstrapData();
