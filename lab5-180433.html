@@ -530,26 +530,58 @@
 
       // PAGE 4 — Meet the Professional
       else if (p === 4) {
-        const savedSpeaker = JSON.parse(localStorage.getItem('lab5_speaker_info') || '{"name":"เภสัชกรวิทยากรรับเชิญ (พี่สอนน้อง)","role":"เภสัชกรปฏิบัติงานวิชาชีพ (โรงพยาบาล / ร้านยาชุมชน / อุตสาหกรรม)","exp":"ประสบการณ์เผชิญหน้าและจัดการกับสถานการณ์ตัดสินใจทางจริยธรรมในงานจริง"}');
+        const defaultSpeakers = [
+		  {
+			name: "ภก.กิติศักดิ์ อ่อนปาน",
+			role: "กลุ่มงานคุ้มครองผู้บริโภคและเภสัชสาธารณสุข สำนักงานสาธารณสุขจังหวัดพิษณุโลก",
+			exp: "งานคุ้มครองผู้บริโภคและกฎหมายเภสัชกรรม"
+		  },
+		  {
+			name: "ภก.ชัยวัฒน์ บูรณะชนอาภา",
+			role: "ผู้ช่วยคณบดีฝ่ายพัสดุ ฝ่ายเภสัชกรรม โรงพยาบาลมหาวิทยาลัยนเรศวร",
+			exp: "จริยธรรมการจัดซื้อจัดจ้างและบริหารพัสดุโรงพยาบาล"
+		  },
+		  {
+			name: "ภก.ปฏิพัทธ์ ศึกษา",
+			role: "ผู้แทนยาบริษัท เอ็กโซติคโลชั่น (ประเทศไทย) จำกัด",
+			exp: "จริยธรรมการส่งเสริมการขายยาและผู้แทนยา"
+		  },
+		  {
+			name: "วิทยากรท่านที่ 4 (ใส่ชื่อตรงนี้)",
+			role: "ใส่ตำแหน่ง / หน่วยงานตรงนี้",
+			exp: "ใส่ประเด็น / ประสบการณ์ที่เกี่ยวข้อง"
+		  }
+		];
+		const savedSpeakers = JSON.parse(localStorage.getItem('lab5_speaker_info_4') || 'null') || defaultSpeakers;
         container.innerHTML = `
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
             <div class="lg:col-span-6 glass rounded-3xl p-6 space-y-4">
               <span class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold">PAGE 4 • MEET THE PROFESSIONAL (16–46 นาที)</span>
               <h2 class="text-xl font-extrabold text-white">👤 ข้อมูลวิทยากรรับเชิญ &amp; กรอบการฟัง</h2>
-              <div class="p-4 rounded-2xl bg-slate-900/95 border border-indigo-500/30 space-y-2 text-xs text-slate-200">
-                <p><strong class="text-indigo-300">ชื่อและตำแหน่ง:</strong> <span id="spk-name-disp">${savedSpeaker.name}</span></p>
-                <p><strong class="text-sky-300">สถานที่/ประเภทการปฏิบัติงาน:</strong> <span id="spk-role-disp">${savedSpeaker.role}</span></p>
-                <p><strong class="text-amber-300">ประสบการณ์ที่เกี่ยวข้อง:</strong> <span id="spk-exp-disp">${savedSpeaker.exp}</span></p>
-              </div>
-              ${isAdmin ? `
-                <div class="p-3 rounded-xl bg-slate-950 border border-amber-500/30 space-y-2">
-                  <p class="text-[11px] font-bold text-amber-400">แก้ไขข้อมูลวิทยากร (เฉพาะอาจารย์):</p>
-                  <input type="text" id="spk-name-in" value="${savedSpeaker.name}" class="w-full px-2.5 py-1.5 rounded bg-slate-900 border border-slate-700 text-xs text-white">
-                  <input type="text" id="spk-role-in" value="${savedSpeaker.role}" class="w-full px-2.5 py-1.5 rounded bg-slate-900 border border-slate-700 text-xs text-white">
-                  <input type="text" id="spk-exp-in" value="${savedSpeaker.exp}" class="w-full px-2.5 py-1.5 rounded bg-slate-900 border border-slate-700 text-xs text-white">
-                  <button onclick="saveSpeakerInfo()" class="px-3 py-1 rounded bg-amber-600 text-white text-xs font-bold">อัปเดตข้อมูลวิทยากร</button>
-                </div>
-              ` : ''}
+              <div class="space-y-2.5">
+				  ${savedSpeakers.map((spk, idx) => `
+					<div class="p-3.5 rounded-2xl bg-slate-900/95 border border-indigo-500/30 space-y-1 text-xs text-slate-200">
+					  <div class="text-[11px] font-bold text-indigo-400">วิทยากรท่านที่ ${idx + 1}</div>
+					  <p><strong class="text-indigo-300">ชื่อและตำแหน่ง:</strong> <span id="spk-name-disp-${idx}">${spk.name}</span></p>
+					  <p><strong class="text-sky-300">สถานที่/ประเภทการปฏิบัติงาน:</strong> <span id="spk-role-disp-${idx}">${spk.role}</span></p>
+					  <p><strong class="text-amber-300">ประสบการณ์ที่เกี่ยวข้อง:</strong> <span id="spk-exp-disp-${idx}">${spk.exp}</span></p>
+					</div>
+				  `).join('')}
+				</div>
+				${isAdmin ? `
+				  <div class="p-3 rounded-xl bg-slate-950 border border-amber-500/30 space-y-3 mt-3">
+					<p class="text-[11px] font-bold text-amber-400">แก้ไขข้อมูลวิทยากรทั้ง 4 ท่าน (เฉพาะอาจารย์):</p>
+					${savedSpeakers.map((spk, idx) => `
+					  <div class="p-2.5 rounded-lg bg-slate-900 border border-slate-800 space-y-1.5">
+						<p class="text-[11px] font-bold text-slate-300">ท่านที่ ${idx + 1}</p>
+						<input type="text" id="spk-name-in-${idx}" value="${spk.name}" class="w-full px-2.5 py-1.5 rounded bg-slate-950 border border-slate-700 text-xs text-white">
+						<input type="text" id="spk-role-in-${idx}" value="${spk.role}" class="w-full px-2.5 py-1.5 rounded bg-slate-950 border border-slate-700 text-xs text-white">
+						<input type="text" id="spk-exp-in-${idx}" value="${spk.exp}" class="w-full px-2.5 py-1.5 rounded bg-slate-950 border border-slate-700 text-xs text-white">
+					  </div>
+					`).join('')}
+					<button onclick="saveSpeakerInfo()" class="px-3 py-1.5 rounded bg-amber-600 text-white text-xs font-bold">อัปเดตข้อมูลวิทยากรทั้ง 4 ท่าน</button>
+				  </div>
+				` : ''}
               <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-200">
                 💡 <strong>คำแนะนำระหว่างฟัง (25 นาที):</strong> จับประเด็นเรื่องสถานการณ์ ความขัดแย้ง เหตุผลในการตัดสินใจ และบทเรียนที่ได้รับ โดยไม่จำเป็นต้องจดทุกคำพูด
               </div>
@@ -593,7 +625,16 @@
                 <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">PAGE 5 • ETHICS LISTENING CARD (46–58 นาที)</span>
                 <span class="text-xs text-slate-400">กลุ่ม ${studentProfile?.group_no || '?'}</span>
               </div>
-              <h2 class="text-xl font-extrabold text-white">📋 บันทึกประเด็นสำคัญจากประสบการณ์วิทยากร</h2>
+				<div>
+				  <label class="block text-xs font-bold text-indigo-300 mb-1">เลือกวิทยากรที่ต้องการบันทึก (ท่านที่ 1–4) *</label>
+				  <select id="p5-speaker" class="w-full p-2.5 rounded-xl bg-slate-900 border border-indigo-500/40 text-xs text-white font-bold">
+					<option value="1">วิทยากรท่านที่ 1: ภก.กิติศักดิ์ อ่อนปาน (สสจ.พิษณุโลก)</option>
+					<option value="2">วิทยากรท่านที่ 2: ภก.ชัยวัฒน์ บูรณะชนอาภา (รพ.มหาวิทยาลัยนเรศวร)</option>
+					<option value="3">วิทยากรท่านที่ 3: ภก.ปฏิพัทธ์ ศึกษา (ผู้แทนยา)</option>
+					<option value="4">วิทยากรท่านที่ 4</option>
+				  </select>
+				</div>
+			  <h2 class="text-xl font-extrabold text-white">📋 บันทึกประเด็นสำคัญจากประสบการณ์วิทยากร</h2>
               <p class="text-xs text-slate-300">เลือกหนึ่งประสบการณ์ที่กลุ่มเห็นว่าน่าสนใจที่สุด แล้วบันทึกครบทั้ง 6 มิติ</p>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
@@ -648,7 +689,16 @@
                 <p>• เน้นเหตุผล ทางเลือก ข้อจำกัด หรือบทเรียนเมื่อมองย้อนกลับ</p>
                 <p>• หลีกเลี่ยงการถามข้อมูลลับหรือชื่อบุคคล/สถานที่</p>
               </div>
-              <textarea id="p6-q" rows="4" placeholder="พิมพ์คำถาม 1 ข้อของกลุ่มถึงวิทยากร..."
+            <div>
+			  <label class="block text-xs font-bold text-amber-300 mb-1">เลือกวิทยากรที่ต้องการถาม (ท่านที่ 1–4) *</label>
+			  <select id="p6-speaker" class="w-full p-2.5 rounded-xl bg-slate-900 border border-amber-500/40 text-xs text-white font-bold">
+				<option value="1">วิทยากรท่านที่ 1: ภก.กิติศักดิ์ อ่อนปาน (สสจ.พิษณุโลก)</option>
+				<option value="2">วิทยากรท่านที่ 2: ภก.ชัยวัฒน์ บูรณะชนอาภา (รพ.มหาวิทยาลัยนเรศวร)</option>
+				<option value="3">วิทยากรท่านที่ 3: ภก.ปฏิพัทธ์ ศึกษา (ผู้แทนยา)</option>
+				<option value="4">วิทยากรท่านที่ 4</option>
+			  </select>
+			</div>
+			<textarea id="p6-q" rows="4" placeholder="พิมพ์คำถาม 1 ข้อของกลุ่มถึงวิทยากร..."
                 class="w-full p-3.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-500"></textarea>
               <div class="flex justify-between items-center">
                 <span id="p6-status" class="text-xs text-emerald-400 font-semibold"></span>
@@ -872,18 +922,16 @@
       }
     }
 
-    function saveSpeakerInfo() {
-      const info = {
-        name: document.getElementById('spk-name-in').value.trim(),
-        role: document.getElementById('spk-role-in').value.trim(),
-        exp: document.getElementById('spk-exp-in').value.trim()
-      };
-      localStorage.setItem('lab5_speaker_info', JSON.stringify(info));
-      document.getElementById('spk-name-disp').textContent = info.name;
-      document.getElementById('spk-role-disp').textContent = info.role;
-      document.getElementById('spk-exp-disp').textContent = info.exp;
-      alert('อัปเดตข้อมูลวิทยากรเรียบร้อยแล้ว');
-    }
+    async function saveSpeakerInfo() {
+	  const updatedSpeakers = [0, 1, 2, 3].map(idx => ({
+		name: document.getElementById(`spk-name-${idx}`).value.trim(),
+		role: document.getElementById(`spk-role-${idx}`).value.trim(),
+		exp: document.getElementById(`spk-exp-${idx}`).value.trim()
+	  }));
+
+	  // นำ updatedSpeakers ไปอัปเดตลง Supabase / state เดิมของคุณ
+	  // เช่น await supabase.from('...').upsert({ ..., speakers: updatedSpeakers })
+	}
 
     // =========================================================================
     // SUBMIT HANDLERS (SUPABASE SCHEMA: ethics)
@@ -926,35 +974,41 @@
     }
 
     async function submitPage5Card() {
-      if (!requireGroup()) return;
-      const sit = document.getElementById('p5-sit').value.trim();
-      const chal = document.getElementById('p5-chal').value.trim();
-      const stake = document.getElementById('p5-stake').value.trim();
-      const dec = document.getElementById('p5-dec').value.trim();
-      const reas = document.getElementById('p5-reas').value.trim();
-      const les = document.getElementById('p5-les').value.trim();
-      if (!sit || !chal || !dec || !les) return alert('กรุณากรอกข้อมูล Listening Card ให้ครบถ้วน');
-      await db.from('lab_group_responses').upsert({
-        lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: 'p5_listening_card',
-        text_val: `Sit: ${sit} | Chal: ${chal} | Dec: ${dec} | Lesson: ${les}`,
-        json_val: { situation: sit, challenge: chal, stakeholders: stake, decision: dec, reasoning: reas, lesson: les },
-        submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
-      }, { onConflict: 'lab_no,group_no,step_key' });
-      document.getElementById('p5-status').textContent = `✓ บันทึก Listening Card ของกลุ่มที่ ${studentProfile.group_no} แล้ว`;
-      await refreshLiveSection(5);
-    }
+	  if (!requireGroup()) return;
+	  const spkNo = document.getElementById('p5-speaker').value;
+	  const spkName = document.getElementById('p5-speaker').selectedOptions[0].text;
+	  const sit = document.getElementById('p5-sit').value.trim();
+	  const chal = document.getElementById('p5-chal').value.trim();
+	  const stake = document.getElementById('p5-stake').value.trim();
+	  const dec = document.getElementById('p5-dec').value.trim();
+	  const reas = document.getElementById('p5-reas').value.trim();
+	  const les = document.getElementById('p5-les').value.trim();
+	  if (!sit || !chal || !dec || !les) return alert('กรุณากรอกข้อมูล Listening Card ให้ครบถ้วน');
+	  await db.from('lab_group_responses').upsert({
+		lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: `p5_listening_card_${spkNo}`,
+		text_val: `[${spkName}] Sit: ${sit} | Chal: ${chal} | Dec: ${dec} | Lesson: ${les}`,
+		json_val: { speaker_no: spkNo, speaker_name: spkName, situation: sit, challenge: chal, stakeholders: stake, decision: dec, reasoning: reas, lesson: les },
+		submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
+	  }, { onConflict: 'lab_no,group_no,step_key' });
+	  document.getElementById('p5-status').textContent = `✓ บันทึก Listening Card (${spkName}) ของกลุ่มที่ ${studentProfile.group_no} แล้ว`;
+	  await refreshLiveSection(5);
+	}
 
-    async function submitPage6Question() {
-      if (!requireGroup()) return;
-      const q = document.getElementById('p6-q').value.trim();
-      if (!q) return alert('กรุณาพิมพ์คำถามถึงวิทยากร');
-      await db.from('lab_group_responses').upsert({
-        lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: 'p6_ask_speaker',
-        text_val: q, submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
-      }, { onConflict: 'lab_no,group_no,step_key' });
-      document.getElementById('p6-status').textContent = `✓ ส่งคำถามของกลุ่มที่ ${studentProfile.group_no} แล้ว`;
-      await refreshLiveSection(6);
-    }
+	async function submitPage6Question() {
+	  if (!requireGroup()) return;
+	  const spkNo = document.getElementById('p6-speaker').value;
+	  const spkName = document.getElementById('p6-speaker').selectedOptions[0].text;
+	  const q = document.getElementById('p6-q').value.trim();
+	  if (!q) return alert('กรุณาพิมพ์คำถามถึงวิทยากร');
+	  await db.from('lab_group_responses').upsert({
+		lab_no: LAB_NO, group_no: studentProfile.group_no, step_key: `p6_ask_speaker_${spkNo}`,
+		text_val: `[ถึง ${spkName}] ${q}`,
+		json_val: { speaker_no: spkNo, speaker_name: spkName, question: q },
+		submitted_by: studentProfile.student_id, updated_at: new Date().toISOString()
+	  }, { onConflict: 'lab_no,group_no,step_key' });
+	  document.getElementById('p6-status').textContent = `✓ ส่งคำถามถึง ${spkName} (กลุ่มที่ ${studentProfile.group_no}) แล้ว`;
+	  await refreshLiveSection(6);
+	}
 
     async function submitPage7Reality() {
       if (!requireGroup()) return;
@@ -1076,7 +1130,7 @@
         if (cntEl) cntEl.textContent = (data || []).length;
       }
       else if (p === 5) {
-        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p5_listening_card').order('group_no');
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).like('step_key', 'p5_listening_card%').order('group_no');
         const rows = data || [];
         const cntEl = document.getElementById('p5-grp-count');
         const listEl = document.getElementById('p5-results-list');
@@ -1086,7 +1140,7 @@
           const j = r.json_val || {};
           return `
             <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs space-y-1">
-              <span class="font-extrabold text-emerald-400">กลุ่มที่ ${r.group_no}</span>
+              <span class="font-extrabold text-emerald-400">กลุ่มที่ ${r.group_no} ${j.speaker_name ? `• ${j.speaker_name}` : ''}</span>
               <p><strong class="text-sky-300">Situation:</strong> ${j.situation || '-'}</p>
               <p><strong class="text-rose-300">Challenge:</strong> ${j.challenge || '-'}</p>
               <p><strong class="text-amber-300">Decision &amp; Reason:</strong> ${j.decision || '-'} (${j.reasoning || '-'})</p>
@@ -1095,7 +1149,7 @@
         }).join('') || `<p class="text-xs text-slate-500">รอ Listening Card จากแต่ละกลุ่ม...</p>`;
       }
       else if (p === 6) {
-        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p6_ask_speaker').order('group_no');
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).like('step_key', 'p6_ask_speaker%').order('group_no');
         const rows = data || [];
         const cntEl = document.getElementById('p6-grp-count');
         const listEl = document.getElementById('p6-results-list');
