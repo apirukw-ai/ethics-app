@@ -80,15 +80,15 @@
           <option value="1">Lab 1: Foundations of Ethical Thinking (พื้นฐานการคิดเชิงจริยธรรม)</option>
           <option value="2">Lab 2: Everyday Ethical Decision Making (การคิดและตัดสินใจทางจริยธรรมในชีวิตประจำวัน)</option>
           <option value="3">Lab 3: Professional Character &amp; Virtues (คุณธรรมและจริยธรรมของผู้ประกอบวิชาชีพ)</option>
-          <option value="4">Lab 4: Autonomy & Informed Consent (การเคารพการตัดสินใจและความยินยอม)</option>
+          <option value="4">Lab 4: Autonomy &amp; Informed Consent (การเคารพการตัดสินใจและความยินยอม)</option>
           <option value="5">Lab 5: Learning Professional Ethics from Practice (เรียนรู้จริยธรรมจากประสบการณ์วิชาชีพ • Guest Speaker)</option>
-          <option value="6">Lab 6: Justice & Resource Allocation (ความยุติธรรมและการจัดสรรทรัพยากร)</option>
-          <option value="7">Lab 7: Confidentiality & Privacy (การรักษาความลับและข้อมูลส่วนบุคคล)</option>
-          <option value="8">Lab 8: Truth-telling & Disclosure (การบอกความจริงและการเปิดเผยข้อมูล)</option>
+          <option value="6">Lab 6: Ethics in Community Pharmacy Practice (จริยธรรมในการปฏิบัติงานเภสัชกรรมชุมชน)</option>
+          <option value="7">Lab 7: Confidentiality &amp; Privacy (การรักษาความลับและข้อมูลส่วนบุคคล)</option>
+          <option value="8">Lab 8: Truth-telling &amp; Disclosure (การบอกความจริงและการเปิดเผยข้อมูล)</option>
           <option value="9">Lab 9: Conflict of Interest (ผลประโยชน์ทับซ้อนในวิชาชีพเภสัชกรรม)</option>
           <option value="10">Lab 10: Interprofessional Ethics (จริยธรรมการทำงานร่วมกับสหวิชาชีพ)</option>
           <option value="11">Lab 11: Case Seminar I (สัมมนากรณีศึกษาเชิงบูรณาการ 1)</option>
-          <option value="12">Lab 12: Case Seminar II & Synthesis (สัมมนากรณีศึกษา 2 และสรุปบทเรียน)</option>
+          <option value="12">Lab 12: Case Seminar II &amp; Synthesis (สัมมนากรณีศึกษา 2 และสรุปบทเรียน)</option>
         </select>
         <button onclick="reloadLabData()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700">
           ↻ รีเฟรชคำตอบล่าสุด
@@ -102,7 +102,7 @@
         </button>
         <button onclick="switchGradingTab('individual')" id="tab-btn-individual"
           class="px-4 py-2 rounded-lg text-xs font-extrabold text-slate-400 hover:text-white transition">
-          2. ประเมินรายบุคคล (90 คน • ฐานกลุ่ม + คะแนนเดี่ยว)
+          2. ประเมินรายบุคคล (<span id="tab-std-count">93</span> คน • ฐานกลุ่ม + คะแนนเดี่ยว)
         </button>
         <button onclick="switchGradingTab('overview')" id="tab-btn-overview"
           class="px-4 py-2 rounded-lg text-xs font-extrabold text-slate-400 hover:text-white transition">
@@ -123,7 +123,7 @@
       </div>
       <div class="glass rounded-xl p-3.5">
         <p class="text-[11px] text-slate-400 font-bold">นิสิตมีส่วนร่วมรายบุคคล</p>
-        <p id="kpi-indiv-active" class="text-xl font-extrabold text-amber-400 mt-0.5">0 / 90 คน</p>
+        <p id="kpi-indiv-active" class="text-xl font-extrabold text-amber-400 mt-0.5">0 / 93 คน</p>
       </div>
       <div class="glass rounded-xl p-3.5">
         <p class="text-[11px] text-slate-400 font-bold">คะแนนเฉลี่ยสุทธิ (Lab นี้)</p>
@@ -281,6 +281,45 @@
     let rubricScores = {};
     let indivAdjustments = {};
 
+    const RUBRIC_CONFIGS = {
+      2: [
+        ['c1_issue', 'C1 ปัญหา (4)', 4],
+        ['c2_stakeholder', 'C2 ผู้เกี่ยวข้อง (4)', 4],
+        ['c3_reasoning', 'C3 คุณค่า/เหตุผล (4)', 4],
+        ['c4_alternatives', 'C4 ทางเลือก (3)', 3],
+        ['c5_new_info', 'C5 ข้อมูลเปลี่ยน (3)', 3],
+        ['c6_listening', 'C6 การฟัง/ร่วม (2)', 2]
+      ],
+      3: [
+        ['c1_issue', 'C1 อธิบายคุณธรรม (3)', 3],
+        ['c2_stakeholder', 'C2 พฤติกรรมสังเกตได้ (4)', 4],
+        ['c3_reasoning', 'C3 ความสำคัญ/ผลกระทบ (3)', 3],
+        ['c4_alternatives', 'C4 ความขัดแย้งคุณธรรม (3)', 3],
+        ['c5_new_info', 'C5 ทางเลือก/Challenge (5)', 5],
+        ['c6_listening', 'C6 อภิปราย/รับฟัง (2)', 2]
+      ],
+      6: [
+        ['c1_issue', 'C1 ร่วมวิเคราะห์ 2 เคส (3)', 3],
+        ['c2_stakeholder', 'C2 เหตุผล/อ้างอิงข้อมูล (3)', 3],
+        ['c3_reasoning', 'C3 รับฟัง/ท้าทายสร้างสรรค์ (4)', 4],
+        ['c4_alternatives', 'C4 พิจารณาข้อมูลใหม่ (2)', 2],
+        ['c5_new_info', 'C5 ระบุปัญหา/ผู้เกี่ยวข้อง (4)', 4],
+        ['c6_listening', 'C6 ทางเลือก/แนวทางปฏิบัติ (4)', 4]
+      ],
+      default: [
+        ['c1_issue', 'C1 ปัญหา (4)', 4],
+        ['c2_stakeholder', 'C2 ผู้เกี่ยวข้อง (4)', 4],
+        ['c3_reasoning', 'C3 เหตุผลหลัก (4)', 4],
+        ['c4_alternatives', 'C4 ทางเลือก (3)', 3],
+        ['c5_new_info', 'C5 ข้อมูลใหม่ (3)', 3],
+        ['c6_listening', 'C6 การฟัง (2)', 2]
+      ]
+    };
+
+    function getRubricCols(labNo) {
+      return RUBRIC_CONFIGS[labNo] || RUBRIC_CONFIGS.default;
+    }
+
     document.getElementById('pin-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       if (document.getElementById('input-pin').value === INSTRUCTOR_PIN) {
@@ -341,6 +380,8 @@
           hint.innerHTML = `<strong>C1</strong> ระบุประเด็นสิทธิ/ความยินยอม (4) • <strong>C2</strong> ประเมินความสามารถตัดสินใจ Capacity (4) • <strong>C3</strong> เหตุผล Autonomy vs Beneficence (4) • <strong>C4</strong> ทางเลือกในการจัดการ (3) • <strong>C5</strong> ตอบสนองข้อจำกัด/สถานการณ์ (3) • <strong>C6</strong> การฟังและมีส่วนร่วม (2) • <em>รวม 20 คะแนน</em>`;
         } else if (currentLab === 5) {
           hint.innerHTML = `<strong>C1</strong> ระบุสถานการณ์และประเด็นจริยธรรม (4) • <strong>C2</strong> ผู้มีส่วนได้เสีย เหตุผล และข้อจำกัด (4) • <strong>C3</strong> เชื่อมโยงหลักคิดทางจริยธรรม (4) • <strong>C4</strong> สรุปบทเรียนและประยุกต์ใช้อนาคต (3) • <strong>C5</strong> ตั้งคำถามและวิเคราะห์เชิงลึก (3) • <strong>C6</strong> การมีส่วนร่วม รับฟัง และสะท้อนคิด (2) • <em>รวม 20 คะแนน</em>`;
+        } else if (currentLab === 6) {
+          hint.innerHTML = `<strong>ส่วนการมีส่วนร่วม (12 คะแนน):</strong> <strong>C1</strong> ร่วมวิเคราะห์ 2 เคส (3) • <strong>C2</strong> เหตุผลอ้างอิงข้อมูล (3) • <strong>C3</strong> รับฟัง &amp; ท้าทายสร้างสรรค์ (4) • <strong>C4</strong> พิจารณาข้อมูลใหม่ (2) | <strong>ส่วนคุณภาพวิเคราะห์ (8 คะแนน):</strong> <strong>C5</strong> ระบุปัญหา &amp; ผู้เกี่ยวข้อง (4) • <strong>C6</strong> ประเมินทางเลือก &amp; แนวทางปฏิบัติ (4) • <em>รวม 20 คะแนน</em>`;
         } else {
           hint.innerHTML = `<strong>C1</strong> ระบุปัญหาจริยธรรม (4) • <strong>C2</strong> ผู้เกี่ยวข้อง/ผลกระทบ (4) • <strong>C3</strong> เหตุผลเชื่อมหลักจริยธรรม (4) • <strong>C4</strong> ทางเลือกหลากหลาย (3) • <strong>C5</strong> ตอบสนองข้อมูลใหม่ (3) • <strong>C6</strong> การฟัง/มีส่วนร่วม (2)`;
         }
@@ -375,6 +416,9 @@
         studentsList = stdRes.data || [];
         groupAssignments = {};
         (grpRes.data || []).forEach(g => groupAssignments[g.student_id] = g);
+
+        const cntSpan = document.getElementById('tab-std-count');
+        if (cntSpan && studentsList.length > 0) cntSpan.textContent = studentsList.length;
 
         badge.className = 'px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 text-xs font-bold border border-emerald-500/30';
         badge.textContent = `● เชื่อมต่อแล้ว (${studentsList.length} คน)`;
@@ -473,7 +517,7 @@
 
       document.getElementById('kpi-group-sub').textContent = `${submittedGroups} / 10 กลุ่ม`;
       document.getElementById('kpi-group-graded').textContent = `${gradedGroups} / 10 กลุ่ม`;
-      document.getElementById('kpi-indiv-active').textContent = `${activeIndivIds.size} / ${studentsList.length} คน`;
+      document.getElementById('kpi-indiv-active').textContent = `${activeIndivIds.size} / ${studentsList.length || 93} คน`;
       document.getElementById('kpi-avg-score').textContent = `${avg} / 20`;
     }
 
@@ -484,12 +528,88 @@
       }
 
       return rows.map(r => {
-        // Lab 5 Group steps (Guest Speaker Session)
-        if (r.step_key === 'p5_listening_card') {
+        // Lab 6 Group steps (Community Pharmacy Practice)
+        if (r.step_key === 'p6_c1_facts') {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-sky-500/30 text-xs space-y-1">
+              <p class="font-bold text-sky-400">Page 6 — Case 1 Facts &amp; Stakeholders:</p>
+              <p class="text-[11px] text-slate-300"><strong>Facts:</strong> ${j.facts || '-'} | <strong>ขาดข้อมูล:</strong> ${j.missing || '-'} | <strong>ผู้เกี่ยวข้อง:</strong> ${j.stakeholders || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p7_c1_issues') {
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-purple-500/30 text-xs space-y-1">
+              <div class="flex justify-between items-center flex-wrap gap-1">
+                <p class="font-bold text-purple-400">Page 7 — Case 1 Ethical Issues:</p>
+                <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-200 font-bold text-[11px]">${(r.selected_items || []).join(', ')}</span>
+              </div>
+              <p class="text-slate-200">${r.text_val || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p8_c1_factors') {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-amber-500/30 text-xs space-y-1">
+              <p class="font-bold text-amber-400">Page 8 — Case 1 Priority Factors:</p>
+              <p class="text-[11px] text-slate-300"><strong>1:</strong> ${j.rank1 || '-'} | <strong>2:</strong> ${j.rank2 || '-'} | <strong>3:</strong> ${j.rank3 || '-'}</p>
+              ${j.note ? `<p class="text-[11px] text-slate-400">${j.note}</p>` : ''}
+            </div>`;
+        }
+        if (r.step_key === 'p9_c1_decision') {
           const j = r.json_val || {};
           return `
             <div class="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-xs space-y-1">
-              <p class="font-bold text-emerald-400">Page 5 — Ethics Listening Card (6 มิติ):</p>
+              <p class="font-bold text-emerald-400">Page 9 — Case 1 Group Decision:</p>
+              <p class="text-[11px] text-slate-300"><strong>แนวทาง:</strong> ${j.action || '-'} | <strong>เหตุผล:</strong> ${j.reasoning || '-'} | <strong>สื่อสาร:</strong> ${j.communication || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p12_c2_info') {
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-sky-500/30 text-xs space-y-1">
+              <p class="font-bold text-sky-400">Page 12 — Case 2 Missing Info &amp; Risk:</p>
+              <p class="text-amber-300 text-[11px]">ข้อมูล: ${(r.selected_items || []).join(', ')}</p>
+              <p class="text-slate-200">${r.text_val || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p13_c2_tension') {
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-indigo-500/30 text-xs space-y-1">
+              <p class="font-bold text-indigo-400">Page 13 — Case 2 Ethical Tension Map:</p>
+              <p class="text-sky-300 text-[11px]">คุณค่า/หน้าที่: ${(r.selected_items || []).join(', ')}</p>
+              <p class="text-slate-200">${r.text_val || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p14_c2_challenge') {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-amber-500/30 text-xs space-y-1">
+              <p class="font-bold text-amber-400">Page 14 — Case 2 Challenge A &amp; B:</p>
+              <p class="text-[11px] text-slate-300"><strong class="text-rose-300">Ch A:</strong> ${j.challenge_a || '-'} | <strong class="text-amber-300">Ch B:</strong> ${j.challenge_b || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p15_c2_decision') {
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-xs space-y-1">
+              <p class="font-bold text-emerald-400">Page 15 — Case 2 Group Decision:</p>
+              <p class="text-slate-200">${r.text_val || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p16_compare') {
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-amber-500/30 text-xs space-y-1">
+              <p class="font-bold text-amber-400">Page 16 — Compare Cases:</p>
+              <p class="text-emerald-300 text-[11px]">หลักคิดร่วม: ${(r.selected_items || []).join(', ')}</p>
+              ${r.text_val ? `<p class="text-slate-200">${r.text_val}</p>` : ''}
+            </div>`;
+        }
+
+        // Lab 5 Group steps (supports both single and 4-speaker keys)
+        if (String(r.step_key).startsWith('p5_listening_card')) {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-xs space-y-1">
+              <p class="font-bold text-emerald-400">Page 5 — Ethics Listening Card ${j.speaker_name ? `(${j.speaker_name})` : ''}:</p>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-1 text-[11px] text-slate-300">
                 <div><strong class="text-sky-400">Situation:</strong> ${j.situation || '-'}</div>
                 <div><strong class="text-rose-400">Challenge:</strong> ${j.challenge || '-'}</div>
@@ -500,10 +620,10 @@
               </div>
             </div>`;
         }
-        if (r.step_key === 'p6_ask_speaker') {
+        if (String(r.step_key).startsWith('p6_ask_speaker')) {
           return `
             <div class="p-3 rounded-xl bg-slate-950/80 border border-amber-500/30 text-xs space-y-1">
-              <p class="font-bold text-amber-400">Page 6 — Ask the Professional (คำถามถึงวิทยากร):</p>
+              <p class="font-bold text-amber-400">Page 6 — Ask the Professional:</p>
               <p class="text-slate-200">${r.text_val || '-'}</p>
             </div>`;
         }
@@ -541,58 +661,8 @@
               <p class="text-[11px] text-slate-300"><strong>เรียนรู้เพิ่ม:</strong> ${j.learn || '-'} | <strong>ทักษะ:</strong> ${j.skill || '-'} | <strong>วิธีเตรียม:</strong> ${j.how || '-'}</p>
             </div>`;
         }
-        // Lab 4 Group steps
-        if (r.step_key === 'p6_analysis') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-sky-400">Page 6 — Group Case Analysis (Informed Consent):</p>
-              <p class="text-slate-200 whitespace-pre-line">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        // Lab 3 Group steps
-        if (r.step_key === 'p6_group_virtue') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs flex justify-between items-center">
-              <span class="font-bold text-emerald-400">Page 6 — คุณธรรมที่กลุ่มเลือก:</span>
-              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-200 font-bold">${r.decision_val || '-'}</span>
-            </div>`;
-        }
-        if (r.step_key === 'p7_define_virtue') {
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-sky-400">Page 7 — นิยามความหมายคุณธรรม:</p>
-              <p class="text-slate-200">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p8_why_matters') {
-          const j = r.json_val || {};
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-rose-400">Page 8 — Why It Matters:</p>
-              <p class="text-amber-300 text-[11px]">ผลกระทบ: ${(j.impacts || []).map(x => x.split(' (')[0]).join(', ')} | เกี่ยวข้อง: ${(j.stakeholders || []).join(', ')}</p>
-              <p class="text-slate-200">${r.text_val || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p9_evidence') {
-          const j = r.json_val || {};
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-              <p class="font-bold text-emerald-400">Page 9 — Observable Evidence (3 พฤติกรรม):</p>
-              <p class="text-slate-200 text-[11px]">1) ${j.b1 || '-'} • 2) ${j.b2 || '-'} • 3) ${j.b3 || '-'}</p>
-            </div>`;
-        }
-        if (r.step_key === 'p19_virtue_map') {
-          const j = r.json_val || {};
-          return `
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-xs space-y-1">
-              <div class="flex justify-between items-center">
-                <p class="font-bold text-emerald-400">Page 19 — Virtue Map:</p>
-                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-200 font-bold">${j.virtue || r.decision_val || '-'}</span>
-              </div>
-              <p class="text-[11px] text-slate-300"><strong>สำคัญ:</strong> ${j.why || '-'} | <strong>พฤติกรรม:</strong> ${j.behavior || '-'}</p>
-            </div>`;
-        }
-        // Generic fallback for Labs 1-12
+
+        // Generic fallback for all other Labs
         return `
           <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
             <p class="font-bold text-sky-400">ขั้นตอน: ${r.step_key} ${r.decision_val ? `(${r.decision_val})` : ''}</p>
@@ -603,6 +673,7 @@
 
     function renderGroupCards() {
       const container = document.getElementById('group-cards-container');
+      const cols = getRubricCols(currentLab);
       let html = '';
 
       for (let g = 1; g <= 10; g++) {
@@ -635,14 +706,7 @@
 
               <div class="lg:col-span-5 bg-slate-900/90 rounded-xl p-4 border border-slate-800 space-y-3">
                 <div class="grid grid-cols-3 gap-2">
-                  ${[
-                    ['c1_issue', 'C1 ปัญหา (4)', 4],
-                    ['c2_stakeholder', 'C2 ผู้เกี่ยวข้อง (4)', 4],
-                    ['c3_reasoning', 'C3 เหตุผลหลัก (4)', 4],
-                    ['c4_alternatives', 'C4 ทางเลือก (3)', 3],
-                    ['c5_new_info', 'C5 ข้อมูลใหม่ (3)', 3],
-                    ['c6_listening', 'C6 การฟัง (2)', 2]
-                  ].map(([col, label, max]) => `
+                  ${cols.map(([col, label, max]) => `
                     <div>
                       <label class="block text-[11px] font-bold text-slate-300 mb-1">${label}</label>
                       <input type="number" step="0.5" min="0" max="${max}" value="${sc[col]}"
@@ -707,15 +771,14 @@
     }
 
     async function autoFillFullSample() {
-      if (!confirm('กำหนดคะแนนเริ่มต้น 16 คะแนน (3, 3, 3, 2.5, 2.5, 2) ให้เฉพาะกลุ่มที่ยังได้ 0 คะแนนหรือไม่?')) return;
+      const cols = getRubricCols(currentLab);
+      if (!confirm('กำหนดคะแนนเริ่มต้น (~80%) ให้เฉพาะกลุ่มที่ยังได้ 0 คะแนนหรือไม่?')) return;
       for (let g = 1; g <= 10; g++) {
         if (getGroupRubricTotal(g) === 0) {
-          rubricScores[g] = {
-            c1_issue: 3, c2_stakeholder: 3, c3_reasoning: 3,
-            c4_alternatives: 2.5, c5_new_info: 2.5, c6_listening: 2,
-            feedback: rubricScores[g].feedback || ''
-          };
-          await updateGroupRubric(g, 'c6_listening', 2, 2);
+          cols.forEach(([col, , max]) => {
+            rubricScores[g][col] = +(max * 0.8).toFixed(1);
+          });
+          await updateGroupRubric(g, 'c6_listening', rubricScores[g].c6_listening, cols[5][2]);
         }
       }
       renderGroupCards();
@@ -726,7 +789,16 @@
       if (items.length === 0) return { count: 0, html: '<span class="text-slate-500">ยังไม่ส่งคำตอบเดี่ยว</span>' };
 
       const badges = items.map(it => {
-        // Lab 5 individual badges
+        // Lab 6 badges
+        if (it.step_key === 'p5_c1_vote') return `<span class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300">C1 Vote: ${it.choice_val}</span>`;
+        if (it.step_key === 'p11_c2_vote') return `<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">C2 Vote1: ${it.choice_val}</span>`;
+        if (it.step_key === 'p15_c2_revote') return `<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">C2 Re-vote: ${it.choice_val}</span>`;
+        if (it.step_key === 'p16_exit_reflection') {
+          const j = it.json_val || {};
+          const tip = `เรียนรู้: ${j.learned||'-'} | หลักคิด: ${j.principle||'-'} | ไม่ละเลย: ${j.never_neglect||'-'}`.replace(/"/g, '&quot;');
+          return `<span title="${tip}" class="px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 cursor-help">✓ Exit Ref</span>`;
+        }
+        // Lab 5 badges
         if (it.step_key === 'p2_connect') return `<span title="${(it.text_val||'').replace(/"/g, '&quot;')}" class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 cursor-help">Connect: ${it.choice_val}</span>`;
         if (it.step_key === 'p3_pretalk_vote') return `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">Pre-talk: ${it.choice_val}</span>`;
         if (it.step_key === 'p4_observe_prep') return `<span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300">Listen (${(it.reason_tags||[]).length})</span>`;
@@ -736,15 +808,8 @@
           const tip = `ต่างเดิม: ${j.diff||'-'} | บทเรียน: ${j.lesson||'-'} | เริ่มวันนี้: ${j.start_today||'-'}`.replace(/"/g, '&quot;');
           return `<span title="${tip}" class="px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 cursor-help">✓ Exit Ref</span>`;
         }
-        // Lab 4 individual badges
-        if (it.step_key === 'p3_vote') return `<span class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300">Vote: ${it.choice_val}</span>`;
-        if (it.step_key === 'p19_exit') return `<span class="px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 cursor-help" title="${(it.text_val||'').replace(/"/g, '&quot;')}">✓ Reflection</span>`;
-        // Lab 3 individual badges
-        if (it.step_key === 'p3_choose_prof') return `<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Choose (${(it.reason_tags||[]).length})</span>`;
-        if (it.step_key === 'p5_top3_vote') return `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">Top3 Vote</span>`;
-        if (it.step_key === 'p12_conflict_vote') return `<span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300">Conflict: ${it.choice_val}</span>`;
-        if (it.step_key === 'p14_dilemma_vote') return `<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">Dilemma: ${it.choice_val}</span>`;
-        return `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">${it.step_key}: ${it.choice_val || it.text_val || '✓'}</span>`;
+        // Generic badges
+        return `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">${it.step_key}: ${it.choice_val || '✓'}</span>`;
       });
 
       return { count: items.length, html: `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` };
@@ -899,6 +964,7 @@
     }
 
     function exportCurrentLabExcel() {
+      const cols = getRubricCols(currentLab);
       const indivSheet = studentsList.map(std => {
         const grp = groupAssignments[std.student_id] || {};
         const gNo = grp.group_no || 0;
@@ -923,17 +989,11 @@
       const groupSheet = [];
       for (let g = 1; g <= 10; g++) {
         const sc = rubricScores[g];
-        groupSheet.push({
-          'กลุ่มที่': g,
-          'C1_ระบุปัญหา(4)': sc.c1_issue,
-          'C2_ผู้เกี่ยวข้อง(4)': sc.c2_stakeholder,
-          'C3_เหตุผลหลัก(4)': sc.c3_reasoning,
-          'C4_ทางเลือก(3)': sc.c4_alternatives,
-          'C5_ข้อมูลใหม่(3)': sc.c5_new_info,
-          'C6_การฟัง(2)': sc.c6_listening,
-          'คะแนนรวมกลุ่ม(20)': getGroupRubricTotal(g),
-          'Feedback': sc.feedback || ''
-        });
+        const row = { 'กลุ่มที่': g };
+        cols.forEach(([col, label]) => { row[label] = sc[col]; });
+        row['คะแนนรวมกลุ่ม(20)'] = getGroupRubricTotal(g);
+        row['Feedback'] = sc.feedback || '';
+        groupSheet.push(row);
       }
 
       const wb = XLSX.utils.book_new();
