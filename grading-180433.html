@@ -81,7 +81,7 @@
           <option value="2">Lab 2: Everyday Ethical Decision Making (การคิดและตัดสินใจทางจริยธรรมในชีวิตประจำวัน)</option>
           <option value="3">Lab 3: Professional Character &amp; Virtues (คุณธรรมและจริยธรรมของผู้ประกอบวิชาชีพ)</option>
           <option value="4">Lab 4: Autonomy & Informed Consent (การเคารพการตัดสินใจและความยินยอม)</option>
-          <option value="5">Lab 5: Beneficence & Non-maleficence (การทำประโยชน์และไม่ก่ออันตราย)</option>
+          <option value="5">Lab 5: Learning Professional Ethics from Practice (เรียนรู้จริยธรรมจากประสบการณ์วิชาชีพ • Guest Speaker)</option>
           <option value="6">Lab 6: Justice & Resource Allocation (ความยุติธรรมและการจัดสรรทรัพยากร)</option>
           <option value="7">Lab 7: Confidentiality & Privacy (การรักษาความลับและข้อมูลส่วนบุคคล)</option>
           <option value="8">Lab 8: Truth-telling & Disclosure (การบอกความจริงและการเปิดเผยข้อมูล)</option>
@@ -339,6 +339,8 @@
           hint.innerHTML = `<strong>C1</strong> อธิบายคุณธรรมได้ชัดเจน (3) • <strong>C2</strong> แปลงเป็นพฤติกรรมที่สังเกตได้ (4) • <strong>C3</strong> วิเคราะห์ความสำคัญ/ผลกระทบ (3) • <strong>C4</strong> วิเคราะห์ความขัดแย้งระหว่างคุณธรรม (3) • <strong>C5</strong> ทางเลือก/เหตุผล &amp; ตอบสนอง Challenge (5) • <strong>C6</strong> การอภิปรายและรับฟัง (2) • <em>รวม 20 คะแนน</em>`;
         } else if (currentLab === 4) {
           hint.innerHTML = `<strong>C1</strong> ระบุประเด็นสิทธิ/ความยินยอม (4) • <strong>C2</strong> ประเมินความสามารถตัดสินใจ Capacity (4) • <strong>C3</strong> เหตุผล Autonomy vs Beneficence (4) • <strong>C4</strong> ทางเลือกในการจัดการ (3) • <strong>C5</strong> ตอบสนองข้อจำกัด/สถานการณ์ (3) • <strong>C6</strong> การฟังและมีส่วนร่วม (2) • <em>รวม 20 คะแนน</em>`;
+        } else if (currentLab === 5) {
+          hint.innerHTML = `<strong>C1</strong> ระบุสถานการณ์และประเด็นจริยธรรม (4) • <strong>C2</strong> ผู้มีส่วนได้เสีย เหตุผล และข้อจำกัด (4) • <strong>C3</strong> เชื่อมโยงหลักคิดทางจริยธรรม (4) • <strong>C4</strong> สรุปบทเรียนและประยุกต์ใช้อนาคต (3) • <strong>C5</strong> ตั้งคำถามและวิเคราะห์เชิงลึก (3) • <strong>C6</strong> การมีส่วนร่วม รับฟัง และสะท้อนคิด (2) • <em>รวม 20 คะแนน</em>`;
         } else {
           hint.innerHTML = `<strong>C1</strong> ระบุปัญหาจริยธรรม (4) • <strong>C2</strong> ผู้เกี่ยวข้อง/ผลกระทบ (4) • <strong>C3</strong> เหตุผลเชื่อมหลักจริยธรรม (4) • <strong>C4</strong> ทางเลือกหลากหลาย (3) • <strong>C5</strong> ตอบสนองข้อมูลใหม่ (3) • <strong>C6</strong> การฟัง/มีส่วนร่วม (2)`;
         }
@@ -482,6 +484,63 @@
       }
 
       return rows.map(r => {
+        // Lab 5 Group steps (Guest Speaker Session)
+        if (r.step_key === 'p5_listening_card') {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-xs space-y-1">
+              <p class="font-bold text-emerald-400">Page 5 — Ethics Listening Card (6 มิติ):</p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-1 text-[11px] text-slate-300">
+                <div><strong class="text-sky-400">Situation:</strong> ${j.situation || '-'}</div>
+                <div><strong class="text-rose-400">Challenge:</strong> ${j.challenge || '-'}</div>
+                <div><strong class="text-amber-300">Stakeholders:</strong> ${j.stakeholders || '-'}</div>
+                <div><strong class="text-emerald-300">Decision:</strong> ${j.decision || '-'}</div>
+                <div><strong class="text-indigo-300">Reasoning:</strong> ${j.reasoning || '-'}</div>
+                <div><strong class="text-purple-300">Lesson:</strong> ${j.lesson || '-'}</div>
+              </div>
+            </div>`;
+        }
+        if (r.step_key === 'p6_ask_speaker') {
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-amber-500/30 text-xs space-y-1">
+              <p class="font-bold text-amber-400">Page 6 — Ask the Professional (คำถามถึงวิทยากร):</p>
+              <p class="text-slate-200">${r.text_val || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p7_reality_vs_class') {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
+              <p class="font-bold text-sky-400">Page 7 — Reality vs Classroom:</p>
+              <p class="text-[11px] text-slate-300"><strong class="text-emerald-400">สอดคล้อง:</strong> ${j.match || '-'} | <strong class="text-amber-300">แตกต่าง:</strong> ${j.diff || '-'} | <strong class="text-rose-400">ข้อจำกัดจริง:</strong> ${j.limit || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p8_ethical_insight') {
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
+              <div class="flex justify-between items-center">
+                <p class="font-bold text-purple-400">Page 8 — Ethical Insight:</p>
+                <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-200 font-bold">${(r.selected_items || []).map(x => x.split(' (')[0]).join(', ')}</span>
+              </div>
+              <p class="text-slate-200">${r.text_val || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p9_group_synthesis') {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-xs space-y-1">
+              <p class="font-bold text-emerald-400">Page 9 — Group Synthesis (3 บทเรียน):</p>
+              <p class="text-[11px] text-slate-300"><strong class="text-sky-300">หลักคิด:</strong> ${j.principle || '-'} | <strong class="text-amber-300">ความท้าทาย:</strong> ${j.challenge || '-'} | <strong class="text-emerald-300">แนวทางใช้จริง:</strong> ${j.action || '-'}</p>
+            </div>`;
+        }
+        if (r.step_key === 'p10_group_prepare') {
+          const j = r.json_val || {};
+          return `
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
+              <p class="font-bold text-amber-400">Page 10 — What Would You Prepare?:</p>
+              <p class="text-[11px] text-slate-300"><strong>เรียนรู้เพิ่ม:</strong> ${j.learn || '-'} | <strong>ทักษะ:</strong> ${j.skill || '-'} | <strong>วิธีเตรียม:</strong> ${j.how || '-'}</p>
+            </div>`;
+        }
         // Lab 4 Group steps
         if (r.step_key === 'p6_analysis') {
           return `
@@ -667,6 +726,16 @@
       if (items.length === 0) return { count: 0, html: '<span class="text-slate-500">ยังไม่ส่งคำตอบเดี่ยว</span>' };
 
       const badges = items.map(it => {
+        // Lab 5 individual badges
+        if (it.step_key === 'p2_connect') return `<span title="${(it.text_val||'').replace(/"/g, '&quot;')}" class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 cursor-help">Connect: ${it.choice_val}</span>`;
+        if (it.step_key === 'p3_pretalk_vote') return `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">Pre-talk: ${it.choice_val}</span>`;
+        if (it.step_key === 'p4_observe_prep') return `<span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300">Listen (${(it.reason_tags||[]).length})</span>`;
+        if (it.step_key === 'p11_my_prep') return `<span title="${(it.text_val||'').replace(/"/g, '&quot;')}" class="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 cursor-help">✓ My Prep</span>`;
+        if (it.step_key === 'p12_exit_reflection') {
+          const j = it.json_val || {};
+          const tip = `ต่างเดิม: ${j.diff||'-'} | บทเรียน: ${j.lesson||'-'} | เริ่มวันนี้: ${j.start_today||'-'}`.replace(/"/g, '&quot;');
+          return `<span title="${tip}" class="px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 cursor-help">✓ Exit Ref</span>`;
+        }
         // Lab 4 individual badges
         if (it.step_key === 'p3_vote') return `<span class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300">Vote: ${it.choice_val}</span>`;
         if (it.step_key === 'p19_exit') return `<span class="px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 cursor-help" title="${(it.text_val||'').replace(/"/g, '&quot;')}">✓ Reflection</span>`;
