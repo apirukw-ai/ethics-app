@@ -796,26 +796,37 @@
 		alert("กรุณาใส่ Supabase Anon Key ในโค้ดก่อนใช้งาน");
 		return;
 	  }
-	  const { data, error } = await sb.from("lab_control").select("*");
-	  
+	  const { data, error } = await sb
+		.from("lab_control")
+		.select("*")
+		.order("lab_no", { ascending: true }); // 1. เรียงลำดับจาก Lab 1 -> 5 เสมอ
+
 	  if (error) {
 		console.error("โหลดข้อมูลล้มเหลว:", error);
 	  }
-	  
+
 	  if (data && data.length > 0) {
-		 // แปลงข้อมูลจากตารางมาเป็นรูปแบบที่ LABS_CATALOG ต้องการ
-		 LABS_CATALOG = data.map(row => ({
-			 no: row.lab_no,
-			 code: `lab${row.lab_no}`,
-			 title: row.title || `Lab ${row.lab_no}`, // <--- แก้บรรทัดนี้ให้ดึง row.title
-			 file: row.active_lab_file || `lab${row.lab_no}-180433.html`,
-			 active: !row.is_locked
-		 }));
-		 dailyLabNo = LABS_CATALOG.length > 0 ? LABS_CATALOG[0].no : 2; // สมมติให้แล็บแรกเป็นแล็บประจำวัน
+		LABS_CATALOG = data.map(row => ({
+		  no: row.lab_no,
+		  code: `lab${row.lab_no}`,
+		  title: row.title || `Lab ${row.lab_no}`,
+		  file: row.active_lab_file || `lab${row.lab_no}-180433.html`,
+		  active: !row.is_locked
+		}));
 	  } else {
 		LABS_CATALOG = [...DEFAULT_LABS_CATALOG];
-		dailyLabNo = 2;
 	  }
+
+	  // 2. ใช้ค่า dailyLabNo ที่อาจารย์เลือกไว้ล่าสุด (ถ้าไม่ได้เลือกไว้ หรือแล็บนั้นถูกล็อกอยู่ ให้ไม่แสดงแบนเนอร์)
+	  const savedDaily = localStorage.getItem("ethics_daily_lab");
+	  if (savedDaily !== null) {
+		dailyLabNo = savedDaily === "" ? null : Number(savedDaily);
+	  }
+	  const currentDailyObj = LABS_CATALOG.find(l => l.no === dailyLabNo);
+	  if (!currentDailyObj || !currentDailyObj.active) {
+		dailyLabNo = null;
+	  }
+
 	  renderDailyBanner();
 	  renderLabLists();
 	  await loadAllLabScores();
