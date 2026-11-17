@@ -547,9 +547,9 @@
 			exp: "จริยธรรมการส่งเสริมการขายยาและผู้แทนยา"
 		  },
 		  {
-			name: "วิทยากรท่านที่ 4 (ใส่ชื่อตรงนี้)",
-			role: "ใส่ตำแหน่ง / หน่วยงานตรงนี้",
-			exp: "ใส่ประเด็น / ประสบการณ์ที่เกี่ยวข้อง"
+			name: "อ.ภก.ธีรชัย เรืองบัณฑิต",
+			role: "ภาควิชาเภสัชกรรมปฏิบัติ",
+			exp: "เภสัชกรประจำร้านยาส่วนตัว"
 		  }
 		];
 		const savedSpeakers = JSON.parse(localStorage.getItem('lab5_speaker_info_4') || 'null') || defaultSpeakers;
@@ -922,15 +922,28 @@
       }
     }
 
-    async function saveSpeakerInfo() {
-	  const updatedSpeakers = [0, 1, 2, 3].map(idx => ({
-		name: document.getElementById(`spk-name-${idx}`).value.trim(),
-		role: document.getElementById(`spk-role-${idx}`).value.trim(),
-		exp: document.getElementById(`spk-exp-${idx}`).value.trim()
-	  }));
+    function saveSpeakerInfo() {
+	  const infoList = [0, 1, 2, 3].map(idx => {
+		const nameEl = document.getElementById(`spk-name-in-${idx}`) || document.getElementById(`spk-name-${idx}`);
+		const roleEl = document.getElementById(`spk-role-in-${idx}`) || document.getElementById(`spk-role-${idx}`);
+		const expEl  = document.getElementById(`spk-exp-in-${idx}`)  || document.getElementById(`spk-exp-${idx}`);
+		return {
+		  name: nameEl ? nameEl.value.trim() : '',
+		  role: roleEl ? roleEl.value.trim() : '',
+		  exp:  expEl  ? expEl.value.trim()  : ''
+		};
+	  });
 
-	  // นำ updatedSpeakers ไปอัปเดตลง Supabase / state เดิมของคุณ
-	  // เช่น await supabase.from('...').upsert({ ..., speakers: updatedSpeakers })
+	  localStorage.setItem('lab5_speaker_info_4', JSON.stringify(infoList));
+	  infoList.forEach((info, idx) => {
+		const nDisp = document.getElementById(`spk-name-disp-${idx}`);
+		const rDisp = document.getElementById(`spk-role-disp-${idx}`);
+		const eDisp = document.getElementById(`spk-exp-disp-${idx}`);
+		if (nDisp) nDisp.textContent = info.name;
+		if (rDisp) rDisp.textContent = info.role;
+		if (eDisp) eDisp.textContent = info.exp;
+	  });
+	  alert('อัปเดตข้อมูลวิทยากรทั้ง 4 ท่านเรียบร้อยแล้ว');
 	}
 
     // =========================================================================
