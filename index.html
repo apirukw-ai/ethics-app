@@ -98,6 +98,24 @@
           <div id="student-lab-list" class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1"></div>
         </div>
       </div>
+
+      <!-- Student Personal Score Lookup Card -->
+      <div class="glass rounded-2xl p-6 space-y-4 border border-sky-500/25">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-xl font-bold text-white">🎯 ตรวจสอบผลประเมินปฏิบัติการของฉัน</h2>
+            <p class="text-xs text-slate-400">กรอกรหัสนิสิต 8 หลัก เพื่อดูคะแนนรายบุคคล คะแนนกลุ่ม และข้อเสนอแนะจากอาจารย์</p>
+          </div>
+          <form onsubmit="lookupStudentPersonalScore(event)" class="flex items-center gap-2">
+            <input type="text" id="lookup-stu-id" required maxlength="10" placeholder="รหัสนิสิต 8 หลัก..."
+              class="px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white focus:border-sky-500 focus:outline-none w-44 tracking-wider" />
+            <button type="submit" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-sm font-semibold shadow transition">
+              ดูคะแนนของฉัน
+            </button>
+          </form>
+        </div>
+        <div id="student-score-result" class="hidden"></div>
+      </div>
     </section>
 
     <!-- TEACHER VIEW -->
@@ -185,7 +203,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
           <div>
             <h2 id="scores-panel-title" class="text-xl font-bold text-white">📊 ศูนย์รวมคะแนนทุกแล็บ — รายบุคคลครบทั้ง 90 คน</h2>
-            <p class="text-xs text-slate-400">ดึงคะแนน Rubric (เต็ม 20 คะแนน/แล็บ) ของแต่ละกลุ่มจากตาราง <code class="text-amber-300">ethics.lab_rubric_scores</code> มาคำนวณและแสดงเป็นคะแนนรายบุคคลอัตโนมัติ</p>
+            <p class="text-xs text-slate-400">ดึงคะแนน Rubric กลุ่ม (<code class="text-amber-300">lab_rubric_scores</code> • 20 คะแนน) + คะแนน Rubric เดี่ยว (<code class="text-sky-300">ind_rubric_score</code> • 10 คะแนน) มารวมเป็นคะแนนสุทธิรายบุคคลอัตโนมัติ</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <input type="text" id="score-search" oninput="renderAllScoresTable()" placeholder="ค้นหารหัส / ชื่อ / กลุ่ม..."
@@ -210,7 +228,7 @@
             <div id="stat-lab-count" class="text-xl font-bold text-sky-400 mt-0.5">-</div>
           </div>
           <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
-            <div class="text-xs text-slate-400">เฉลี่ยต่อแล็บที่ประเมิน (เต็ม 20)</div>
+            <div class="text-xs text-slate-400">เฉลี่ยร้อยละต่อแล็บที่ประเมิน</div>
             <div id="stat-avg-per-lab" class="text-xl font-bold text-indigo-400 mt-0.5">-</div>
           </div>
           <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
@@ -345,7 +363,10 @@
 
     let studentsList = generateFallbackStudents();
     let groupScoreMap = {};
+    let groupFeedbackMap = {};
     let indivAdjMap = {};
+    let indRubricMap = {};
+    let labsWithIndRubric = new Set();
     let dailyLabNo = localStorage.getItem("ethics_daily_lab") !== null
       ? (localStorage.getItem("ethics_daily_lab") === "" ? null : Number(localStorage.getItem("ethics_daily_lab")))
       : 2;
@@ -612,7 +633,11 @@
 
     async function loadAllLabScores() {
       groupScoreMap = {};
+      groupFeedbackMap = {};
       indivAdjMap = {};
+      indRubricMap = {};
+      labsWithIndRubric = new Set();
+
       const labNos = new Set(LABS_CATALOG.map(l => l.no));
       for (let i = 1; i <= 15; i++) labNos.add(i);
 
@@ -621,6 +646,7 @@
         Object.entries(cached).forEach(([gNo, obj]) => {
           if (obj && typeof obj.total === "number") {
             groupScoreMap[`lab${l}_${gNo}`] = Number(obj.total);
+            if (obj.feedback) groupFeedbackMap[`lab${l}_${gNo}`] = obj.feedback;
           }
         });
         const cachedAdj = JSON.parse(localStorage.getItem(`ethics_indiv_adj_lab${l}`) || "{}");
@@ -633,8 +659,16 @@
 
       if (sb) {
         try {
-          const { data: stus } = await sb.from("students_180433").select("*").order("seq", { ascending: true });
-          const { data: grps } = await sb.from("lab_groups").select("*");
+          const [stusRes, grpsRes, scoresRes, adjsRes, indRubRes] = await Promise.all([
+            sb.from("students_180433").select("*").order("seq", { ascending: true }),
+            sb.from("lab_groups").select("*"),
+            sb.from("lab_rubric_scores").select("*"),
+            sb.from("lab_individual_responses").select("*").eq("step_key", "grade_adj"),
+            sb.from("lab_individual_responses").select("*").eq("step_key", "ind_rubric_score")
+          ]);
+
+          const stus = stusRes.data;
+          const grps = grpsRes.data;
           if (stus && stus.length > 0) {
             const grpLookup = {};
             (grps || []).forEach(g => { grpLookup[g.student_id] = g.group_no; });
@@ -647,24 +681,48 @@
             }));
           }
 
-          const { data: scores } = await sb.from("lab_rubric_scores").select("*");
-          if (scores) {
-            scores.forEach(row => {
+          if (scoresRes.data) {
+            scoresRes.data.forEach(row => {
               const lNo = row.lab_no || Number(String(row.lab_code || "").replace(/\D/g, ""));
               const gNo = row.group_no;
-              const tot = row.total_score ?? row.score;
-              if (lNo && gNo && tot !== null && tot !== undefined) {
-                groupScoreMap[`lab${lNo}_${gNo}`] = Number(tot);
+              const sumC = Number(row.c1_issue||0) + Number(row.c2_stakeholder||0) + Number(row.c3_reasoning||0) + Number(row.c4_alternatives||0) + Number(row.c5_new_info||0) + Number(row.c6_listening||0);
+              const tot = row.total_score !== null && row.total_score !== undefined ? Number(row.total_score) : sumC;
+              if (lNo && gNo) {
+                groupScoreMap[`lab${lNo}_${gNo}`] = tot;
+                groupFeedbackMap[`lab${lNo}_${gNo}`] = row.feedback || "";
               }
             });
           }
 
-          const { data: adjs } = await sb.from("lab_individual_responses").select("*").eq("step_key", "grade_adj");
-          if (adjs) {
-            adjs.forEach(row => {
+          if (adjsRes.data) {
+            adjsRes.data.forEach(row => {
               if (row.lab_no && row.student_id && row.json_val && typeof row.json_val.adj === "number") {
                 indivAdjMap[`lab${row.lab_no}_${row.student_id}`] = Number(row.json_val.adj);
               }
+            });
+          }
+
+          if (indRubRes.data) {
+            indRubRes.data.forEach(row => {
+              const lNo = Number(row.lab_no);
+              labsWithIndRubric.add(lNo);
+              let parsed = {};
+              try {
+                parsed = typeof row.text_val === "string" ? JSON.parse(row.text_val) : (row.json_val || {});
+              } catch (e) {
+                parsed = row.json_val || {};
+              }
+              const p = Number(parsed.participation || 0);
+              const reas = Number(parsed.reasoning || 0);
+              const refl = Number(parsed.reflection || 0);
+              const tot = parsed.ind_total !== undefined ? Number(parsed.ind_total) : (p + reas + refl || Number(row.choice_val || 0));
+              indRubricMap[`lab${lNo}_${row.student_id}`] = {
+                participation: p,
+                reasoning: reas,
+                reflection: refl,
+                ind_total: tot,
+                note: parsed.note || ""
+              };
             });
           }
         } catch (err) {
@@ -675,24 +733,50 @@
       renderAllScoresTable();
     }
 
+    function getLabMaxScore(labNo) {
+      return labsWithIndRubric.has(Number(labNo)) ? 30 : 20;
+    }
+
     function computeStudentScoreRow(stu) {
       const labs = {};
+      const details = {};
       let sum = 0;
+      let maxAssessed = 0;
       let count = 0;
+
       LABS_CATALOG.forEach(lab => {
-        const baseVal = groupScoreMap[`lab${lab.no}_${stu.group_no}`];
-        const adjVal = indivAdjMap[`lab${lab.no}_${stu.student_id}`];
-        if (typeof baseVal === "number" && !isNaN(baseVal)) {
-          const net = +Math.min(20, Math.max(0, baseVal + (typeof adjVal === "number" ? adjVal : 0))).toFixed(2);
-          labs[lab.no] = net;
+        const lNo = lab.no;
+        const lMax = getLabMaxScore(lNo);
+        const hasInd = labsWithIndRubric.has(lNo);
+        const rawBase = groupScoreMap[`lab${lNo}_${stu.group_no}`];
+        const indObj = indRubricMap[`lab${lNo}_${stu.student_id}`];
+        const adjVal = indivAdjMap[`lab${lNo}_${stu.student_id}`] || 0;
+
+        if ((typeof rawBase === "number" && !isNaN(rawBase)) || indObj) {
+          const indTot = indObj ? Number(indObj.ind_total || 0) : 0;
+          const baseVal = (hasInd && indObj && indTot === 0) ? 0 : (Number(rawBase) || 0);
+          const net = +Math.min(lMax, Math.max(0, baseVal + indTot + adjVal)).toFixed(2);
+          labs[lNo] = net;
+          details[lNo] = {
+            max: lMax,
+            hasInd,
+            grp: baseVal,
+            ind: indObj || null,
+            adj: adjVal,
+            net,
+            feedback: groupFeedbackMap[`lab${lNo}_${stu.group_no}`] || ""
+          };
           sum += net;
+          maxAssessed += lMax;
           count++;
         } else {
-          labs[lab.no] = null;
+          labs[lNo] = null;
+          details[lNo] = null;
         }
       });
-      const avg = count > 0 ? +(sum / count).toFixed(2) : 0;
-      return { ...stu, labs, sum: +sum.toFixed(2), count, avg };
+
+      const pct = maxAssessed > 0 ? +((sum / maxAssessed) * 100).toFixed(2) : 0;
+      return { ...stu, labs, details, sum: +sum.toFixed(2), maxAssessed, count, pct };
     }
 
     function renderAllScoresTable() {
@@ -701,7 +785,7 @@
       const tbody = document.getElementById("all-scores-tbody");
       tbody.innerHTML = "";
 
-      const maxPossible = LABS_CATALOG.length * 20;
+      const maxPossible = LABS_CATALOG.reduce((acc, l) => acc + getLabMaxScore(l.no), 0);
       const labRangeLabel = LABS_CATALOG.length > 0
         ? `Lab ${LABS_CATALOG[0].no}–${LABS_CATALOG[LABS_CATALOG.length - 1].no}`
         : "ไม่มีแล็บ";
@@ -713,8 +797,9 @@
 
       let dynamicCols = "";
       LABS_CATALOG.forEach((lab, idx) => {
+        const lMax = getLabMaxScore(lab.no);
         const badgeColor = idx % 2 === 0 ? "bg-sky-950/40 text-sky-300" : "bg-indigo-950/40 text-indigo-300";
-        dynamicCols += `<th class="p-2.5 border-b border-slate-800 text-center ${badgeColor}" title="${lab.title}">Lab ${lab.no}<br>(20)</th>`;
+        dynamicCols += `<th class="p-2.5 border-b border-slate-800 text-center ${badgeColor}" title="${lab.title}">Lab ${lab.no}<br>(${lMax})</th>`;
       });
 
       thead.innerHTML = `
@@ -725,7 +810,7 @@
           <th class="p-2.5 border-b border-slate-800 text-center">กลุ่ม</th>
           ${dynamicCols}
           <th class="p-2.5 border-b border-slate-800 text-center bg-emerald-950/50 text-emerald-300 font-bold">รวม<br>(${maxPossible})</th>
-          <th class="p-2.5 border-b border-slate-800 text-center bg-amber-950/40 text-amber-300 font-bold">เฉลี่ย<br>(20)</th>
+          <th class="p-2.5 border-b border-slate-800 text-center bg-amber-950/40 text-amber-300 font-bold">ร้อยละ<br>(%)</th>
         </tr>
       `;
 
@@ -741,7 +826,7 @@
       document.getElementById("stat-total-students").textContent = `${rows.length} คน`;
       const assessedRows = rows.filter(r => r.count > 0);
       document.getElementById("stat-avg-per-lab").textContent = assessedRows.length
-        ? (assessedRows.reduce((a, b) => a + b.avg, 0) / assessedRows.length).toFixed(2)
+        ? `${(assessedRows.reduce((a, b) => a + b.pct, 0) / assessedRows.length).toFixed(2)}%`
         : "-";
       document.getElementById("stat-avg-total").textContent = assessedRows.length
         ? (assessedRows.reduce((a, b) => a + b.sum, 0) / assessedRows.length).toFixed(2)
@@ -751,8 +836,12 @@
         let labCells = "";
         LABS_CATALOG.forEach((lab, idx) => {
           const v = r.labs[lab.no];
+          const det = r.details[lab.no];
           const hl = idx % 2 === 0 ? "bg-sky-950/20" : "bg-indigo-950/20";
-          labCells += `<td class="p-2 text-center ${hl} ${v !== null ? "text-slate-100 font-medium" : "text-slate-600"}">${v !== null ? v : "-"}</td>`;
+          const tip = det && det.hasInd && det.ind
+            ? `กลุ่ม ${det.grp}/20 + เดี่ยว ${det.ind.ind_total}/10`
+            : "";
+          labCells += `<td title="${tip}" class="p-2 text-center ${hl} ${v !== null ? "text-slate-100 font-medium" : "text-slate-600"}">${v !== null ? v : "-"}</td>`;
         });
         tbody.innerHTML += `
           <tr class="hover:bg-slate-900/90">
@@ -762,10 +851,69 @@
             <td class="p-2 text-center"><span class="px-2 py-0.5 rounded bg-slate-800 text-amber-300 font-semibold">G${r.group_no}</span></td>
             ${labCells}
             <td class="p-2 text-center bg-emerald-950/30 text-emerald-300 font-bold">${r.sum}</td>
-            <td class="p-2 text-center bg-amber-950/20 text-amber-300 font-bold">${r.avg}</td>
+            <td class="p-2 text-center bg-amber-950/20 text-amber-300 font-bold">${r.pct}%</td>
           </tr>
         `;
       });
+    }
+
+    function lookupStudentPersonalScore(e) {
+      e.preventDefault();
+      const sid = document.getElementById("lookup-stu-id").value.trim();
+      const box = document.getElementById("student-score-result");
+      box.classList.remove("hidden");
+
+      const stu = studentsList.find(s => s.student_id === sid);
+      if (!stu) {
+        box.innerHTML = `<div class="p-3 rounded-xl bg-rose-950/70 border border-rose-500/40 text-rose-200 text-sm">ไม่พบรหัสนิสิต <strong>${sid}</strong> ในระบบ</div>`;
+        return;
+      }
+
+      const row = computeStudentScoreRow(stu);
+      const cardsHtml = LABS_CATALOG.map(lab => {
+        const det = row.details[lab.no];
+        if (!det) {
+          return `
+            <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800 text-xs text-slate-500">
+              <div class="font-bold text-slate-300">${lab.title}</div>
+              <div class="mt-1">ยังไม่มีผลประเมินในระบบ</div>
+            </div>`;
+        }
+        return `
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-sky-500/30 space-y-2 text-xs">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
+              <div class="font-bold text-white text-sm">${lab.title}</div>
+              <span class="px-3 py-1 rounded-lg bg-emerald-950 border border-emerald-600/40 text-emerald-300 font-extrabold text-sm">
+                คะแนนสุทธิ: ${det.net} / ${det.max}
+              </span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div class="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                <div class="text-slate-400">คะแนนงานกลุ่ม (กลุ่มที่ ${stu.group_no})</div>
+                <div class="text-base font-bold text-sky-300 mt-0.5">${det.grp} / 20 คะแนน</div>
+                ${det.feedback ? `<div class="text-[11px] text-slate-300 mt-1"><strong class="text-amber-300">Feedback กลุ่ม:</strong> ${det.feedback}</div>` : ""}
+              </div>
+              ${det.hasInd && det.ind ? `
+              <div class="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                <div class="text-slate-400">คะแนนรายบุคคล (เต็ม 10)</div>
+                <div class="text-base font-bold text-indigo-300 mt-0.5">${det.ind.ind_total} / 10 คะแนน <span class="text-[11px] font-normal text-slate-400">(ส่วนร่วม ${det.ind.participation}/3 • เหตุผล ${det.ind.reasoning}/3 • สะท้อนคิด ${det.ind.reflection}/4)</span></div>
+                ${det.ind.note ? `<div class="text-[11px] text-slate-300 mt-1"><strong class="text-emerald-300">หมายเหตุ:</strong> ${det.ind.note}</div>` : ""}
+              </div>` : ""}
+            </div>
+          </div>`;
+      }).join("");
+
+      box.innerHTML = `
+        <div class="space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-slate-900 border border-slate-700">
+            <div>
+              <span class="text-sm font-bold text-white">${stu.full_name}</span>
+              <span class="text-xs text-slate-400 ml-2">(${stu.student_id} • กลุ่มที่ ${stu.group_no})</span>
+            </div>
+            <div class="text-xs font-bold text-emerald-400">คะแนนสะสมทั้งหมด: ${row.sum} / ${row.maxAssessed} (${row.pct}%)</div>
+          </div>
+          <div class="space-y-2.5">${cardsHtml}</div>
+        </div>`;
     }
 
     function exportAllLabsExcel() {
@@ -778,10 +926,16 @@
           "กลุ่มที่": r.group_no
         };
         LABS_CATALOG.forEach(lab => {
-          obj[`Lab ${lab.no} (20)`] = r.labs[lab.no] !== null ? r.labs[lab.no] : "";
+          const lMax = getLabMaxScore(lab.no);
+          const det = r.details[lab.no];
+          if (labsWithIndRubric.has(lab.no)) {
+            obj[`Lab ${lab.no} เดี่ยว(10)`] = det && det.ind ? det.ind.ind_total : "";
+            obj[`Lab ${lab.no} กลุ่ม(20)`] = det ? det.grp : "";
+          }
+          obj[`Lab ${lab.no} รวม(${lMax})`] = r.labs[lab.no] !== null ? r.labs[lab.no] : "";
         });
         obj["รวมคะแนนทุกแล็บ"] = r.sum;
-        obj["เฉลี่ยต่อแล็บที่ประเมิน (20)"] = r.avg;
+        obj["ร้อยละสะสม(%)"] = r.pct;
         return obj;
       });
 

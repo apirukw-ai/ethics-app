@@ -102,7 +102,7 @@
         </button>
         <button onclick="switchGradingTab('individual')" id="tab-btn-individual"
           class="px-4 py-2 rounded-lg text-xs font-extrabold text-slate-400 hover:text-white transition">
-          2. ประเมินรายบุคคล (<span id="tab-std-count">93</span> คน • ฐานกลุ่ม + คะแนนเดี่ยว)
+          2. ประเมินรายบุคคล (<span id="tab-std-count">90</span> คน • กลุ่ม 20 + เดี่ยว 10)
         </button>
         <button onclick="switchGradingTab('overview')" id="tab-btn-overview"
           class="px-4 py-2 rounded-lg text-xs font-extrabold text-slate-400 hover:text-white transition">
@@ -186,17 +186,21 @@
         <div class="overflow-x-auto max-h-[650px]">
           <table class="w-full text-xs text-left">
             <thead class="bg-slate-900 text-slate-300 sticky top-0 z-10 border-b border-slate-800">
-              <tr>
-                <th class="p-3">ที่</th>
-                <th class="p-3">รหัสนิสิต</th>
-                <th class="p-3">ชื่อ-สกุล</th>
-                <th class="p-3 text-center">กลุ่ม</th>
-                <th class="p-3">บทบาท</th>
-                <th class="p-3">ผลงานเดี่ยวที่ส่งใน Lab นี้</th>
-                <th class="p-3 text-center">คะแนนกลุ่ม (20)</th>
-                <th class="p-3 text-center">ปรับคะแนนเดี่ยว (+/-)</th>
-                <th class="p-3 text-center text-emerald-400">คะแนนสุทธิ (20)</th>
-                <th class="p-3">หมายเหตุรายบุคคล</th>
+              <tr id="indiv-thead-row">
+                <th class="p-2.5">ที่</th>
+                <th class="p-2.5">รหัสนิสิต</th>
+                <th class="p-2.5">ชื่อ-สกุล</th>
+                <th class="p-2.5 text-center">กลุ่ม</th>
+                <th class="p-2.5">บทบาท</th>
+                <th class="p-2.5">ผลงานเดี่ยวที่ส่งใน Lab นี้</th>
+                <th class="p-2.5 text-center">กลุ่ม<br>(20)</th>
+                <th class="p-2.5 text-center bg-sky-950/40 text-sky-300">ส่วนร่วม<br>(3)</th>
+                <th class="p-2.5 text-center bg-sky-950/40 text-sky-300">เหตุผล<br>(3)</th>
+                <th class="p-2.5 text-center bg-sky-950/40 text-sky-300">สะท้อน<br>(4)</th>
+                <th class="p-2.5 text-center bg-indigo-950/50 text-indigo-300">รวมเดี่ยว<br>(10)</th>
+                <th class="p-2.5 text-center">ปรับ<br>(+/-)</th>
+                <th id="th-indiv-net" class="p-2.5 text-center text-emerald-400">สุทธิ<br>(30)</th>
+                <th class="p-2.5">หมายเหตุรายบุคคล</th>
               </tr>
             </thead>
             <tbody id="indiv-tbody" class="divide-y divide-slate-800/80"></tbody>
@@ -210,7 +214,7 @@
       <div class="glass rounded-2xl p-4 flex flex-wrap justify-between items-center gap-3">
         <div>
           <h2 class="text-base font-extrabold text-white">ตารางสรุปคะแนนปฏิบัติการสะสมรายบุคคล (Lab 1–12)</h2>
-          <p class="text-xs text-slate-400">คำนวณจาก (คะแนน Rubric กลุ่ม + คะแนนปรับรายบุคคล) สูงสุด 20 คะแนน/ปฏิบัติการ</p>
+          <p class="text-xs text-slate-400">คำนวณจาก (คะแนน Rubric กลุ่ม 20 + คะแนน Rubric เดี่ยว 10 + คะแนนปรับรายบุคคล) แสดงคะแนนสุทธิและร้อยละอัตโนมัติ</p>
         </div>
         <button onclick="loadAllLabsMatrix()" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold">
           ↻ โหลดคะแนนล่าสุดทั้ง 12 ปฏิบัติการ
@@ -232,7 +236,7 @@
                 <th class="p-2.5 text-center">L7</th><th class="p-2.5 text-center">L8</th>
                 <th class="p-2.5 text-center">L9</th><th class="p-2.5 text-center">L10</th>
                 <th class="p-2.5 text-center">L11</th><th class="p-2.5 text-center">L12</th>
-                <th class="p-2.5 text-center text-emerald-400">รวม (240)</th>
+                <th id="th-overview-sum" class="p-2.5 text-center text-emerald-400">รวม (250)</th>
                 <th class="p-2.5 text-center text-sky-400">เฉลี่ย %</th>
               </tr>
             </thead>
@@ -280,6 +284,7 @@
     let indivResponses = [];
     let rubricScores = {};
     let indivAdjustments = {};
+    let indRubricScores = {};
 
     const RUBRIC_CONFIGS = {
       2: [
@@ -469,6 +474,27 @@
         }
       }
 
+      indRubricScores = {};
+      indivResponses.filter(r => r.step_key === 'ind_rubric_score').forEach(r => {
+        let parsed = {};
+        try {
+          parsed = typeof r.text_val === 'string' ? JSON.parse(r.text_val) : (r.json_val || {});
+        } catch (e) {
+          parsed = r.json_val || {};
+        }
+        const p = Number(parsed.participation || 0);
+        const reas = Number(parsed.reasoning || 0);
+        const refl = Number(parsed.reflection || 0);
+        const tot = parsed.ind_total !== undefined ? Number(parsed.ind_total) : (p + reas + refl || Number(r.choice_val || 0));
+        indRubricScores[r.student_id] = {
+          participation: p,
+          reasoning: reas,
+          reflection: refl,
+          ind_total: tot,
+          note: parsed.note || ''
+        };
+      });
+
       indivAdjustments = JSON.parse(localStorage.getItem(`ethics_indiv_adj_lab${currentLab}`) || '{}');
       indivResponses.filter(r => r.step_key === 'grade_adj').forEach(r => {
         const j = r.json_val || {};
@@ -498,17 +524,24 @@
 
       const activeIndivIds = new Set(
         indivResponses
-          .filter(r => r.step_key !== 'grade_adj' && !String(r.student_id).startsWith('ANON_'))
+          .filter(r => r.step_key !== 'grade_adj' && r.step_key !== 'ind_rubric_score' && !String(r.student_id).startsWith('ANON_'))
           .map(r => r.student_id)
       );
+
+      const hasIndRubric = Object.keys(indRubricScores).length > 0;
+      const labMaxScore = hasIndRubric ? 30 : 20;
 
       let sumNet = 0, countScored = 0;
       studentsList.forEach(std => {
         const gNo = groupAssignments[std.student_id]?.group_no;
         if (gNo) {
-          const base = getGroupRubricTotal(gNo);
+          const indObj = indRubricScores[std.student_id];
+          const indTot = indObj ? Number(indObj.ind_total || 0) : 0;
+          // If Lab has ind_rubric_score and student got 0 (absent), effective group score is 0
+          const rawBase = getGroupRubricTotal(gNo);
+          const base = (hasIndRubric && indObj && indTot === 0) ? 0 : rawBase;
           const adj = Number(indivAdjustments[std.student_id]?.adj || 0);
-          const net = Math.min(20, Math.max(0, base + adj));
+          const net = Math.min(labMaxScore, Math.max(0, base + indTot + adj));
           sumNet += net;
           countScored++;
         }
@@ -517,8 +550,8 @@
 
       document.getElementById('kpi-group-sub').textContent = `${submittedGroups} / 10 กลุ่ม`;
       document.getElementById('kpi-group-graded').textContent = `${gradedGroups} / 10 กลุ่ม`;
-      document.getElementById('kpi-indiv-active').textContent = `${activeIndivIds.size} / ${studentsList.length || 93} คน`;
-      document.getElementById('kpi-avg-score').textContent = `${avg} / 20`;
+      document.getElementById('kpi-indiv-active').textContent = `${activeIndivIds.size} / ${studentsList.length || 90} คน`;
+      document.getElementById('kpi-avg-score').textContent = `${avg} / ${labMaxScore}`;
     }
 
     function formatGroupSubmissionHtml(gNo) {
@@ -785,7 +818,7 @@
     }
 
     function getStudentIndivSummary(sid) {
-      const items = indivResponses.filter(r => r.student_id === sid && r.step_key !== 'grade_adj');
+      const items = indivResponses.filter(r => r.student_id === sid && r.step_key !== 'grade_adj' && r.step_key !== 'ind_rubric_score');
       if (items.length === 0) return { count: 0, html: '<span class="text-slate-500">ยังไม่ส่งคำตอบเดี่ยว</span>' };
 
       const badges = items.map(it => {
@@ -831,39 +864,124 @@
         return true;
       });
 
+      const hasIndRubric = Object.keys(indRubricScores).length > 0;
+      const labMaxScore = hasIndRubric ? 30 : 20;
+      const thNet = document.getElementById('th-indiv-net');
+      if (thNet) thNet.innerHTML = `สุทธิ<br>(${labMaxScore})`;
+
       tbody.innerHTML = filtered.map(std => {
         const grp = groupAssignments[std.student_id] || {};
         const gNo = grp.group_no || 0;
         const role = grp[`role_lab${currentLab}`] || grp.role_lab1 || '-';
-        const baseScore = gNo ? getGroupRubricTotal(gNo) : 0;
+        const indObj = indRubricScores[std.student_id] || { participation: 0, reasoning: 0, reflection: 0, ind_total: 0, note: '' };
+        const rawBase = gNo ? getGroupRubricTotal(gNo) : 0;
+        const baseScore = (hasIndRubric && indRubricScores[std.student_id] && indObj.ind_total === 0) ? 0 : rawBase;
         const adjObj = indivAdjustments[std.student_id] || { adj: 0, note: '' };
-        const netScore = +Math.min(20, Math.max(0, baseScore + Number(adjObj.adj || 0))).toFixed(2);
+        const combinedNote = adjObj.note || indObj.note || '';
+        const netScore = +Math.min(labMaxScore, Math.max(0, baseScore + indObj.ind_total + Number(adjObj.adj || 0))).toFixed(2);
         const sub = getStudentIndivSummary(std.student_id);
 
         return `
           <tr class="hover:bg-slate-900/60">
-            <td class="p-2.5 text-slate-400">${std.seq}</td>
-            <td class="p-2.5 font-mono font-bold text-slate-200">${std.student_id}</td>
-            <td class="p-2.5 font-semibold text-white">${std.full_name}</td>
-            <td class="p-2.5 text-center">
-              ${gNo ? `<span class="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold">กลุ่ม ${gNo}</span>` : `<span class="text-rose-400">-</span>`}
+            <td class="p-2 text-slate-400">${std.seq}</td>
+            <td class="p-2 font-mono font-bold text-slate-200">${std.student_id}</td>
+            <td class="p-2 font-semibold text-white whitespace-nowrap">${std.full_name}</td>
+            <td class="p-2 text-center">
+              ${gNo ? `<span class="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold">G${gNo}</span>` : `<span class="text-rose-400">-</span>`}
             </td>
-            <td class="p-2.5 text-slate-400">${role}</td>
-            <td class="p-2.5">${sub.html}</td>
-            <td class="p-2.5 text-center font-bold text-slate-300">${baseScore}</td>
-            <td class="p-2.5 text-center">
+            <td class="p-2 text-slate-400 text-[11px]">${role}</td>
+            <td class="p-2">${sub.html}</td>
+            <td class="p-2 text-center font-bold text-slate-300">${baseScore}</td>
+            <td class="p-1.5 text-center bg-sky-950/20">
+              <input type="number" step="0.5" min="0" max="3" value="${indObj.participation}"
+                onchange="saveIndRubricScore('${std.student_id}', 'participation', this.value, 3)"
+                class="w-12 px-1 py-1 rounded bg-slate-950 border border-slate-700 text-center font-bold text-sky-300">
+            </td>
+            <td class="p-1.5 text-center bg-sky-950/20">
+              <input type="number" step="0.5" min="0" max="3" value="${indObj.reasoning}"
+                onchange="saveIndRubricScore('${std.student_id}', 'reasoning', this.value, 3)"
+                class="w-12 px-1 py-1 rounded bg-slate-950 border border-slate-700 text-center font-bold text-sky-300">
+            </td>
+            <td class="p-1.5 text-center bg-sky-950/20">
+              <input type="number" step="0.5" min="0" max="4" value="${indObj.reflection}"
+                onchange="saveIndRubricScore('${std.student_id}', 'reflection', this.value, 4)"
+                class="w-12 px-1 py-1 rounded bg-slate-950 border border-slate-700 text-center font-bold text-sky-300">
+            </td>
+            <td id="indiv-rub-tot-${std.student_id}" class="p-2 text-center font-extrabold text-indigo-300 bg-indigo-950/30">${indObj.ind_total}</td>
+            <td class="p-1.5 text-center">
               <input type="number" step="0.5" min="-20" max="20" value="${adjObj.adj || 0}"
                 onchange="saveIndividualAdjustment('${std.student_id}', 'adj', this.value)"
-                class="w-16 px-2 py-1 rounded-lg bg-slate-950 border border-slate-700 text-center font-bold ${adjObj.adj > 0 ? 'text-emerald-400' : adjObj.adj < 0 ? 'text-rose-400' : 'text-white'}">
+                class="w-14 px-1 py-1 rounded bg-slate-950 border border-slate-700 text-center font-bold ${adjObj.adj > 0 ? 'text-emerald-400' : adjObj.adj < 0 ? 'text-rose-400' : 'text-white'}">
             </td>
-            <td id="indiv-net-${std.student_id}" class="p-2.5 text-center font-extrabold text-emerald-400 text-sm">${netScore}</td>
-            <td class="p-2.5">
-              <input type="text" value="${(adjObj.note || '').replace(/"/g, '&quot;')}" placeholder="หมายเหตุ..."
-                onchange="saveIndividualAdjustment('${std.student_id}', 'note', this.value)"
-                class="w-full min-w-[130px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white">
+            <td id="indiv-net-${std.student_id}" class="p-2 text-center font-extrabold text-emerald-400 text-sm">${netScore}</td>
+            <td class="p-2">
+              <input type="text" value="${combinedNote.replace(/"/g, '&quot;')}" placeholder="หมายเหตุ..."
+                onchange="saveIndRubricNote('${std.student_id}', this.value)"
+                class="w-full min-w-[160px] px-2 py-1 rounded bg-slate-950 border border-slate-700 text-xs text-white">
             </td>
           </tr>`;
       }).join('');
+    }
+
+    function computeStudentNetForCurrentLab(sid) {
+      const hasIndRubric = Object.keys(indRubricScores).length > 0;
+      const labMaxScore = hasIndRubric ? 30 : 20;
+      const gNo = groupAssignments[sid]?.group_no || 0;
+      const indObj = indRubricScores[sid] || { participation: 0, reasoning: 0, reflection: 0, ind_total: 0, note: '' };
+      const rawBase = gNo ? getGroupRubricTotal(gNo) : 0;
+      const baseScore = (hasIndRubric && indRubricScores[sid] && indObj.ind_total === 0) ? 0 : rawBase;
+      const adj = Number(indivAdjustments[sid]?.adj || 0);
+      return +Math.min(labMaxScore, Math.max(0, baseScore + indObj.ind_total + adj)).toFixed(2);
+    }
+
+    async function saveIndRubricScore(sid, field, val, maxVal) {
+      if (!indRubricScores[sid]) {
+        indRubricScores[sid] = { participation: 0, reasoning: 0, reflection: 0, ind_total: 0, note: '' };
+      }
+      let num = parseFloat(val);
+      if (isNaN(num) || num < 0) num = 0;
+      if (num > maxVal) num = maxVal;
+      indRubricScores[sid][field] = num;
+      const tot = +(indRubricScores[sid].participation + indRubricScores[sid].reasoning + indRubricScores[sid].reflection).toFixed(2);
+      indRubricScores[sid].ind_total = tot;
+
+      const rubEl = document.getElementById(`indiv-rub-tot-${sid}`);
+      if (rubEl) rubEl.textContent = tot;
+      const netEl = document.getElementById(`indiv-net-${sid}`);
+      if (netEl) netEl.textContent = computeStudentNetForCurrentLab(sid);
+
+      await persistIndRubricRow(sid);
+      updateKpis();
+    }
+
+    async function saveIndRubricNote(sid, noteVal) {
+      if (indRubricScores[sid]) {
+        indRubricScores[sid].note = noteVal;
+        await persistIndRubricRow(sid);
+      } else {
+        await saveIndividualAdjustment(sid, 'note', noteVal);
+      }
+    }
+
+    async function persistIndRubricRow(sid) {
+      const obj = indRubricScores[sid];
+      if (!obj) return;
+      const payloadJson = {
+        participation: obj.participation,
+        reasoning: obj.reasoning,
+        reflection: obj.reflection,
+        ind_total: obj.ind_total,
+        note: obj.note || ''
+      };
+      await db.from('lab_individual_responses').delete()
+        .eq('lab_no', currentLab).eq('step_key', 'ind_rubric_score').eq('student_id', sid);
+      await db.from('lab_individual_responses').insert({
+        lab_no: currentLab,
+        step_key: 'ind_rubric_score',
+        student_id: sid,
+        choice_val: String(obj.ind_total),
+        text_val: JSON.stringify(payloadJson)
+      });
     }
 
     async function saveIndividualAdjustment(sid, field, val) {
@@ -876,9 +994,7 @@
 
       localStorage.setItem(`ethics_indiv_adj_lab${currentLab}`, JSON.stringify(indivAdjustments));
 
-      const gNo = groupAssignments[sid]?.group_no || 0;
-      const baseScore = gNo ? getGroupRubricTotal(gNo) : 0;
-      const netScore = +Math.min(20, Math.max(0, baseScore + Number(indivAdjustments[sid].adj || 0))).toFixed(2);
+      const netScore = computeStudentNetForCurrentLab(sid);
       const netEl = document.getElementById(`indiv-net-${sid}`);
       if (netEl) netEl.textContent = netScore;
 
@@ -916,14 +1032,16 @@
       renderIndividualTable();
     }
 
-    async function loadAllLabsMatrix() {
-      const [allRubricRes, allAdjRes] = await Promise.all([
+    async function fetchAllLabsScoreMaps() {
+      const [allRubricRes, allAdjRes, allIndRubRes] = await Promise.all([
         db.from('lab_rubric_scores').select('*'),
-        db.from('lab_individual_responses').select('*').eq('step_key', 'grade_adj')
+        db.from('lab_individual_responses').select('*').eq('step_key', 'grade_adj'),
+        db.from('lab_individual_responses').select('*').eq('step_key', 'ind_rubric_score')
       ]);
 
       const rRows = allRubricRes.data || [];
       const aRows = allAdjRes.data || [];
+      const indRows = allIndRubRes.data || [];
 
       const rMap = {};
       rRows.forEach(r => {
@@ -937,19 +1055,52 @@
         aMap[`${r.lab_no}_${r.student_id}`] = Number(r.json_val?.adj || 0);
       });
 
+      const indMap = {};
+      const labsWithIndRubric = new Set();
+      indRows.forEach(r => {
+        labsWithIndRubric.add(Number(r.lab_no));
+        let parsed = {};
+        try {
+          parsed = typeof r.text_val === 'string' ? JSON.parse(r.text_val) : (r.json_val || {});
+        } catch (e) {
+          parsed = r.json_val || {};
+        }
+        const tot = parsed.ind_total !== undefined ? Number(parsed.ind_total) : Number(r.choice_val || 0);
+        indMap[`${r.lab_no}_${r.student_id}`] = tot;
+      });
+
+      return { rMap, aMap, indMap, labsWithIndRubric };
+    }
+
+    async function loadAllLabsMatrix() {
+      const { rMap, aMap, indMap, labsWithIndRubric } = await fetchAllLabsScoreMaps();
+
+      let maxTerm = 0;
+      for (let l = 1; l <= 12; l++) maxTerm += labsWithIndRubric.has(l) ? 30 : 20;
+      const thSum = document.getElementById('th-overview-sum');
+      if (thSum) thSum.textContent = `รวม (${maxTerm})`;
+
       const tbody = document.getElementById('overview-tbody');
       tbody.innerHTML = studentsList.map(std => {
         const gNo = groupAssignments[std.student_id]?.group_no || 0;
-        let total240 = 0;
+        let totalTerm = 0;
         let cells = '';
         for (let l = 1; l <= 12; l++) {
-          const base = gNo ? Number(rMap[`${l}_${gNo}`] || 0) : 0;
-          const adj = Number(aMap[`${l}_${std.student_id}`] || 0);
-          const net = base > 0 || adj !== 0 ? +Math.min(20, Math.max(0, base + adj)).toFixed(2) : 0;
-          total240 += net;
+          const hasInd = labsWithIndRubric.has(l);
+          const lMax = hasInd ? 30 : 20;
+          const indKey = `${l}_${std.student_id}`;
+          const hasIndRecord = Object.prototype.hasOwnProperty.call(indMap, indKey);
+          const indTot = hasIndRecord ? Number(indMap[indKey]) : 0;
+          const rawBase = gNo ? Number(rMap[`${l}_${gNo}`] || 0) : 0;
+          const base = (hasInd && hasIndRecord && indTot === 0) ? 0 : rawBase;
+          const adj = Number(aMap[indKey] || 0);
+          const net = (base > 0 || indTot > 0 || adj !== 0)
+            ? +Math.min(lMax, Math.max(0, base + indTot + adj)).toFixed(2)
+            : 0;
+          totalTerm += net;
           cells += `<td class="p-2 text-center ${net > 0 ? 'text-slate-200 font-semibold' : 'text-slate-600'}">${net > 0 ? net : '-'}</td>`;
         }
-        const pct = ((total240 / 240) * 100).toFixed(1);
+        const pct = maxTerm > 0 ? ((totalTerm / maxTerm) * 100).toFixed(1) : '0.0';
         return `
           <tr class="hover:bg-slate-900/60">
             <td class="p-2 text-slate-400">${std.seq}</td>
@@ -957,7 +1108,7 @@
             <td class="p-2 font-semibold text-white whitespace-nowrap">${std.full_name}</td>
             <td class="p-2 text-center text-sky-300 font-bold">${gNo || '-'}</td>
             ${cells}
-            <td class="p-2 text-center font-extrabold text-emerald-400">${total240.toFixed(2)}</td>
+            <td class="p-2 text-center font-extrabold text-emerald-400">${totalTerm.toFixed(2)}</td>
             <td class="p-2 text-center font-bold text-sky-400">${pct}%</td>
           </tr>`;
       }).join('');
@@ -965,13 +1116,18 @@
 
     function exportCurrentLabExcel() {
       const cols = getRubricCols(currentLab);
+      const hasIndRubric = Object.keys(indRubricScores).length > 0;
+      const labMaxScore = hasIndRubric ? 30 : 20;
+
       const indivSheet = studentsList.map(std => {
         const grp = groupAssignments[std.student_id] || {};
         const gNo = grp.group_no || 0;
-        const base = gNo ? getGroupRubricTotal(gNo) : 0;
+        const indObj = indRubricScores[std.student_id] || { participation: 0, reasoning: 0, reflection: 0, ind_total: 0, note: '' };
+        const rawBase = gNo ? getGroupRubricTotal(gNo) : 0;
+        const base = (hasIndRubric && indRubricScores[std.student_id] && indObj.ind_total === 0) ? 0 : rawBase;
         const adjObj = indivAdjustments[std.student_id] || { adj: 0, note: '' };
-        const net = +Math.min(20, Math.max(0, base + Number(adjObj.adj || 0))).toFixed(2);
-        const items = indivResponses.filter(r => r.student_id === std.student_id && r.step_key !== 'grade_adj');
+        const net = +Math.min(labMaxScore, Math.max(0, base + indObj.ind_total + Number(adjObj.adj || 0))).toFixed(2);
+        const items = indivResponses.filter(r => r.student_id === std.student_id && r.step_key !== 'grade_adj' && r.step_key !== 'ind_rubric_score');
         return {
           'ลำดับ': std.seq,
           'รหัสนิสิต': std.student_id,
@@ -979,10 +1135,14 @@
           'กลุ่ม': gNo || '',
           'บทบาท': grp[`role_lab${currentLab}`] || grp.role_lab1 || '',
           'จำนวนกิจกรรมเดี่ยวที่ส่ง': items.length,
-          'คะแนนฐานกลุ่ม (20)': base,
-          'ปรับคะแนนรายบุคคล (+/-)': adjObj.adj || 0,
-          'คะแนนสุทธิ Lab (20)': net,
-          'หมายเหตุ': adjObj.note || ''
+          '1.ส่วนร่วม(3)': indObj.participation,
+          '2.เหตุผล(3)': indObj.reasoning,
+          '3.สะท้อนคิด(4)': indObj.reflection,
+          'รวมคะแนนเดี่ยว(10)': indObj.ind_total,
+          'คะแนนฐานกลุ่ม(20)': base,
+          'ปรับคะแนนรายบุคคล(+/-)': adjObj.adj || 0,
+          [`คะแนนสุทธิ Lab (${labMaxScore})`]: net,
+          'หมายเหตุ': adjObj.note || indObj.note || ''
         };
       });
 
@@ -1003,21 +1163,10 @@
     }
 
     async function exportAllLabsSummaryExcel() {
-      const [allRubricRes, allAdjRes] = await Promise.all([
-        db.from('lab_rubric_scores').select('*'),
-        db.from('lab_individual_responses').select('*').eq('step_key', 'grade_adj')
-      ]);
-      const rRows = allRubricRes.data || [];
-      const aRows = allAdjRes.data || [];
+      const { rMap, aMap, indMap, labsWithIndRubric } = await fetchAllLabsScoreMaps();
 
-      const rMap = {};
-      rRows.forEach(r => {
-        const lNo = r.lab_no || Number(String(r.lab_code || '').replace(/\D/g, ''));
-        const sumC = Number(r.c1_issue||0) + Number(r.c2_stakeholder||0) + Number(r.c3_reasoning||0) + Number(r.c4_alternatives||0) + Number(r.c5_new_info||0) + Number(r.c6_listening||0);
-        rMap[`${lNo}_${r.group_no}`] = r.total_score ?? sumC;
-      });
-      const aMap = {};
-      aRows.forEach(r => aMap[`${r.lab_no}_${r.student_id}`] = Number(r.json_val?.adj || 0));
+      let maxTerm = 0;
+      for (let l = 1; l <= 12; l++) maxTerm += labsWithIndRubric.has(l) ? 30 : 20;
 
       const rows = studentsList.map(std => {
         const gNo = groupAssignments[std.student_id]?.group_no || 0;
@@ -1029,14 +1178,22 @@
         };
         let total = 0;
         for (let l = 1; l <= 12; l++) {
-          const base = gNo ? Number(rMap[`${l}_${gNo}`] || 0) : 0;
-          const adj = Number(aMap[`${l}_${std.student_id}`] || 0);
-          const net = (base > 0 || adj !== 0) ? +Math.min(20, Math.max(0, base + adj)).toFixed(2) : 0;
-          obj[`Lab_${l}`] = net;
+          const hasInd = labsWithIndRubric.has(l);
+          const lMax = hasInd ? 30 : 20;
+          const indKey = `${l}_${std.student_id}`;
+          const hasIndRecord = Object.prototype.hasOwnProperty.call(indMap, indKey);
+          const indTot = hasIndRecord ? Number(indMap[indKey]) : 0;
+          const rawBase = gNo ? Number(rMap[`${l}_${gNo}`] || 0) : 0;
+          const base = (hasInd && hasIndRecord && indTot === 0) ? 0 : rawBase;
+          const adj = Number(aMap[indKey] || 0);
+          const net = (base > 0 || indTot > 0 || adj !== 0)
+            ? +Math.min(lMax, Math.max(0, base + indTot + adj)).toFixed(2)
+            : 0;
+          obj[`Lab_${l}(${lMax})`] = net;
           total += net;
         }
-        obj['รวมทั้งเทอม(240)'] = +total.toFixed(2);
-        obj['ร้อยละ'] = +((total / 240) * 100).toFixed(2);
+        obj[`รวมทั้งเทอม(${maxTerm})`] = +total.toFixed(2);
+        obj['ร้อยละ'] = maxTerm > 0 ? +((total / maxTerm) * 100).toFixed(2) : 0;
         return obj;
       });
 
