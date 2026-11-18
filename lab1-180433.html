@@ -72,7 +72,7 @@
           <option value="1">PAGE 1: Welcome (คำถามเปิดประเด็น)</option>
           <option value="2">PAGE 2: Course Orientation (กติกาการเรียนรู้)</option>
           <option value="3">PAGE 3: Question — Ethics คืออะไร? (Word Cloud)</option>
-          <option value="4">PAGE 4: Dilemma 1 — Law ≠ Ethics (Anonymous Vote)</option>
+          <option value="4">PAGE 4: Dilemma 1 — Law ≠ Ethics (Vote 1)</option>
           <option value="5">PAGE 5: See The Room (ผลโหวต Dilemma 1)</option>
           <option value="6">PAGE 6: Group Discussion 1 (เลือก 3 เหตุผลหลัก)</option>
           <option value="7">PAGE 7: Dilemma 2 — ทำเพื่อประโยชน์ของตัวเอง</option>
@@ -118,7 +118,6 @@
   <!-- ==================== STUDENT LOGIN / GROUP MODAL ==================== -->
   <div id="student-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="w-full max-w-md glass rounded-2xl p-6 shadow-2xl border border-slate-700 space-y-4">
-      <!-- Dynamic Alert Reason Box -->
       <div id="modal-alert-box" class="hidden p-3 rounded-xl bg-amber-500/20 border border-amber-500/50 text-amber-200 text-xs font-bold text-center"></div>
 
       <div class="text-center">
@@ -221,10 +220,6 @@
     let activeCharts = {};
 
     let studentProfile = JSON.parse(localStorage.getItem('lab1_student_profile') || 'null');
-    if (!localStorage.getItem('lab1_anon_id')) {
-      localStorage.setItem('lab1_anon_id', 'ANON_' + Math.random().toString(36).substring(2, 8).toUpperCase());
-    }
-    const anonId = localStorage.getItem('lab1_anon_id');
 
     const PAGE_TITLES = [
       "1. Welcome", "2. Orientation", "3. Ethics Word", "4. Dilemma 1",
@@ -257,7 +252,6 @@
       renderStepPills();
       await renderCurrentPage();
 
-      // Poll every 3.5s for live charts, group answers, and instructor page sync
       pollTimer = setInterval(syncLoop, 3500);
 
       const params = new URLSearchParams(window.location.search);
@@ -319,7 +313,6 @@
         badgeText.textContent = `${studentProfile.student_id} (${grpLabel})`;
         dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
 
-        // Hide banner only when both student_id AND group_no are set (and not admin)
         if (!isAdmin && studentProfile.group_no) {
           banner.classList.add('hidden');
         } else if (!isAdmin) {
@@ -334,7 +327,6 @@
       }
     }
 
-    // Helper: Render submitter identity tag right above submit buttons
     function renderSubmitterTag(mode = 'individual') {
       if (studentProfile && studentProfile.student_id) {
         const isMissingGroup = (mode === 'group' && !studentProfile.group_no);
@@ -688,16 +680,17 @@
         container.innerHTML = `
           <div class="glass rounded-3xl p-6 md:p-10 max-w-3xl mx-auto space-y-6">
             <div class="flex justify-between items-center">
-              <span class="text-xs font-bold text-sky-400">PAGE 4 • VOTE 1 (Anonymous Vote)</span>
-              <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">ไม่ระบุตัวตน (โหวตได้ทันที)</span>
+              <span class="text-xs font-bold text-sky-400">PAGE 4 • VOTE 1 (ตอบรายบุคคล)</span>
+              <span class="px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold">ระบุตัวตน</span>
             </div>
             <div class="p-5 rounded-2xl bg-slate-900 border border-slate-700">
               <p class="text-xs text-slate-400 uppercase font-bold mb-1">สถานการณ์</p>
               <p class="text-lg md:text-xl font-bold text-white">“การกระทำหนึ่งไม่ผิดกฎหมาย แต่คุณคิดว่าไม่ถูกต้องทางจริยธรรม คุณคิดว่าเป็นไปได้หรือไม่?”</p>
             </div>
+            ${renderSubmitterTag('individual')}
             <div class="space-y-3" id="p4-options">
               ${opts.map(o => `
-                <button onclick="submitAnonVote('p4_vote', '${o.code}')" class="w-full text-left p-4 rounded-xl bg-slate-900/90 hover:bg-sky-950/60 border border-slate-700 hover:border-sky-500 text-sm md:text-base font-semibold text-slate-100 transition">
+                <button onclick="submitIndividualVote('p4_vote', '${o.code}')" class="w-full text-left p-4 rounded-xl bg-slate-900/90 hover:bg-sky-950/60 border border-slate-700 hover:border-sky-500 text-sm md:text-base font-semibold text-slate-100 transition">
                   ${o.label}
                 </button>
               `).join('')}
@@ -711,7 +704,7 @@
           <div class="glass rounded-3xl p-6 md:p-8 max-w-4xl mx-auto space-y-6">
             <div class="flex justify-between items-center">
               <div>
-                <span class="text-xs font-bold text-sky-400">PAGE 5 • SEE THE ROOM (Anonymous Result)</span>
+                <span class="text-xs font-bold text-sky-400">PAGE 5 • SEE THE ROOM</span>
                 <h2 class="text-2xl font-extrabold text-white">ผลโหวต Dilemma 1: Law ≠ Ethics (<span id="p5-count">0</span> คน)</h2>
               </div>
             </div>
@@ -1058,7 +1051,7 @@
     }
 
     // =========================================================================
-    // SUBMISSION HANDLERS
+    // SUBMISSION HANDLERS (WITH STRICT ERROR HANDLING)
     // =========================================================================
     function limitCheckboxes(selector, max) {
       const boxes = document.querySelectorAll(selector);
@@ -1073,35 +1066,21 @@
       if (!requireStudent()) return;
       const word = document.getElementById('p3-word').value.trim();
       if (!word) return alert('กรุณาพิมพ์คำสั้น ๆ 1–3 คำ');
-      await db.from('lab_individual_responses').upsert({
+      const { error } = await db.from('lab_individual_responses').upsert({
         lab_no: LAB_NO,
         step_key: 'p3_word',
         student_id: studentProfile.student_id,
         text_val: word,
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,student_id' });
+      if (error) return alert('บันทึกคำตอบไม่สำเร็จ: ' + error.message);
       document.getElementById('p3-word').value = '';
       await refreshLiveSection(3);
     }
 
-    async function submitAnonVote(stepKey, choiceCode) {
-      await db.from('lab_individual_responses').upsert({
-        lab_no: LAB_NO,
-        step_key: stepKey,
-        student_id: anonId,
-        choice_val: choiceCode,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'lab_no,step_key,student_id' });
-      const fb = document.getElementById('p4-feedback');
-      if (fb) {
-        fb.classList.remove('hidden');
-        fb.textContent = `✓ บันทึกผลโหวตแบบไม่ระบุตัวตนเรียบร้อยแล้ว (ตัวเลือก ${choiceCode})`;
-      }
-    }
-
     async function submitIndividualVote(stepKey, choiceCode) {
       if (!requireStudent()) return;
-      await db.from('lab_individual_responses').upsert({
+      const { error } = await db.from('lab_individual_responses').upsert({
         lab_no: LAB_NO,
         step_key: stepKey,
         student_id: studentProfile.student_id,
@@ -1109,14 +1088,26 @@
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,student_id' });
 
-      const mapFb = { 'p7_vote': ['p7-feedback', 7], 'p9_vote': ['p9-feedback', 9], 'p12_revote': ['p12-feedback', 12] };
+      if (error) {
+        alert('บันทึกผลโหวตไม่สำเร็จ: ' + error.message);
+        return;
+      }
+
+      const mapFb = {
+        'p4_vote': ['p4-feedback', 4],
+        'p7_vote': ['p7-feedback', 7],
+        'p9_vote': ['p9-feedback', 9],
+        'p12_revote': ['p12-feedback', 12]
+      };
       const [fbId, pageNo] = mapFb[stepKey];
       const fb = document.getElementById(fbId);
       if (fb) {
         fb.classList.remove('hidden');
         fb.textContent = `✓ บันทึกคำตอบตัวเลือก ${choiceCode} ในนาม ${studentProfile.student_id} สำเร็จ`;
       }
-      await refreshLiveSection(pageNo);
+      if ([7, 9, 12].includes(pageNo)) {
+        await refreshLiveSection(pageNo);
+      }
     }
 
     async function submitP6Group() {
@@ -1126,7 +1117,7 @@
       if (checked.length !== 3) return alert('กรุณาเลือกเหตุผลสำคัญที่สุดให้ครบ 3 ข้อ');
       if (!conflict) return alert('กรุณาอธิบายแนวทางการให้น้ำหนักเมื่อเหตุผลขัดแย้งกัน');
 
-      await db.from('lab_group_responses').upsert({
+      const { error } = await db.from('lab_group_responses').upsert({
         lab_no: LAB_NO,
         step_key: 'p6_disc1',
         group_no: studentProfile.group_no,
@@ -1135,6 +1126,7 @@
         text_val: conflict,
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
+      if (error) return alert('บันทึกคำตอบกลุ่มไม่สำเร็จ: ' + error.message);
       await refreshLiveSection(6);
     }
 
@@ -1144,7 +1136,7 @@
       const explain = document.getElementById('p8-explain').value.trim();
       if (checked.length === 0 || checked.length > 2) return alert('กรุณาเลือกเหตุผลหลัก 1–2 ข้อ');
 
-      await db.from('lab_individual_responses').upsert({
+      const { error } = await db.from('lab_individual_responses').upsert({
         lab_no: LAB_NO,
         step_key: 'p8_why',
         student_id: studentProfile.student_id,
@@ -1152,6 +1144,7 @@
         text_val: explain,
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,student_id' });
+      if (error) return alert('บันทึกเหตุผลไม่สำเร็จ: ' + error.message);
       alert(`บันทึกเหตุผลของรหัส ${studentProfile.student_id} เรียบร้อยแล้ว`);
     }
 
@@ -1162,7 +1155,7 @@
       keys.forEach(k => payload[k] = document.getElementById(`canvas-${k}`).value.trim());
       if (!payload.decision || !payload.why) return alert('กรุณากรอกอย่างน้อยหัวข้อ 8 (Decision) และ 9 (Why?)');
 
-      await db.from('lab_group_responses').upsert({
+      const { error } = await db.from('lab_group_responses').upsert({
         lab_no: LAB_NO,
         step_key: 'p10_canvas',
         group_no: studentProfile.group_no,
@@ -1171,6 +1164,7 @@
         json_val: payload,
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
+      if (error) return alert('บันทึก Canvas ไม่สำเร็จ: ' + error.message);
       await refreshLiveSection(10);
     }
 
@@ -1180,7 +1174,7 @@
       const reason = document.getElementById('p11-reason').value.trim();
       if (!reason) return alert('กรุณาอธิบายเหตุผลประกอบข้อมูลใหม่');
 
-      await db.from('lab_group_responses').upsert({
+      const { error } = await db.from('lab_group_responses').upsert({
         lab_no: LAB_NO,
         step_key: 'p11_challenge',
         group_no: studentProfile.group_no,
@@ -1189,6 +1183,7 @@
         text_val: reason,
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
+      if (error) return alert('บันทึกผล Challenge ไม่สำเร็จ: ' + error.message);
       await refreshLiveSection(11);
     }
 
@@ -1218,7 +1213,7 @@
       if (!requireGroup()) return;
       if (!window.p13Sequence || window.p13Sequence.length < 5) return alert('กรุณาคลิกเลือกเรียงการ์ดขั้นตอนอย่างน้อย 5 ขั้นตอน (แนะนำครบ 9 การ์ด)');
 
-      await db.from('lab_group_responses').upsert({
+      const { error } = await db.from('lab_group_responses').upsert({
         lab_no: LAB_NO,
         step_key: 'p13_framework',
         group_no: studentProfile.group_no,
@@ -1227,6 +1222,7 @@
         text_val: window.p13Sequence.join(' → '),
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
+      if (error) return alert('บันทึก Framework ไม่สำเร็จ: ' + error.message);
       await refreshLiveSection(13);
     }
 
@@ -1237,13 +1233,15 @@
       const q3 = document.getElementById('p14-q3').value.trim();
       if (!q1 || !q2 || !q3) return alert('กรุณาตอบให้ครบทั้ง 3 ข้อสั้น ๆ');
 
-      await db.from('lab_individual_responses').upsert({
+      const { error } = await db.from('lab_individual_responses').upsert({
         lab_no: LAB_NO,
         step_key: 'p14_reflection',
         student_id: studentProfile.student_id,
         json_val: { q1, q2, q3 },
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,student_id' });
+
+      if (error) return alert('บันทึก Exit Reflection ไม่สำเร็จ: ' + error.message);
 
       const fb = document.getElementById('p14-feedback');
       fb.classList.remove('hidden');
@@ -1631,6 +1629,7 @@
       const stdRows = studentsList.map(std => {
         const findStep = (k) => indiv.find(r => r.student_id === std.student_id && r.step_key === k);
         const p3 = findStep('p3_word');
+        const p4 = findStep('p4_vote');
         const p7 = findStep('p7_vote');
         const p8 = findStep('p8_why');
         const p9 = findStep('p9_vote');
@@ -1644,6 +1643,7 @@
           'กลุ่ม': groupAssignments[std.student_id]?.group_no || '',
           'บทบาท': groupAssignments[std.student_id]?.role_lab1 || '',
           'P3_EthicsWord': p3?.text_val || '',
+          'P4_LawVsEthics': p4?.choice_val || '',
           'P7_Dilemma2': p7?.choice_val || '',
           'P8_WhyTags': (p8?.reason_tags || []).join(', '),
           'P8_Explain': p8?.text_val || '',
