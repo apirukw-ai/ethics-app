@@ -635,7 +635,7 @@
               <div class="grid grid-cols-2 gap-2">
                 ${whyOpts.map(w => `
                   <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer hover:border-indigo-500 text-xs font-semibold">
-                    <input type="checkbox" value="${w}" class="p5-chk accent-indigo-500" onchange="limitCheckboxes('.p5-chk', 2)">
+                    <input type="checkbox" value="${w}" class="p5-chk accent-indigo-500" onchange="limitCheckboxes(this, '.p5-chk', 2)">
                     <span>${w}</span>
                   </label>
                 `).join('')}
@@ -1132,17 +1132,141 @@
           </div>`;
         await refreshLiveSection(19);
       }
+      await prefillExistingResponses(p);
+    }
+
+    
+    function showToast(msg, isErr = false) {
+      const el = document.getElementById('toast-banner');
+      if (!el) return;
+      el.className = isErr
+        ? 'fixed bottom-5 right-5 z-50 px-5 py-3 rounded-xl bg-rose-600 text-white text-sm font-extrabold shadow-2xl border border-rose-400/50 transition-all'
+        : 'fixed bottom-5 right-5 z-50 px-5 py-3 rounded-xl bg-emerald-600 text-white text-sm font-extrabold shadow-2xl border border-emerald-400/50 transition-all';
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
+    }
+
+    async function prefillExistingResponses(pageNo) {
+      if (!studentProfile || !studentProfile.student_id) return;
+      const sid = studentProfile.student_id;
+      const gNo = studentProfile.group_no;
+
+      if (pageNo === 5) {
+        const { data } = await db.from('lab_individual_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p5_why').eq('student_id', sid).maybeSingle();
+        if (data) {
+          const tags = data.reason_tags || [];
+          document.querySelectorAll('.p5-chk').forEach(b => { b.checked = tags.includes(b.value); });
+          const noteEl = document.getElementById('p5-note');
+          if (noteEl && data.text_val) noteEl.value = data.text_val;
+        }
+      } else if (pageNo === 7 && gNo) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p7_facts_unknowns').eq('group_no', gNo).maybeSingle();
+        if (data && data.json_val) {
+          const j = data.json_val;
+          if (j.facts) document.getElementById('p7-facts').value = j.facts;
+          if (j.unknown) document.getElementById('p7-unknown').value = j.unknown;
+          if (j.stakeholders) document.getElementById('p7-stakeholders').value = j.stakeholders;
+          if (j.issue) document.getElementById('p7-issue').value = j.issue;
+          if (j.values) document.getElementById('p7-values').value = j.values;
+        }
+      } else if (pageNo === 8 && gNo) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p8_stakeholders').eq('group_no', gNo).maybeSingle();
+        if (data) {
+          const items = data.selected_items || [];
+          if (items.length > 0) document.querySelectorAll('.p8-chk').forEach(b => { b.checked = items.includes(b.value); });
+          if (data.text_val) document.getElementById('p8-most').value = data.text_val;
+        }
+      } else if (pageNo === 9 && gNo) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p9_issue').eq('group_no', gNo).maybeSingle();
+        if (data && data.text_val && data.text_val.includes(' กับ ')) {
+          const parts = data.text_val.replace(' ขัดแย้งกัน', '').split(' กับ ');
+          if (parts[0]) document.getElementById('p9-side1').value = parts[0];
+          if (parts[1]) document.getElementById('p9-side2').value = parts[1];
+        }
+      } else if (pageNo === 10 && gNo) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p10_tension_map').eq('group_no', gNo).maybeSingle();
+        if (data && data.json_val) {
+          const j = data.json_val;
+          if (j.valA) document.getElementById('p10-valA').value = j.valA;
+          if (j.valB) document.getElementById('p10-valB').value = j.valB;
+          if (j.lossA) document.getElementById('p10-lossA').value = j.lossA;
+          if (j.lossB) document.getElementById('p10-lossB').value = j.lossB;
+        }
+      } else if (pageNo === 11 && gNo) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p11_options').eq('group_no', gNo).maybeSingle();
+        if (data) {
+          const items = data.selected_items || [];
+          if (items[0]) document.getElementById('p11-opt1').value = items[0];
+          if (items[1]) document.getElementById('p11-opt2').value = items[1];
+          if (items[2]) document.getElementById('p11-opt3').value = items[2];
+          if (data.decision_val) document.getElementById('p11-best').value = data.decision_val;
+        }
+      } else if (pageNo === 12 && gNo) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p12_consequences').eq('group_no', gNo).maybeSingle();
+        if (data && data.json_val) {
+          const j = data.json_val;
+          if (j.gain) document.getElementById('p12-gain').value = j.gain;
+          if (j.lose) document.getElementById('p12-lose').value = j.lose;
+          if (j.risk) document.getElementById('p12-risk').value = j.risk;
+          if (j.long_term) document.getElementById('p12-long').value = j.long_term;
+        }
+      } else if (pageNo === 13 && gNo) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p13_decision').eq('group_no', gNo).maybeSingle();
+        if (data) {
+          if (data.decision_val) document.getElementById('p13-choice').value = data.decision_val;
+          if (data.text_val) document.getElementById('p13-stmt').value = data.text_val;
+        }
+      } else if (pageNo === 14 && gNo) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p14_challenge1').eq('group_no', gNo).maybeSingle();
+        if (data) {
+          if (data.decision_val) document.getElementById('p14-stance').value = data.decision_val;
+          if (data.text_val) document.getElementById('p14-reason').value = data.text_val;
+        }
+      } else if (pageNo === 15 && gNo) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p15_challenge2').eq('group_no', gNo).maybeSingle();
+        if (data) {
+          if (data.decision_val) document.getElementById('p15-stance').value = data.decision_val;
+          if (data.text_val) document.getElementById('p15-reason').value = data.text_val;
+        }
+      } else if (pageNo === 17 && gNo) {
+        const { data } = await db.from('lab_group_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p17_framework').eq('group_no', gNo).maybeSingle();
+        if (data && Array.isArray(data.selected_items)) {
+          window.p17Sequence = [...data.selected_items];
+          const box = document.getElementById('p17-selected-sequence');
+          if (box) {
+            box.innerHTML = window.p17Sequence.map((c, idx) => `
+              <span class="px-2.5 py-1 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 font-bold">
+                ${idx + 1}. ${c}
+              </span>
+            `).join('');
+          }
+        }
+      } else if (pageNo === 18) {
+        const { data } = await db.from('lab_individual_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p18_bridge').eq('student_id', sid).maybeSingle();
+        if (data && Array.isArray(data.reason_tags)) {
+          document.querySelectorAll('.p18-chk').forEach(b => { b.checked = data.reason_tags.includes(b.value); });
+        }
+      } else if (pageNo === 19) {
+        const { data } = await db.from('lab_individual_responses').select('*').eq('lab_no', LAB_NO).eq('step_key', 'p19_reflection').eq('student_id', sid).maybeSingle();
+        if (data && data.json_val) {
+          if (data.json_val.before) document.getElementById('p19-before').value = data.json_val.before;
+          if (data.json_val.now) document.getElementById('p19-now').value = data.json_val.now;
+          if (data.json_val.next) document.getElementById('p19-next').value = data.json_val.next;
+        }
+      }
     }
 
     // =========================================================================
     // SUBMISSION HANDLERS
     // =========================================================================
-    function limitCheckboxes(selector, max) {
+    function limitCheckboxes(el, selector, max) {
       const boxes = document.querySelectorAll(selector);
       const checked = Array.from(boxes).filter(b => b.checked);
       if (checked.length > max) {
-        event.target.checked = false;
-        alert(`เลือกได้สูงสุด ${max} ข้อครับ`);
+        if (el) el.checked = false;
+        showToast(`เลือกได้สูงสุด ${max} ข้อครับ`, true);
       }
     }
 
@@ -1185,7 +1309,7 @@
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,student_id' });
       await refreshLiveSection(5);
-      alert('บันทึกเหตุผลของคุณเรียบร้อยแล้ว');
+      showToast('✓ บันทึกเหตุผลของคุณเรียบร้อยแล้ว');
     }
 
     async function submitP7Facts() {
@@ -1208,6 +1332,7 @@
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
       await refreshLiveSection(7);
+      showToast('✓ บันทึก Facts & Unknowns ของกลุ่มเรียบร้อยแล้ว');
     }
 
     async function submitP8Stakeholder() {
@@ -1226,6 +1351,7 @@
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
       await refreshLiveSection(8);
+      showToast('✓ บันทึก Stakeholder Map ของกลุ่มเรียบร้อยแล้ว');
     }
 
     async function submitP9Issue() {
@@ -1243,6 +1369,7 @@
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
       await refreshLiveSection(9);
+      showToast('✓ บันทึก Ethical Issue ของกลุ่มเรียบร้อยแล้ว');
     }
 
     async function submitP10Tension() {
@@ -1263,6 +1390,7 @@
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
       await refreshLiveSection(10);
+      showToast('✓ บันทึก Ethical Tension Map เรียบร้อยแล้ว');
     }
 
     async function submitP11Options() {
@@ -1283,6 +1411,7 @@
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
       await refreshLiveSection(11);
+      showToast('✓ บันทึกทางเลือกของกลุ่มเรียบร้อยแล้ว');
     }
 
     async function submitP12Conseq() {
@@ -1304,6 +1433,7 @@
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
       await refreshLiveSection(12);
+      showToast('✓ บันทึกการวิเคราะห์ผลกระทบเรียบร้อยแล้ว');
     }
 
     async function submitP13Decision() {
@@ -1322,6 +1452,7 @@
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
       await refreshLiveSection(13);
+      showToast('✓ บันทึกการตัดสินใจของกลุ่มเรียบร้อยแล้ว');
     }
 
     async function submitP14Chal1() {
@@ -1340,6 +1471,7 @@
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
       await refreshLiveSection(14);
+      showToast('✓ บันทึกผล Challenge 1 เรียบร้อยแล้ว');
     }
 
     async function submitP15Chal2() {
@@ -1358,6 +1490,7 @@
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
       await refreshLiveSection(15);
+      showToast('✓ บันทึกผล Challenge 2 เรียบร้อยแล้ว');
     }
 
     function pickFrameworkCard(card) {
@@ -1394,6 +1527,7 @@
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,group_no' });
       await refreshLiveSection(17);
+      showToast('✓ บันทึก Framework ของกลุ่มเรียบร้อยแล้ว');
     }
 
     async function submitP18Bridge() {
@@ -1409,7 +1543,7 @@
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,student_id' });
       await refreshLiveSection(18);
-      alert('บันทึกข้อมูล Professional Bridge เรียบร้อยแล้ว');
+      showToast('✓ บันทึกข้อมูล Professional Bridge เรียบร้อยแล้ว');
     }
 
     async function submitP19Reflection() {
@@ -1431,6 +1565,7 @@
       fb.classList.remove('hidden');
       fb.textContent = '✓ บันทึก Exit Reflection Lab 2 เรียบร้อยแล้ว';
       await refreshLiveSection(19);
+      showToast('✓ บันทึก Exit Reflection Lab 2 เรียบร้อยแล้ว');
     }
 
     // =========================================================================
@@ -1836,12 +1971,14 @@
       }
 
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stdRows), 'รายบุคคล_90คน');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stdRows), 'รายบุคคล_100คน');
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(grpRows), 'รายกลุ่ม_และ_Rubric');
       XLSX.writeFile(wb, 'ผลปฏิบัติการที่2_180433_2-2569.xlsx');
     }
 
     init();
   </script>
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast-banner" class="fixed bottom-5 right-5 z-50 hidden px-5 py-3 rounded-xl bg-emerald-600 text-white text-sm font-extrabold shadow-2xl border border-emerald-400/50 transition-all"></div>
 </body>
 </html>
