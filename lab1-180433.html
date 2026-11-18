@@ -49,6 +49,19 @@
     </div>
   </header>
 
+  <!-- PERSISTENT IDENTITY WARNING BANNER -->
+  <div id="unidentified-banner" class="hidden bg-amber-500/15 border-b border-amber-500/40 px-4 py-2.5">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2 text-xs md:text-sm text-amber-200">
+        <span class="text-base">⚠️</span>
+        <span><strong>ยังไม่ได้ระบุตัวตน:</strong> กรุณากรอกรหัสนิสิตและกลุ่มของคุณก่อนทำกิจกรรม เพื่อให้ระบบบันทึกคะแนนและคำตอบรายบุคคลได้ถูกต้อง</span>
+      </div>
+      <button onclick="openStudentLoginModal()" class="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold shadow shrink-0 transition">
+        ระบุรหัสนิสิตทันที
+      </button>
+    </div>
+  </div>
+
   <!-- INSTRUCTOR CONTROL BAR (VISIBLE ONLY IN ADMIN MODE) -->
   <div id="admin-control-bar" class="hidden bg-slate-900 border-b border-amber-500/30 px-4 py-2.5">
     <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
@@ -105,6 +118,9 @@
   <!-- ==================== STUDENT LOGIN / GROUP MODAL ==================== -->
   <div id="student-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="w-full max-w-md glass rounded-2xl p-6 shadow-2xl border border-slate-700 space-y-4">
+      <!-- Dynamic Alert Reason Box -->
+      <div id="modal-alert-box" class="hidden p-3 rounded-xl bg-amber-500/20 border border-amber-500/50 text-amber-200 text-xs font-bold text-center"></div>
+
       <div class="text-center">
         <h3 class="text-lg font-bold text-white">ข้อมูลผู้เข้าร่วมปฏิบัติการที่ 1</h3>
         <p class="text-xs text-slate-400 mt-1">กรอกรหัสนิสิต 8 หลัก ระบบจะดึงชื่อและกลุ่มของท่านอัตโนมัติ</p>
@@ -244,7 +260,6 @@
       // Poll every 3.5s for live charts, group answers, and instructor page sync
       pollTimer = setInterval(syncLoop, 3500);
 
-      // Normal Lab view on open; redirect legacy ?tab=grading to separate grading hub
       const params = new URLSearchParams(window.location.search);
       if (params.get('tab') === 'grading' || params.get('tab') === 'rubric') {
         window.location.href = 'grading-180433.html?lab=1';
@@ -275,14 +290,13 @@
         }
       }
 
-      // Refresh live dashboard widgets on pages that display room/group results
       if ([3, 5, 6, 7, 9, 10, 11, 12, 13, 14].includes(currentViewPage)) {
         await refreshLiveSection(currentViewPage);
       }
     }
 
     // =========================================================================
-    // STUDENT PROFILE & GROUP MANAGEMENT
+    // STUDENT PROFILE, IDENTITY BANNER & HELPER UI
     // =========================================================================
     function syncStudentProfileWithDB() {
       if (studentProfile && studentProfile.student_id) {
@@ -298,17 +312,64 @@
     function updateStudentBadgeUI() {
       const badgeText = document.getElementById('student-badge-text');
       const dot = document.getElementById('login-dot');
+      const banner = document.getElementById('unidentified-banner');
+
       if (studentProfile && studentProfile.student_id) {
         const grpLabel = studentProfile.group_no ? `กลุ่ม ${studentProfile.group_no}` : 'ยังไม่ระบุกลุ่ม';
         badgeText.textContent = `${studentProfile.student_id} (${grpLabel})`;
         dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+
+        // Hide banner only when both student_id AND group_no are set (and not admin)
+        if (!isAdmin && studentProfile.group_no) {
+          banner.classList.add('hidden');
+        } else if (!isAdmin) {
+          banner.classList.remove('hidden');
+        }
       } else {
         badgeText.textContent = 'ระบุรหัสนิสิต / กลุ่ม';
         dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
+        if (!isAdmin) {
+          banner.classList.remove('hidden');
+        }
       }
     }
 
-    function openStudentLoginModal() {
+    // Helper: Render submitter identity tag right above submit buttons
+    function renderSubmitterTag(mode = 'individual') {
+      if (studentProfile && studentProfile.student_id) {
+        const isMissingGroup = (mode === 'group' && !studentProfile.group_no);
+        if (isMissingGroup) {
+          return `
+            <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-amber-500/15 border border-amber-500/40 text-xs text-amber-200">
+              <span>⚠️ รหัส <strong>${studentProfile.student_id}</strong> ยังไม่ได้เลือกกลุ่ม</span>
+              <button type="button" onclick="openStudentLoginModal('กรุณาเลือกกลุ่มที่ 1–10 ก่อนส่งคำตอบของกลุ่ม')" class="underline font-bold text-amber-300 hover:text-white">เลือกกลุ่ม</button>
+            </div>`;
+        }
+        const label = mode === 'group'
+          ? `กลุ่มที่ ${studentProfile.group_no} (ผู้บันทึก: ${studentProfile.student_id} ${studentProfile.full_name || ''})`
+          : `${studentProfile.student_id} ${studentProfile.full_name || ''} ${studentProfile.group_no ? `(กลุ่ม ${studentProfile.group_no})` : ''}`;
+        return `
+          <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700/80 text-xs text-slate-300">
+            <span class="truncate">👤 กำลังส่งในนาม: <strong class="text-emerald-400">${label}</strong></span>
+            <button type="button" onclick="openStudentLoginModal()" class="text-sky-400 hover:underline font-semibold shrink-0 ml-2">เปลี่ยนคน</button>
+          </div>`;
+      }
+      return `
+        <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-rose-500/15 border border-rose-500/40 text-xs text-rose-200">
+          <span>⚠️ คุณยังไม่ได้ระบุรหัสนิสิต (ระบบจะถามรหัสเมื่อกดส่ง)</span>
+          <button type="button" onclick="openStudentLoginModal()" class="underline font-bold text-rose-300 hover:text-white shrink-0 ml-2">ระบุรหัส</button>
+        </div>`;
+    }
+
+    function openStudentLoginModal(reasonMsg = '') {
+      const alertBox = document.getElementById('modal-alert-box');
+      if (reasonMsg) {
+        alertBox.textContent = `⚠️ ${reasonMsg}`;
+        alertBox.classList.remove('hidden');
+      } else {
+        alertBox.classList.add('hidden');
+      }
+
       document.getElementById('student-modal').classList.remove('hidden');
       if (studentProfile) {
         document.getElementById('modal-sid').value = studentProfile.student_id || '';
@@ -316,6 +377,7 @@
         document.getElementById('modal-role').value = studentProfile.role || 'Member';
         previewModalStudent(studentProfile.student_id);
       }
+      setTimeout(() => document.getElementById('modal-sid').focus(), 50);
     }
 
     function closeStudentLoginModal() {
@@ -377,7 +439,7 @@
 
     function requireStudent() {
       if (!studentProfile || !studentProfile.student_id) {
-        openStudentLoginModal();
+        openStudentLoginModal('กรุณาระบุรหัสนิสิต 8 หลักและกลุ่มของคุณก่อนบันทึกคำตอบ');
         return false;
       }
       return true;
@@ -386,7 +448,7 @@
     function requireGroup() {
       if (!requireStudent()) return false;
       if (!studentProfile.group_no) {
-        openStudentLoginModal();
+        openStudentLoginModal('กิจกรรมนี้เป็นการตอบในนามกลุ่ม กรุณาเลือกกลุ่มที่ 1–10 ก่อนบันทึก');
         return false;
       }
       return true;
@@ -416,6 +478,11 @@
     function switchRole(role) {
       isAdmin = (role === 'admin');
       document.getElementById('admin-control-bar').classList.toggle('hidden', !isAdmin);
+      if (isAdmin) {
+        document.getElementById('unidentified-banner').classList.add('hidden');
+      } else {
+        updateStudentBadgeUI();
+      }
       document.getElementById('btn-role-admin').className = isAdmin
         ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white shadow'
         : 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700';
@@ -473,7 +540,7 @@
 
     function navigateToPage(p) {
       if (!isAdmin && controlState.is_locked && p !== controlState.current_page) {
-        return; // Locked to instructor's active slide
+        return;
       }
       if (isAdmin) {
         setInstructorPage(p);
@@ -540,7 +607,7 @@
             </div>
             <div class="pt-2">
               <button onclick="openStudentLoginModal()" class="px-6 py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold shadow-lg">
-                ลงทะเบียนรหัสนิสิตและกลุ่มของคุณก่อนเริ่มกิจกรรม
+                ${studentProfile && studentProfile.student_id ? `✓ ลงทะเบียนแล้ว (${studentProfile.student_id} • กลุ่ม ${studentProfile.group_no || '-'}) — คลิกเพื่อแก้ไข` : 'ลงทะเบียนรหัสนิสิตและกลุ่มของคุณก่อนเริ่มกิจกรรม'}
               </button>
             </div>
           </div>`;
@@ -588,6 +655,7 @@
               <span class="text-xs font-bold text-sky-400">PAGE 3 • เวลา 8–18 นาที (ตอบรายบุคคล)</span>
               <h2 class="text-xl font-extrabold text-white">เมื่อได้ยินคำว่า “จริยธรรม” คุณนึกถึงอะไรเป็นอันดับแรก?</h2>
               <p class="text-xs text-slate-400">พิมพ์คำสั้น ๆ 1–3 คำ (เช่น ความดี, ถูก/ผิด, ศีลธรรม, กฎหมาย, ความรับผิดชอบ, ไม่ทำร้ายคนอื่น)</p>
+              ${renderSubmitterTag('individual')}
               <div class="space-y-3">
                 <input type="text" id="p3-word" maxlength="40" placeholder="พิมพ์คำสั้น ๆ 1–3 คำ..."
                   class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-sky-500" />
@@ -621,7 +689,7 @@
           <div class="glass rounded-3xl p-6 md:p-10 max-w-3xl mx-auto space-y-6">
             <div class="flex justify-between items-center">
               <span class="text-xs font-bold text-sky-400">PAGE 4 • VOTE 1 (Anonymous Vote)</span>
-              <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">ไม่ระบุตัวตน</span>
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">ไม่ระบุตัวตน (โหวตได้ทันที)</span>
             </div>
             <div class="p-5 rounded-2xl bg-slate-900 border border-slate-700">
               <p class="text-xs text-slate-400 uppercase font-bold mb-1">สถานการณ์</p>
@@ -682,6 +750,7 @@
                 <textarea id="p6-conflict" rows="3" placeholder="อธิบายแนวคิดของกลุ่ม..."
                   class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-sky-500"></textarea>
               </div>
+              ${renderSubmitterTag('group')}
               <button onclick="submitP6Group()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow">ส่งคำตอบของกลุ่ม</button>
             </div>
             <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-4">
@@ -707,6 +776,7 @@
               <div class="p-4 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-200 leading-relaxed">
                 คุณทำงานกลุ่มกับเพื่อน 5 คน เพื่อนคนหนึ่งแทบไม่ได้ช่วยงานกลุ่ม แต่ก่อนส่งงานเขาขอให้ใส่ชื่อเขาด้วย เพราะถ้าไม่มีชื่อ เขาอาจมีปัญหากับผลการเรียน คุณเป็นคนที่มีสิทธิ์ตัดสินใจว่าจะใส่ชื่อเขาหรือไม่ <strong>คุณจะทำอย่างไร?</strong>
               </div>
+              ${renderSubmitterTag('individual')}
               <div class="space-y-2.5">
                 ${opts.map(o => `
                   <button onclick="submitIndividualVote('p7_vote', '${o.code}')" class="w-full text-left p-3.5 rounded-xl bg-slate-900 hover:bg-sky-950/60 border border-slate-700 hover:border-sky-500 text-sm font-semibold text-white transition">
@@ -749,6 +819,7 @@
               <textarea id="p8-explain" rows="3" placeholder="เขียนคำอธิบายสั้น ๆ..."
                 class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-sky-500"></textarea>
             </div>
+            ${renderSubmitterTag('individual')}
             <button onclick="submitP8Why()" class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold shadow">บันทึกเหตุผลของคุณ</button>
             <div class="p-4 rounded-2xl bg-indigo-950/70 border border-indigo-500/30 text-center text-sm text-indigo-200 font-semibold">
               💡 คำตอบเดียวกัน ≠ เหตุผลเดียวกัน &nbsp;|&nbsp; คำตอบต่างกัน ≠ คนหนึ่งต้องผิดเสมอไป
@@ -772,6 +843,7 @@
               <div class="p-4 rounded-xl bg-slate-900 border border-emerald-500/30 text-sm text-slate-200 leading-relaxed">
                 ผู้ป่วยมาขอคำแนะนำเกี่ยวกับผลิตภัณฑ์สุขภาพชนิดหนึ่ง เภสัชกรพบว่าผลิตภัณฑ์ดังกล่าว<strong>ถูกกฎหมายและสามารถจำหน่ายได้</strong> แต่<strong>หลักฐานเกี่ยวกับประโยชน์ของผลิตภัณฑ์ยังมีข้อจำกัด</strong> ผู้ป่วยเชื่อว่าผลิตภัณฑ์นี้จะช่วยตนเองได้ และต้องการซื้อ <strong>เภสัชกรควรทำอย่างไร?</strong>
               </div>
+              ${renderSubmitterTag('individual')}
               <div class="space-y-2">
                 ${opts.map(o => `
                   <button onclick="submitIndividualVote('p9_vote', '${o.code}')" class="w-full text-left p-3.5 rounded-xl bg-slate-900 hover:bg-emerald-950/60 border border-slate-700 hover:border-emerald-500 text-sm font-semibold text-white transition">
@@ -808,7 +880,7 @@
             <div class="lg:col-span-5 glass rounded-2xl p-5 space-y-3">
               <span class="text-xs font-bold text-emerald-400">PAGE 10 • GROUP ETHICAL REASONING CANVAS (62–78 นาที)</span>
               <h2 class="text-lg font-extrabold text-white">บันทึก Canvas ของกลุ่ม (Recorder กรอกให้กลุ่ม)</h2>
-              <div class="space-y-2.5 max-h-[540px] overflow-y-auto pr-1">
+              <div class="space-y-2.5 max-h-[480px] overflow-y-auto pr-1">
                 ${fields.map(f => `
                   <div>
                     <label class="block text-xs font-bold text-sky-300 mb-1">${f.label}</label>
@@ -816,6 +888,7 @@
                   </div>
                 `).join('')}
               </div>
+              ${renderSubmitterTag('group')}
               <button onclick="submitP10Canvas()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow">บันทึก Ethical Canvas ของกลุ่ม</button>
             </div>
             <div class="lg:col-span-7 glass rounded-2xl p-5 space-y-3">
@@ -866,6 +939,7 @@
                 <textarea id="p11-reason" rows="3" placeholder="ทำไมกลุ่มจึงยืนยัน หรือเปลี่ยนการตัดสินใจ?"
                   class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"></textarea>
               </div>
+              ${renderSubmitterTag('group')}
               <button onclick="submitP11Challenge()" class="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold shadow">บันทึกผล Challenge ของกลุ่ม</button>
             </div>
             <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-3">
@@ -890,6 +964,7 @@
               <span class="text-xs font-bold text-sky-400">PAGE 12 • RE-VOTE (90–98 นาที)</span>
               <h2 class="text-xl font-extrabold text-white">โหวตอีกครั้งหลังเจอ Challenge</h2>
               <p class="text-xs text-slate-300">“เภสัชกรควรทำอย่างไร?” (การเปลี่ยนคำตอบไม่ใช่ความผิด หากเหตุผลและข้อมูลเปลี่ยน)</p>
+              ${renderSubmitterTag('individual')}
               <div class="space-y-2">
                 ${opts.map(o => `
                   <button onclick="submitIndividualVote('p12_revote', '${o.code}')" class="w-full text-left p-3 rounded-xl bg-slate-900 hover:bg-sky-950/60 border border-slate-700 hover:border-sky-500 text-sm font-semibold text-white transition">
@@ -935,6 +1010,7 @@
                 </div>
                 <div id="p13-selected-sequence" class="flex flex-wrap gap-1.5 text-xs"></div>
               </div>
+              ${renderSubmitterTag('group')}
               <button onclick="submitP13Framework()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow">ส่ง Framework ของกลุ่ม</button>
             </div>
             <div class="lg:col-span-6 glass rounded-2xl p-6 space-y-4">
@@ -971,6 +1047,7 @@
                 <label class="block text-sm font-bold text-slate-200 mb-1">Q3: สิ่งหนึ่งที่คุณอยากฝึกเพิ่มเติมเกี่ยวกับการตัดสินใจทางจริยธรรมคืออะไร?</label>
                 <textarea id="p14-q3" rows="2" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"></textarea>
               </div>
+              ${renderSubmitterTag('individual')}
               <button onclick="submitP14Reflection()" class="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg">ส่ง Exit Reflection</button>
             </div>
             <div id="p14-feedback" class="hidden p-3 rounded-xl bg-emerald-950 text-emerald-300 border border-emerald-700 text-sm text-center font-bold"></div>
@@ -1037,7 +1114,7 @@
       const fb = document.getElementById(fbId);
       if (fb) {
         fb.classList.remove('hidden');
-        fb.textContent = `✓ บันทึกคำตอบตัวเลือก ${choiceCode} สำเร็จ`;
+        fb.textContent = `✓ บันทึกคำตอบตัวเลือก ${choiceCode} ในนาม ${studentProfile.student_id} สำเร็จ`;
       }
       await refreshLiveSection(pageNo);
     }
@@ -1075,7 +1152,7 @@
         text_val: explain,
         updated_at: new Date().toISOString()
       }, { onConflict: 'lab_no,step_key,student_id' });
-      alert('บันทึกเหตุผลของคุณเรียบร้อยแล้ว');
+      alert(`บันทึกเหตุผลของรหัส ${studentProfile.student_id} เรียบร้อยแล้ว`);
     }
 
     async function submitP10Canvas() {
@@ -1170,7 +1247,7 @@
 
       const fb = document.getElementById('p14-feedback');
       fb.classList.remove('hidden');
-      fb.textContent = '✓ บันทึก Exit Reflection เรียบร้อยแล้ว ขอบคุณสำหรับการมีส่วนร่วมใน Lab 1';
+      fb.textContent = `✓ บันทึก Exit Reflection ของ ${studentProfile.student_id} (${studentProfile.full_name || ''}) เรียบร้อยแล้ว`;
       await refreshLiveSection(14);
     }
 
@@ -1326,7 +1403,6 @@
           }
         }
 
-        // Calculate individual shifts
         const bMap = {};
         bRows.forEach(r => bMap[r.student_id] = r.choice_val);
         let paired = 0, changed = 0;
@@ -1532,7 +1608,6 @@
       row.total_score = total;
       row.updated_at = new Date().toISOString();
 
-      // Cache for index.html aggregator
       const cached = JSON.parse(localStorage.getItem('ethics_rubric_lab1') || '{}');
       cached[groupNo] = { d: dims, total: total, feedback: row.feedback || '' };
       localStorage.setItem('ethics_rubric_lab1', JSON.stringify(cached));
@@ -1553,7 +1628,6 @@
       const grp = grpRes.data || [];
       const rubric = rubricRes.data || [];
 
-      // Sheet 1: Individual Summary
       const stdRows = studentsList.map(std => {
         const findStep = (k) => indiv.find(r => r.student_id === std.student_id && r.step_key === k);
         const p3 = findStep('p3_word');
@@ -1581,7 +1655,6 @@
         };
       });
 
-      // Sheet 2: Group Responses & Rubric
       const grpRows = [];
       for (let g = 1; g <= 10; g++) {
         const d1 = grp.find(r => r.group_no === g && r.step_key === 'p6_disc1');
